@@ -1,0 +1,71 @@
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.about-dialog {
+  background: #1e1e1e;
+  color: #fff;
+  border-radius: 12px;
+  padding: 32px 40px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.about-dialog__close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.about-dialog__close:hover { color: #fff; }
+
+.about-dialog__logo {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.about-dialog__title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.about-dialog__version {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 20px;
+}
+
+.about-dialog__mission {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ccc;
+  margin: 0 0 20px;
+}
+
+.about-dialog__credit {
+  font-size: 13px;
+  color: #aaa;
+}
+
+.about-dialog__credit a {
+  color: #7eb8f7;
+  text-decoration: none;
+}
+
+.about-dialog__credit a:hover { text-decoration: underline; }
