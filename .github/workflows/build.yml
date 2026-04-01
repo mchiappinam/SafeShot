@@ -5,6 +5,9 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -17,9 +20,7 @@ jobs:
       - run: node scripts/generate-icons.js
       - run: npx tsc -p tsconfig.main.json
       - run: npx vite build
-      - run: npx electron-builder --win nsis
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npx electron-builder --win nsis --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: SafeShot-Windows
@@ -36,9 +37,7 @@ jobs:
       - run: node scripts/generate-icons.js
       - run: npx tsc -p tsconfig.main.json
       - run: npx vite build
-      - run: npx electron-builder --mac dmg zip
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npx electron-builder --mac dmg zip --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: SafeShot-macOS
