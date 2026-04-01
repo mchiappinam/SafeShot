@@ -44,3 +44,25 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.zip
+
+  release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: SafeShot-Windows
+          path: artifacts/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: SafeShot-macOS
+          path: artifacts/macos
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/windows/*.exe
+            artifacts/macos/*.dmg
+            artifacts/macos/*.zip
+          generate_release_notes: true
