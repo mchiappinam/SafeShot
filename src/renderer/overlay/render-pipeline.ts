@@ -49,6 +49,8 @@ export class RenderPipeline {
   private rafId: number | null = null;
   private running = false;
   private dirty = false;
+  private offsetX = 0; // offset to translate virtual screen coords to canvas coords
+  private offsetY = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -62,6 +64,9 @@ export class RenderPipeline {
     this.bitmaps.clear();
     this.screens = screens;
     if (screens.length === 0) return;
+    // Compute offset so virtual screen coords map to canvas 0,0
+    this.offsetX = Math.min(...screens.map(s => s.bounds.x));
+    this.offsetY = Math.min(...screens.map(s => s.bounds.y));
     await Promise.all(screens.map(async (s) => {
       // Decode base64 data URL directly — avoids fetch() which CSP can block
       const base64 = s.imageDataURL.replace(/^data:image\/\w+;base64,/, '');
@@ -108,7 +113,7 @@ export class RenderPipeline {
     // Layer 0: frozen screen bitmaps
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
-      if (bmp) ctx.drawImage(bmp, s.bounds.x, s.bounds.y, s.bounds.width, s.bounds.height);
+      if (bmp) ctx.drawImage(bmp, s.bounds.x - this.offsetX, s.bounds.y - this.offsetY, s.bounds.width, s.bounds.height);
     }
 
     // Layer 1: dim mask with selection cutout
