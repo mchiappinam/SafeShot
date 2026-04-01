@@ -1,0 +1,52 @@
+name: Build SafeShot
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: nsis
+            artifact: SafeShot-Windows
+          - os: macos-latest
+            target: dmg
+            artifact: SafeShot-macOS
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate icons
+        run: node scripts/generate-icons.js
+
+      - name: Build main process
+        run: npx tsc -p tsconfig.main.json
+
+      - name: Build renderer
+        run: npx vite build
+
+      - name: Package
+        run: npx electron-builder --${{ matrix.os == 'windows-latest' && 'win' || 'mac' }} ${{ matrix.target }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip

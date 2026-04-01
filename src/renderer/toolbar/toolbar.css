@@ -1,0 +1,13 @@
+/* Toolbar fade transitions — Requirements 9.1, 9.2, 9.3, 9.8 */
+
+.toolbar {
+  opacity: 1;
+  transition: opacity 150ms ease-in-out;
+  pointer-events: auto;
+}
+
+.toolbar--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease-in-out;
+}
