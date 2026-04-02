@@ -37,12 +37,19 @@ function writeLog(level: 'INFO' | 'ERROR', message: string): void {
  * Requirement 1.1, 1.2, 1.3, 1.5, 1.6
  */
 function enforceNetworkIsolation(): void {
-  // 1. Block all outbound requests via webRequest
+  // 1. Block all outbound requests via webRequest — allow data: URLs
   session.defaultSession.webRequest.onBeforeRequest(
     { urls: ['<all_urls>'] },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (_details: any, callback: any) => {
-      callback({ cancel: true });
+      // Allow data: URLs (used by renderer to decode captured screen bitmaps)
+      // Allow file: URLs (used to load the renderer HTML)
+      const url: string = _details.url || '';
+      if (url.startsWith('data:') || url.startsWith('file:') || url.startsWith('devtools:')) {
+        callback({ cancel: false });
+      } else {
+        callback({ cancel: true });
+      }
     }
   );
 
