@@ -49,8 +49,14 @@ export class ScreenCapture {
     // Release any previously held images before a fresh capture
     this.release();
 
-    const sources = await desktopCapturer.getSources({ types: ['screen'] });
     const displays = screen.getAllDisplays();
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: {
+        width: Math.max(...displays.map(d => d.size.width * d.scaleFactor), 1920),
+        height: Math.max(...displays.map(d => d.size.height * d.scaleFactor), 1080),
+      },
+    });
 
     const results: ScreenData[] = [];
 

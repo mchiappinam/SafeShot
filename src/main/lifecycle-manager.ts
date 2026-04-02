@@ -60,7 +60,7 @@ function enforceNetworkIsolation(): void {
       callback({
         responseHeaders: {
           'Content-Security-Policy': [
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; font-src 'self'; object-src 'none'; media-src 'none'; frame-src 'none'",
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src data: blob:; font-src 'self'; object-src 'none'; media-src 'none'; frame-src 'none'",
           ],
         },
       });

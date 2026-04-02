@@ -63,8 +63,12 @@ export class RenderPipeline {
     this.screens = screens;
     if (screens.length === 0) return;
     await Promise.all(screens.map(async (s) => {
-      const res = await fetch(s.imageDataURL);
-      const blob = await res.blob();
+      // Decode base64 data URL directly — avoids fetch() which CSP can block
+      const base64 = s.imageDataURL.replace(/^data:image\/\w+;base64,/, '');
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'image/png' });
       this.bitmaps.set(s.displayId, await createImageBitmap(blob));
     }));
     this.dirty = true;
