@@ -60,32 +60,35 @@ function enforceNetworkIsolation(): void {
     }
   );
 
-  // 3. Monkey-patch Node's http/https modules as defense-in-depth
+  // 3. Monkey-patch Node's http/https modules as defense-in-depth.
+  // In Electron 30+ some of these are read-only getters, so we wrap
+  // each in try/catch. The webRequest blocking above is the primary defense.
   const networkError = new Error(
     'SafeShot: network access is disabled. All operations are strictly local.'
   );
+  const blockRequest = (): never => { throw networkError; };
 
-  const blockRequest = (): never => {
-    throw networkError;
-  };
+  function tryPatch(obj: unknown, prop: string): void {
+    try {
+      Object.defineProperty(obj, prop, { value: blockRequest, writable: false, configurable: true });
+    } catch {
+      // Property is non-configurable (read-only getter) — skip silently
+    }
+  }
 
-  // Patch http
-  (http as unknown as Record<string, unknown>).request = blockRequest;
-  (http as unknown as Record<string, unknown>).get = blockRequest;
-  (http as unknown as Record<string, unknown>).createServer = blockRequest;
-
-  // Patch https
-  (https as unknown as Record<string, unknown>).request = blockRequest;
-  (https as unknown as Record<string, unknown>).get = blockRequest;
-  (https as unknown as Record<string, unknown>).createServer = blockRequest;
+  tryPatch(http, 'request');
+  tryPatch(http, 'get');
+  tryPatch(http, 'createServer');
+  tryPatch(https, 'request');
+  tryPatch(https, 'get');
+  tryPatch(https, 'createServer');
 
   // Patch Electron's net module if available
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const electronNet = require('electron').net;
     if (electronNet) {
-      electronNet.request = blockRequest;
-      electronNet.fetch = blockRequest;
+      tryPatch(electronNet, 'request');
+      tryPatch(electronNet, 'fetch');
     }
   } catch {
     // net module may not be available in all contexts
