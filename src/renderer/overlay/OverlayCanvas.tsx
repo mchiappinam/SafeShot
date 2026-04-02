@@ -119,8 +119,16 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     const bounds = computeTotalBounds(screens);
     const canvas = canvasRef.current;
     if (canvas) { canvas.width = bounds.width; canvas.height = bounds.height; }
-    selMgrRef.current = new SelectionManager(bounds);
-    pipelineRef.current.setScreens(screens).catch(console.error);
+    // Use bounds starting at 0,0 for selection (canvas coords are relative)
+    selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: bounds.width, height: bounds.height });
+    pipelineRef.current.setScreens(screens).catch((err) => {
+      console.error('setScreens failed:', err);
+      // Show red background so user knows something went wrong
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) { ctx.fillStyle = 'rgba(255,0,0,0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+      }
+    });
   }, [screens]);
 
   const getCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
