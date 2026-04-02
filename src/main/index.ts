@@ -54,9 +54,25 @@ app.whenReady().then(async () => {
       try {
         const screens = await screenCapture.captureAllDisplays();
         log('Captured ' + screens.length + ' displays');
+
+        // Compute bounding rect of all displays for multi-monitor overlay
+        const allDisplays = screen.getAllDisplays();
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const d of allDisplays) {
+          minX = Math.min(minX, d.bounds.x);
+          minY = Math.min(minY, d.bounds.y);
+          maxX = Math.max(maxX, d.bounds.x + d.bounds.width);
+          maxY = Math.max(maxY, d.bounds.y + d.bounds.height);
+        }
+        const totalWidth = maxX - minX;
+        const totalHeight = maxY - minY;
+        log('Overlay bounds: ' + minX + ',' + minY + ' ' + totalWidth + 'x' + totalHeight);
+
         overlayWindow = new BrowserWindow({
-          fullscreen: true, transparent: true, frame: false, alwaysOnTop: true,
+          x: minX, y: minY, width: totalWidth, height: totalHeight,
+          transparent: true, frame: false, alwaysOnTop: true,
           skipTaskbar: true, resizable: false, focusable: true,
+          fullscreenable: false,
           webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') },
         });
         const htmlPath = path.join(__dirname, '..', '..', 'renderer', 'index.html');
