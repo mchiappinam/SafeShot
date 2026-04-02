@@ -50,12 +50,11 @@ export class ScreenCapture {
     this.release();
 
     const displays = screen.getAllDisplays();
+    const maxW = Math.max(...displays.map(d => Math.round(d.bounds.width * d.scaleFactor)), 1920);
+    const maxH = Math.max(...displays.map(d => Math.round(d.bounds.height * d.scaleFactor)), 1080);
     const sources = await desktopCapturer.getSources({
       types: ['screen'],
-      thumbnailSize: {
-        width: Math.max(...displays.map(d => d.size.width * d.scaleFactor), 1920),
-        height: Math.max(...displays.map(d => d.size.height * d.scaleFactor), 1080),
-      },
+      thumbnailSize: { width: maxW, height: maxH },
     });
 
     const results: ScreenData[] = [];
