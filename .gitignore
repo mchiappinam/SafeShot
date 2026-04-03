@@ -6,3 +6,5 @@ src-tauri/icons/
 .vite/
 .DS_Store
 Thumbs.db
+.vscode/
+.kiro/
