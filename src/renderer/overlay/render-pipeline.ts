@@ -1,6 +1,6 @@
 import { DIM_MASK_OPACITY, RESIZE_HANDLE_SIZE } from '../../shared/constants';
 import type { Annotation, ScreenData, Selection } from '../../shared/types';
-import { drawCircle, drawTriangle, drawOctagon, drawLine, drawArrow, drawSquare, drawText, drawFill } from '../annotation/shapes';
+import { drawCircle, drawTriangle, drawOctagon, drawLine, drawArrow, drawSquare, drawText } from '../annotation/shapes';
 import { drawFreehand } from '../annotation/freehand';
 
 interface HandlePoint { x: number; y: number; }
@@ -33,22 +33,19 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation): void 
       if (start && end) drawArrow(ctx, start, end, ann.color, ann.strokeWidth);
       break;
     case 'circle':
-      if (start && end) drawCircle(ctx, start, end, ann.color, ann.strokeWidth);
+      if (start && end) drawCircle(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
       break;
     case 'triangle':
-      if (start && end) drawTriangle(ctx, start, end, ann.color, ann.strokeWidth);
+      if (start && end) drawTriangle(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
       break;
     case 'octagon':
-      if (start && end) drawOctagon(ctx, start, end, ann.color, ann.strokeWidth);
+      if (start && end) drawOctagon(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
       break;
     case 'square':
-      if (start && end) drawSquare(ctx, start, end, ann.color, ann.strokeWidth);
+      if (start && end) drawSquare(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
       break;
     case 'text':
       if (start && ann.text) drawText(ctx, start, ann.text, ann.color, 16);
-      break;
-    case 'fill':
-      if (start && end) drawFill(ctx, start, end, ann.color);
       break;
   }
 }
