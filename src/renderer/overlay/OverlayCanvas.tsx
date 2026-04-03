@@ -67,21 +67,17 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     notifySelection();
   }, [notifySelection]);
 
-  // Export only the selected region (frozen screen + annotations, no dim mask)
+  // Export only the selected region (frozen screen + annotations, no UI chrome)
   const getSelectionDataURL = useCallback((): string | null => {
-    const canvas = canvasRef.current;
     const pipeline = pipelineRef.current;
     const sel = selMgrRef.current?.getSelection();
-    if (!canvas || !pipeline || !sel) return null;
+    if (!pipeline || !sel) return null;
 
-    const exportCanvas = document.createElement('canvas');
-    exportCanvas.width = Math.round(sel.width);
-    exportCanvas.height = Math.round(sel.height);
-    const ectx = exportCanvas.getContext('2d');
-    if (!ectx) return null;
-
-    // Draw the portion of the main canvas that's inside the selection
-    ectx.drawImage(canvas, sel.x, sel.y, sel.width, sel.height, 0, 0, sel.width, sel.height);
+    const annEng = annEngRef.current;
+    const annotations = annEng?.getAnnotations() ?? [];
+    const preview = annEng?.getPreview() ?? null;
+    const exportCanvas = pipeline.renderCleanExport(sel, annotations, preview);
+    if (!exportCanvas) return null;
 
     return exportCanvas.toDataURL('image/png');
   }, []);

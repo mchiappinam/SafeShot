@@ -22,7 +22,7 @@ export function computeDrawingToolbarPosition(sel: Selection, bounds: Rectangle)
   let x: number;
   if (fitsRight) { side = 'right'; x = rightX; }
   else if (fitsLeft) { side = 'left'; x = leftX; }
-  else { side = 'right'; x = bounds.x + bounds.width - DRAWING_TOOLBAR_WIDTH - TOOLBAR_GAP; } // overlay inside
+  else { side = 'right'; x = sel.x + sel.width - DRAWING_TOOLBAR_WIDTH - TOOLBAR_GAP; } // inside selection
   const y = Math.max(bounds.y, Math.min(sel.y, bounds.y + bounds.height - DRAWING_TOOLBAR_HEIGHT));
   return { x, y, side, edge: 'bottom' };
 }
@@ -38,7 +38,7 @@ export function computeActionToolbarPosition(
   let y: number;
   if (fitsBelow) { edge = 'bottom'; y = belowY; }
   else if (fitsAbove) { edge = 'top'; y = aboveY; }
-  else { edge = 'bottom'; y = bounds.y + bounds.height - ACTION_TOOLBAR_HEIGHT - TOOLBAR_GAP; } // overlay inside
+  else { edge = 'bottom'; y = sel.y + sel.height - ACTION_TOOLBAR_HEIGHT - TOOLBAR_GAP; } // inside selection
   const x = Math.max(bounds.x, Math.min(sel.x, bounds.x + bounds.width - ACTION_TOOLBAR_WIDTH));
 
   const drawingRight = drawing.x + DRAWING_TOOLBAR_WIDTH;

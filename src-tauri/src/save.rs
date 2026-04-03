@@ -90,7 +90,7 @@ pub fn save_screenshot(image_data_url: String, show_dialog: bool) -> SaveResult 
 }
 
 #[tauri::command]
-pub fn copy_to_clipboard(image_data_url: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+pub fn copy_to_clipboard(image_data_url: String) -> Result<(), String> {
     let png_bytes = decode_data_url(&image_data_url)?;
     let img = image::load_from_memory(&png_bytes).map_err(|e| e.to_string())?;
     let rgba = img.to_rgba8();
@@ -105,10 +105,5 @@ pub fn copy_to_clipboard(image_data_url: String, app_handle: tauri::AppHandle) -
     };
     clipboard.set_image(img_data).map_err(|e| e.to_string())?;
 
-    // Close overlay window from Rust side to avoid white flash
-    use tauri::Manager;
-    if let Some(win) = app_handle.get_webview_window("overlay") {
-        win.close().ok();
-    }
     Ok(())
 }
