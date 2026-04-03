@@ -43,7 +43,7 @@ export interface ResizeHandle {
 
 // Annotations
 
-export type ToolType = 'pencil' | 'line' | 'arrow' | 'sharpie' | 'circle' | 'triangle' | 'octagon';
+export type ToolType = 'pencil' | 'line' | 'arrow' | 'sharpie' | 'circle' | 'triangle' | 'octagon' | 'square' | 'text' | 'fill';
 
 export interface Annotation {
   id: string;                   // UUID
@@ -51,6 +51,7 @@ export interface Annotation {
   color: string;                // Hex color
   strokeWidth: number;          // 2 for pencil, 8 for sharpie, 2 for shapes/line
   points: Point[];              // Freehand: all sampled points. Shapes/line: [start, end]
+  text?: string;                // Text content (text tool only)
 }
 
 // Screen Data

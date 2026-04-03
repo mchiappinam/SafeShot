@@ -1,6 +1,6 @@
 import { DIM_MASK_OPACITY, RESIZE_HANDLE_SIZE } from '../../shared/constants';
 import type { Annotation, ScreenData, Selection } from '../../shared/types';
-import { drawCircle, drawTriangle, drawOctagon, drawLine, drawArrow } from '../annotation/shapes';
+import { drawCircle, drawTriangle, drawOctagon, drawLine, drawArrow, drawSquare, drawText, drawFill } from '../annotation/shapes';
 import { drawFreehand } from '../annotation/freehand';
 
 interface HandlePoint { x: number; y: number; }
@@ -20,8 +20,11 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation): void 
   if (ann.points.length === 0) return;
   const [start, end] = ann.points;
   switch (ann.tool) {
-    case 'pencil': case 'sharpie':
+    case 'pencil':
       drawFreehand(ctx, ann.points, ann.color, ann.strokeWidth);
+      break;
+    case 'sharpie':
+      drawFreehand(ctx, ann.points, ann.color, ann.strokeWidth, 0.4);
       break;
     case 'line':
       if (start && end) drawLine(ctx, start, end, ann.color, ann.strokeWidth);
@@ -37,6 +40,15 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation): void 
       break;
     case 'octagon':
       if (start && end) drawOctagon(ctx, start, end, ann.color, ann.strokeWidth);
+      break;
+    case 'square':
+      if (start && end) drawSquare(ctx, start, end, ann.color, ann.strokeWidth);
+      break;
+    case 'text':
+      if (start && ann.text) drawText(ctx, start, ann.text, ann.color, 16);
+      break;
+    case 'fill':
+      if (start && end) drawFill(ctx, start, end, ann.color);
       break;
   }
 }
