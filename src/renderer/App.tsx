@@ -10,7 +10,6 @@ import ColorPicker from './toolbar/ColorPicker';
 import AboutDialog from './about/AboutDialog';
 import './toolbar/toolbar.css';
 
-// Tauri globals (injected by withGlobalTauri)
 declare global {
   interface Window {
     __TAURI__: {
@@ -34,7 +33,6 @@ function computeTotalBounds(screens: ScreenData[]): Rectangle {
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
-// Map Tauri's snake_case response to our camelCase ScreenData
 interface TauriScreenData {
   display_id: string;
   x: number; y: number; width: number; height: number;
@@ -65,20 +63,14 @@ export default function App(): React.ReactElement {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
-  // On mount, capture screens immediately (overlay window is created by Rust on capture)
   useEffect(() => {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
       setScreens(mapScreenData(raw));
     }).catch(err => console.error('capture_screens failed:', err));
   }, []);
 
-  const handleClose = useCallback(() => {
-    // Close the overlay window
-    window.__TAURI__.core.invoke('plugin:window|close', { label: 'overlay' }).catch(() => {
-      // Fallback: close current window
-      window.close();
-    });
-  }, []);
+  // Fix 1: use window.close() which Tauri intercepts
+  const handleClose = useCallback(() => { window.close(); }, []);
 
   const handleSave = useCallback((dataURL: string, shiftHeld: boolean) => {
     invoke<{ success: boolean; file_path?: string; error?: string }>('save_screenshot', {
@@ -89,11 +81,11 @@ export default function App(): React.ReactElement {
     });
   }, [handleClose]);
 
+  // Fix 2: copy image data via our own Rust command instead of clipboard plugin
   const handleCopy = useCallback((dataURL: string) => {
-    // Write to clipboard via Tauri plugin
-    window.__TAURI__.core.invoke('plugin:clipboard-manager|write_image', {
-      image: dataURL,
-    }).then(() => handleClose()).catch(console.error);
+    invoke('copy_to_clipboard', { imageDataUrl: dataURL })
+      .then(() => handleClose())
+      .catch(console.error);
   }, [handleClose]);
 
   const handleStateChange = useCallback((state: CaptureState) => setCaptureState(state), []);
@@ -131,7 +123,6 @@ export default function App(): React.ReactElement {
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
           <ActionToolbar canUndo={canUndo} canRedo={canRedo}
             onUndo={() => overlayRef.current?.undo()} onRedo={() => overlayRef.current?.redo()}
-            getImageDataURL={() => document.querySelector('canvas')?.toDataURL('image/png') ?? ''}
             position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y }} />
         </div>
       )}

@@ -98,34 +98,3 @@ export interface ToolbarPosition {
   side: 'left' | 'right';
   edge: 'top' | 'bottom';
 }
-
-// ─── Color Picker ────────────────────────────────────────────────────
-
-export interface ColorPickerState {
-  isOpen: boolean;
-  presetColors: string[];       // At least 12 hex colors
-  customColor: string;          // User-entered hex value
-  selectedColor: string;        // Currently active color
-}
-
-// ─── About Dialog ────────────────────────────────────────────────────
-
-export interface AboutDialogData {
-  version: string;
-  logoPath: string;
-  missionStatement: string;
-  developerName: string;
-  developerUrl: string;
-}
-
-// ─── Hotkey Configuration ────────────────────────────────────────────
-
-export interface HotkeyConfig {
-  primary: string;              // Default: 'PrintScreen'
-  alternative?: string;         // User-configured fallback
-}
-
-export interface HotkeyConflict {
-  key: string;
-  conflictingApp?: string;
-}

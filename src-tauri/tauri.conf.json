@@ -36,13 +36,6 @@
     }
   },
   "plugins": {
-    "global-shortcut": {},
-    "dialog": { "all": true },
-    "clipboard-manager": {},
-    "fs": {
-      "scope": {
-        "allow": ["$PICTURE/**", "$HOME/Images/**"]
-      }
-    }
+    "global-shortcut": {}
   }
 }
