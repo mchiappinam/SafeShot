@@ -54,11 +54,16 @@ fn main() {
         .setup(|app| {
             log("Setup starting...");
 
-            // Enable auto-start on OS boot
-            let autostart = app.autolaunch();
-            if !autostart.is_enabled().unwrap_or(false) {
-                autostart.enable().ok();
-                log("Autostart enabled");
+            // On first run, enable autostart. After that, respect user's choice.
+            {
+                let path = save::config_path();
+                if !path.exists() {
+                    // Create config file to mark first run complete
+                    std::fs::write(&path, "{}").ok();
+                    let autostart = app.autolaunch();
+                    autostart.enable().ok();
+                    log("First run: autostart enabled");
+                }
             }
 
             // Build tray menu
