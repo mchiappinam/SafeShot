@@ -10,12 +10,12 @@ interface DrawingToolbarProps {
 }
 
 const TOOLS: { id: ToolType; label: string }[] = [
-  { id: 'pencil',   label: '✏️' },
-  { id: 'line',     label: '╱' },
-  { id: 'sharpie',  label: '🖊' },
-  { id: 'circle',   label: '○' },
-  { id: 'triangle', label: '△' },
-  { id: 'octagon',  label: '⬡' },
+  { id: 'pencil',   label: '✏️ Pencil' },
+  { id: 'line',     label: '╱ Line' },
+  { id: 'sharpie',  label: '🖊 Sharpie' },
+  { id: 'circle',   label: '○ Circle' },
+  { id: 'triangle', label: '△ Triangle' },
+  { id: 'octagon',  label: '⬡ Octagon' },
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
@@ -47,8 +47,10 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
           title={id}
           onClick={() => handleToolClick(id)}
           style={{
-            width: 32,
+            width: 'auto',
+            minWidth: 32,
             height: 32,
+            padding: '0 8px',
             border: activeTool === id ? '2px solid #fff' : '2px solid transparent',
             borderRadius: 4,
             background: activeTool === id ? 'rgba(255,255,255,0.2)' : 'transparent',

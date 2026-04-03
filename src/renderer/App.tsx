@@ -81,12 +81,9 @@ export default function App(): React.ReactElement {
     });
   }, [handleClose]);
 
-  // Fix 2: copy image data via our own Rust command instead of clipboard plugin
   const handleCopy = useCallback((dataURL: string) => {
-    invoke('copy_to_clipboard', { imageDataUrl: dataURL })
-      .then(() => handleClose())
-      .catch(console.error);
-  }, [handleClose]);
+    invoke('copy_to_clipboard', { imageDataUrl: dataURL }).catch(console.error);
+  }, []);
 
   const handleStateChange = useCallback((state: CaptureState) => setCaptureState(state), []);
   const handleAnnotationsChange = useCallback((undo: boolean, redo: boolean) => { setCanUndo(undo); setCanRedo(redo); }, []);
@@ -123,6 +120,9 @@ export default function App(): React.ReactElement {
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
           <ActionToolbar canUndo={canUndo} canRedo={canRedo}
             onUndo={() => overlayRef.current?.undo()} onRedo={() => overlayRef.current?.redo()}
+            onSave={() => { const c = document.querySelector('canvas'); if (c) handleSave(c.toDataURL('image/png'), false); }}
+            onCopy={() => { const c = document.querySelector('canvas'); if (c) handleCopy(c.toDataURL('image/png')); }}
+            onCancel={handleClose}
             position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y }} />
         </div>
       )}
