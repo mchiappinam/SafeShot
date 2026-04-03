@@ -11,7 +11,7 @@ pub struct SaveResult {
     pub error: Option<String>,
 }
 
-fn config_path() -> PathBuf {
+pub fn config_path() -> PathBuf {
     let mut dir = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."));
     dir.push("SafeShot");
     fs::create_dir_all(&dir).ok();
