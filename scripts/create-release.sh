@@ -12,6 +12,7 @@ fi
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
 sed -i "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" src-tauri/tauri.conf.json
+sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$VERSION\"/" src/renderer/App.tsx
 
 echo "Updated version to $VERSION"
 
