@@ -192,12 +192,25 @@ fn start_capture(app: &AppHandle) {
 
     log(&format!("Virtual desktop: {}x{} at ({},{})", total_w, total_h, min_x, min_y));
 
+    // On Windows, undecorated windows have an invisible ~7px border/shadow.
+    // Compensate by expanding the window to cover it.
+    #[cfg(target_os = "windows")]
+    let (pos_x, pos_y, size_w, size_h) = {
+        let border = 7.0;
+        (min_x as f64 - border, min_y as f64 - border, total_w + border * 2.0, total_h + border * 2.0)
+    };
+    #[cfg(not(target_os = "windows"))]
+    let (pos_x, pos_y, size_w, size_h) = (min_x as f64, min_y as f64, total_w, total_h);
+
     match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")
-        .position(min_x as f64, min_y as f64)
-        .inner_size(total_w, total_h)
+        .position(pos_x, pos_y)
+        .inner_size(size_w, size_h)
         .decorations(false)
         .resizable(false)
+        .maximizable(false)
+        .minimizable(false)
+        .closable(false)
         .always_on_top(true)
         .skip_taskbar(true)
         .focused(true)
