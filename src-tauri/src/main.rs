@@ -187,25 +187,14 @@ fn start_capture(app: &AppHandle) {
     let min_y = screens.iter().map(|s| s.y).min().unwrap_or(0);
     let max_x = screens.iter().map(|s| s.x + s.width as i32).max().unwrap_or(1920);
     let max_y = screens.iter().map(|s| s.y + s.height as i32).max().unwrap_or(1080);
-    let total_w = (max_x - min_x) as f64;
-    let total_h = (max_y - min_y) as f64;
+    let total_w = max_x - min_x;
+    let total_h = max_y - min_y;
 
     log(&format!("Virtual desktop: {}x{} at ({},{})", total_w, total_h, min_x, min_y));
 
-    // On Windows, undecorated windows have an invisible ~7px border/shadow.
-    // Compensate by expanding the window to cover it.
-    #[cfg(target_os = "windows")]
-    let (pos_x, pos_y, size_w, size_h) = {
-        let border = 7.0;
-        (min_x as f64 - border, min_y as f64 - border, total_w + border * 2.0, total_h + border * 2.0)
-    };
-    #[cfg(not(target_os = "windows"))]
-    let (pos_x, pos_y, size_w, size_h) = (min_x as f64, min_y as f64, total_w, total_h);
-
-    match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
+    // Create window, then reposition with physical coordinates to avoid DPI scaling issues
+    let win = match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")
-        .position(pos_x, pos_y)
-        .inner_size(size_w, size_h)
         .decorations(false)
         .resizable(false)
         .maximizable(false)
@@ -218,9 +207,15 @@ fn start_capture(app: &AppHandle) {
         .visible(false)
         .build()
     {
-        Ok(_) => log("Overlay window created (hidden)"),
-        Err(e) => log(&format!("Overlay window failed: {}", e)),
-    }
+        Ok(w) => { log("Overlay window created (hidden)"); w },
+        Err(e) => { log(&format!("Overlay window failed: {}", e)); return; },
+    };
+
+    // Set exact position and size using physical pixels to bypass DPI scaling
+    use tauri::{PhysicalPosition, PhysicalSize};
+    win.set_position(PhysicalPosition::new(min_x, min_y)).ok();
+    win.set_size(PhysicalSize::new(total_w as u32, total_h as u32)).ok();
+    log(&format!("Window positioned: ({},{}) {}x{} physical", min_x, min_y, total_w, total_h));
 }
 
 fn open_save_folder(_app: &AppHandle) {
