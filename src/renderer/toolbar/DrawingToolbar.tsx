@@ -5,12 +5,14 @@ interface DrawingToolbarProps {
   activeTool: ToolType | null;
   onToolSelect: (tool: ToolType | null) => void;
   onColorPickerOpen: () => void;
+  onThicknessOpen: () => void;
   activeColor: string;
+  strokeWidth: number;
   position: { x: number; y: number };
 }
 
 const TOOLS: { id: ToolType; label: string; tooltip: string }[] = [
-  { id: 'pencil',   label: '✏️', tooltip: 'Pencil' },
+  { id: 'pencil',   label: '🖊', tooltip: 'Sharpie' },
   { id: 'sharpie',  label: '🖍️', tooltip: 'Highlighter' },
   { id: 'line',     label: '╱',  tooltip: 'Line' },
   { id: 'arrow',    label: '➜',  tooltip: 'Arrow' },
@@ -23,7 +25,7 @@ const TOOLS: { id: ToolType; label: string; tooltip: string }[] = [
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
-  activeTool, onToolSelect, onColorPickerOpen, activeColor, position,
+  activeTool, onToolSelect, onColorPickerOpen, onThicknessOpen, activeColor, strokeWidth, position,
 }) => {
   const handleToolClick = (tool: ToolType) => {
     onToolSelect(activeTool === tool ? null : tool);
@@ -81,6 +83,30 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
           }}
         />
         <span className="tooltip-text">Color Picker</span>
+      </div>
+      <div style={{ position: 'relative' }} className="tooltip-wrap">
+        <button
+          onClick={onThicknessOpen}
+          style={{
+            width: 32,
+            height: 32,
+            border: '2px solid #fff',
+            borderRadius: 4,
+            background: 'transparent',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div style={{
+            width: Math.min(strokeWidth, 20),
+            height: Math.min(strokeWidth, 20),
+            borderRadius: '50%',
+            background: '#fff',
+          }} />
+        </button>
+        <span className="tooltip-text">Thickness</span>
       </div>
     </div>
   );

@@ -20,12 +20,18 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
     }
   };
 
+  // Clamp position to stay within screen bounds
+  const pickerWidth = 170;
+  const pickerHeight = 140;
+  const x = Math.max(0, Math.min(position.x, window.innerWidth - pickerWidth));
+  const y = Math.max(0, Math.min(position.y, window.innerHeight - pickerHeight));
+
   return (
     <div
       style={{
         position: 'fixed',
-        left: position.x,
-        top: position.y,
+        left: x,
+        top: y,
         background: 'rgba(30,30,30,0.95)',
         borderRadius: 8,
         padding: 10,

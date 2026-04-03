@@ -7,6 +7,7 @@ import type { OverlayCanvasHandle } from './overlay/OverlayCanvas';
 import DrawingToolbar from './toolbar/DrawingToolbar';
 import ActionToolbar from './toolbar/ActionToolbar';
 import ColorPicker from './toolbar/ColorPicker';
+import ThicknessPicker from './toolbar/ThicknessPicker';
 import './toolbar/toolbar.css';
 
 declare global {
@@ -48,6 +49,8 @@ export default function App(): React.ReactElement {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [thicknessOpen, setThicknessOpen] = useState(false);
+  const [strokeWidth, setStrokeWidth] = useState(2);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -98,6 +101,7 @@ export default function App(): React.ReactElement {
         screens={screens}
         activeTool={activeTool}
         activeColor={activeColor}
+        strokeWidth={strokeWidth}
         onStateChange={handleStateChange}
         onAnnotationsChange={handleAnnotationsChange}
         onSelectionChange={handleSelectionChange}
@@ -109,7 +113,9 @@ export default function App(): React.ReactElement {
       {showToolbars && toolbarPositions && (
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
           <DrawingToolbar activeTool={activeTool} onToolSelect={setActiveTool}
-            onColorPickerOpen={() => setColorPickerOpen(true)} activeColor={activeColor}
+            onColorPickerOpen={() => { setColorPickerOpen(true); setThicknessOpen(false); }}
+            onThicknessOpen={() => { setThicknessOpen(true); setColorPickerOpen(false); }}
+            activeColor={activeColor} strokeWidth={strokeWidth}
             position={{ x: toolbarPositions.drawing.x, y: toolbarPositions.drawing.y }} />
         </div>
       )}
@@ -129,6 +135,13 @@ export default function App(): React.ReactElement {
         <ColorPicker selectedColor={activeColor}
           onColorChange={(c) => { setActiveColor(c); setColorPickerOpen(false); invoke('set_last_color', { color: c }).catch(() => {}); }}
           onClose={() => setColorPickerOpen(false)}
+          position={{ x: toolbarPositions.drawing.x + 50, y: toolbarPositions.drawing.y }} />
+      )}
+
+      {thicknessOpen && toolbarPositions && (
+        <ThicknessPicker value={strokeWidth}
+          onChange={setStrokeWidth}
+          onClose={() => setThicknessOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 50, y: toolbarPositions.drawing.y }} />
       )}
     </>
