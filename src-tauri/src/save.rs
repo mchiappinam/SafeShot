@@ -44,6 +44,31 @@ pub fn set_last_color(color: String) {
     fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
 }
 
+#[tauri::command]
+pub fn get_last_thickness() -> u32 {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(t) = json.get("lastThickness").and_then(|v| v.as_u64()) {
+                return t as u32;
+            }
+        }
+    }
+    2
+}
+
+#[tauri::command]
+pub fn set_last_thickness(thickness: u32) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["lastThickness"] = serde_json::json!(thickness);
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
 pub fn get_save_directory() -> String {
     // Use Pictures directory on all platforms
     let base = dirs::picture_dir().unwrap_or_else(|| {

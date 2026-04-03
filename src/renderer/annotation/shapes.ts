@@ -77,10 +77,10 @@ export function drawOctagon(
 ): void {
   ctx.save();
 
-  // Use the smaller dimension to make a regular octagon
+  // Use the distance from center to drag point as radius
   const cx = (start.x + end.x) / 2;
   const cy = (start.y + end.y) / 2;
-  const r = Math.min(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) / 2;
+  const r = Math.max(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) / 2;
 
   ctx.strokeStyle = color;
   ctx.lineWidth = strokeWidth;

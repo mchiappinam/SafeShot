@@ -57,9 +57,12 @@ export default function App(): React.ReactElement {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
       setScreens(mapScreenData(raw));
     }).catch(err => console.error('capture_screens failed:', err));
-    // Load last used color
+    // Load last used color and thickness
     invoke<string>('get_last_color').then(color => {
       if (color) setActiveColor(color);
+    }).catch(() => {});
+    invoke<number>('get_last_thickness').then(t => {
+      if (t > 0) setStrokeWidth(t);
     }).catch(() => {});
   }, []);
 
@@ -135,14 +138,14 @@ export default function App(): React.ReactElement {
         <ColorPicker selectedColor={activeColor}
           onColorChange={(c) => { setActiveColor(c); setColorPickerOpen(false); invoke('set_last_color', { color: c }).catch(() => {}); }}
           onClose={() => setColorPickerOpen(false)}
-          position={{ x: toolbarPositions.drawing.x + 50, y: toolbarPositions.drawing.y }} />
+          position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}
 
       {thicknessOpen && toolbarPositions && (
         <ThicknessPicker value={strokeWidth}
-          onChange={setStrokeWidth}
+          onChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); }}
           onClose={() => setThicknessOpen(false)}
-          position={{ x: toolbarPositions.drawing.x + 50, y: toolbarPositions.drawing.y }} />
+          position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}
     </>
   );
