@@ -134,7 +134,7 @@ export default function App(): React.ReactElement {
           position={{ x: toolbarPositions.drawing.x + 50, y: toolbarPositions.drawing.y }} />
       )}
 
-      {aboutOpen && <AboutDialog version="1.1.5" onClose={() => setAboutOpen(false)} />}
+      {aboutOpen && <AboutDialog version="1.1.6" onClose={() => setAboutOpen(false)} />}
     </>
   );
 }
