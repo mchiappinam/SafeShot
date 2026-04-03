@@ -22,6 +22,7 @@ export interface OverlayCanvasProps {
 export interface OverlayCanvasHandle {
   undo: () => void;
   redo: () => void;
+  getSelectionDataURL: () => string | null;
 }
 
 function computeTotalBounds(screens: ScreenData[]): Rectangle {
@@ -80,7 +81,8 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   useImperativeHandle(ref, () => ({
     undo: () => { annEngRef.current?.undo(); notifyAnnotations(); syncPipeline(); },
     redo: () => { annEngRef.current?.redo(); notifyAnnotations(); syncPipeline(); },
-  }), [notifyAnnotations, syncPipeline]);
+    getSelectionDataURL,
+  }), [notifyAnnotations, syncPipeline, getSelectionDataURL]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -164,6 +166,27 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     syncPipeline();
   }, [syncPipeline, notifyAnnotations]);
 
+  // Export only the selected region (frozen screen + annotations, no dim mask)
+  const getSelectionDataURL = useCallback((): string | null => {
+    const canvas = canvasRef.current;
+    const pipeline = pipelineRef.current;
+    const sel = selMgrRef.current?.getSelection();
+    if (!canvas || !pipeline || !sel) return null;
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = Math.round(sel.width);
+    exportCanvas.height = Math.round(sel.height);
+    const ectx = exportCanvas.getContext('2d');
+    if (!ectx) return null;
+
+    // Draw the portion of the main canvas that's inside the selection
+    // But the main canvas has the dim overlay — we need to draw from the bitmaps directly
+    // For simplicity, draw from the main canvas selection area (which is unmasked)
+    ectx.drawImage(canvas, sel.x, sel.y, sel.width, sel.height, 0, 0, sel.width, sel.height);
+
+    return exportCanvas.toDataURL('image/png');
+  }, []);
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const canvas = canvasRef.current;
     if (e.key === 'Escape') { e.preventDefault(); onClose(); return; }
@@ -171,9 +194,17 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (!mod || !canvas) return;
     if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); annEngRef.current?.undo(); notifyAnnotations(); syncPipeline(); }
     else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); annEngRef.current?.redo(); notifyAnnotations(); syncPipeline(); }
-    else if (e.key === 's') { e.preventDefault(); onSave(canvas.toDataURL('image/png'), e.shiftKey); }
-    else if (e.key === 'c') { e.preventDefault(); onCopy(canvas.toDataURL('image/png')); }
-  }, [syncPipeline, notifyAnnotations, onClose, onSave, onCopy]);
+    else if (e.key === 's') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, e.shiftKey); }
+    else if (e.key === 'c') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onCopy(d); }
+    else if (e.key === 'a') { e.preventDefault(); /* Ctrl+A: select entire screen */
+      selMgrRef.current?.discardSelection();
+      selMgrRef.current?.startSelection({ x: 0, y: 0 });
+      selMgrRef.current?.updateSelection({ x: window.innerWidth, y: window.innerHeight });
+      selMgrRef.current?.finalizeSelection();
+      setCaptureState('area-finalized');
+      syncPipeline();
+    }
+  }, [syncPipeline, notifyAnnotations, onClose, onSave, onCopy, getSelectionDataURL]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
