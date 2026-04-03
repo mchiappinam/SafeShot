@@ -197,6 +197,7 @@ fn start_capture(app: &AppHandle) {
         .position(min_x as f64, min_y as f64)
         .inner_size(total_w, total_h)
         .decorations(false)
+        .resizable(false)
         .always_on_top(true)
         .skip_taskbar(true)
         .focused(true)
