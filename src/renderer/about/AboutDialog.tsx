@@ -7,7 +7,7 @@ interface AboutDialogProps {
 }
 
 const MISSION =
-  'Built to make your work life easier and safer. Your screenshots stay yours — always. ' +
+  'Built to make your work life easier and safer. Your screenshots stay yours, always. ' +
   'No cloud, no tracking, no compromises. Just you and your screen, 100% private.';
 
 const DEV_URL = 'https://chiappina.com';

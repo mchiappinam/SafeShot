@@ -2,7 +2,7 @@
 
 Privacy-first screenshot tool for Windows and macOS. Inspired by similar tools.
 
-Fast screen capture with area selection, annotation tools, and local-only save/copy. Zero network capabilities — no cloud, no telemetry, no tracking.
+Fast screen capture with area selection, annotation tools, and local-only save/copy. Zero network capabilities, no cloud, no telemetry, no tracking.
 
 ## Features
 
@@ -39,7 +39,7 @@ npx tauri dev
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT, see [LICENSE](LICENSE)
 
 ## Author
 

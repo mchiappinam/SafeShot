@@ -69,7 +69,7 @@ export default function App(): React.ReactElement {
     }).catch(err => console.error('capture_screens failed:', err));
   }, []);
 
-  // Close overlay only — don't exit the app
+  // Close overlay only, don't exit the app
   const handleClose = useCallback(() => {
     invoke('close_overlay').catch(console.error);
   }, []);
