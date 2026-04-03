@@ -103,6 +103,45 @@ export class RenderPipeline {
 
   requestRender(): void { this.dirty = true; if (!this.running) this.renderFrame(); }
 
+  /** Render only the screen bitmaps + annotations for the selection region (no dim, no border, no handles, no label). */
+  renderCleanExport(sel: { x: number; y: number; width: number; height: number }, annotations: Annotation[], preview: Annotation | null): HTMLCanvasElement | null {
+    const w = Math.round(sel.width);
+    const h = Math.round(sel.height);
+    if (w <= 0 || h <= 0) return null;
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = w;
+    exportCanvas.height = h;
+    const ctx = exportCanvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Draw screen bitmaps offset so selection region maps to 0,0
+    const cw = this.canvas.width, ch = this.canvas.height;
+    for (const s of this.screens) {
+      const bmp = this.bitmaps.get(s.displayId);
+      if (bmp) {
+        const sx = (s.bounds.x - this.offsetX) / this.totalWidth * cw;
+        const sy = (s.bounds.y - this.offsetY) / this.totalHeight * ch;
+        const sw = s.bounds.width / this.totalWidth * cw;
+        const sh = s.bounds.height / this.totalHeight * ch;
+        ctx.drawImage(bmp, sx - sel.x, sy - sel.y, sw, sh);
+      }
+    }
+
+    // Draw annotations offset
+    if (annotations.length > 0 || preview) {
+      ctx.save();
+      ctx.translate(-sel.x, -sel.y);
+      ctx.beginPath();
+      ctx.rect(sel.x, sel.y, sel.width, sel.height);
+      ctx.clip();
+      for (const ann of annotations) renderAnnotation(ctx, ann);
+      if (preview) renderAnnotation(ctx, preview);
+      ctx.restore();
+    }
+
+    return exportCanvas;
+  }
+
   private scheduleFrame(): void {
     if (!this.running) return;
     this.rafId = requestAnimationFrame(() => {

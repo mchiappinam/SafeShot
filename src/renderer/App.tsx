@@ -70,19 +70,23 @@ export default function App(): React.ReactElement {
   }, []);
 
   // Close overlay only — don't exit the app
-  const handleClose = useCallback(() => { window.close(); }, []);
+  const handleClose = useCallback(() => {
+    invoke('close_overlay').catch(console.error);
+  }, []);
 
   const handleSave = useCallback((dataURL: string, shiftHeld: boolean) => {
     invoke<{ success: boolean; file_path?: string; error?: string }>('save_screenshot', {
       imageDataUrl: dataURL, showDialog: shiftHeld,
     }).then(result => {
-      if (result.success) window.close();
+      if (result.success) invoke('close_overlay').catch(console.error);
       else console.error('Save failed:', result.error);
     });
   }, []);
 
   const handleCopy = useCallback((dataURL: string) => {
-    invoke('copy_to_clipboard', { imageDataUrl: dataURL }).catch(console.error);
+    invoke('copy_to_clipboard', { imageDataUrl: dataURL })
+      .then(() => invoke('close_overlay').catch(console.error))
+      .catch(console.error);
   }, []);
 
   const handleStateChange = useCallback((state: CaptureState) => setCaptureState(state), []);

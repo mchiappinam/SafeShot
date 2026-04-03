@@ -39,6 +39,7 @@ fn main() {
             save::save_screenshot,
             save::get_next_filename,
             save::copy_to_clipboard,
+            close_overlay,
         ])
         .setup(|app| {
             log("Setup starting...");
@@ -91,6 +92,14 @@ fn main() {
         Ok(_) => log("SafeShot exited normally"),
         Err(e) => log(&format!("SafeShot run failed: {}", e)),
     }
+}
+
+#[tauri::command]
+fn close_overlay(app: AppHandle) {
+    if let Some(win) = app.get_webview_window("overlay") {
+        win.close().ok();
+    }
+    log("Overlay closed");
 }
 
 fn start_capture(app: &AppHandle) {
