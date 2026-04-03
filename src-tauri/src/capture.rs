@@ -33,7 +33,8 @@ pub fn do_capture() -> Result<Vec<ScreenData>, String> {
             image.width(),
             image.height(),
             image::ExtendedColorType::Rgba8,
-        ).map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
         let b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
         let data_url = format!("data:image/png;base64,{}", b64);

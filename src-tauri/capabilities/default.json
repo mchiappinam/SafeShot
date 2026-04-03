@@ -1,0 +1,13 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for SafeShot",
+  "windows": ["*"],
+  "permissions": [
+    "core:default",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
+  ]
+}

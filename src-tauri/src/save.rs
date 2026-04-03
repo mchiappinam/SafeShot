@@ -14,7 +14,9 @@ pub struct SaveResult {
 pub fn get_save_directory() -> String {
     // Use Pictures directory on all platforms
     let base = dirs::picture_dir().unwrap_or_else(|| {
-        dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join("Pictures")
+        dirs::home_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("Pictures")
     });
     base.join("SafeShot").to_string_lossy().to_string()
 }
@@ -52,15 +54,29 @@ fn decode_data_url(image_data_url: &str) -> Result<Vec<u8>, String> {
 }
 
 #[tauri::command]
-pub fn save_screenshot(image_data_url: String, show_dialog: bool, app_handle: tauri::AppHandle) -> SaveResult {
+pub fn save_screenshot(
+    image_data_url: String,
+    show_dialog: bool,
+    app_handle: tauri::AppHandle,
+) -> SaveResult {
     let dir = get_save_directory();
     if let Err(e) = fs::create_dir_all(&dir) {
-        return SaveResult { success: false, file_path: None, error: Some(e.to_string()) };
+        return SaveResult {
+            success: false,
+            file_path: None,
+            error: Some(e.to_string()),
+        };
     }
 
     let png_bytes = match decode_data_url(&image_data_url) {
         Ok(bytes) => bytes,
-        Err(e) => return SaveResult { success: false, file_path: None, error: Some(e) },
+        Err(e) => {
+            return SaveResult {
+                success: false,
+                file_path: None,
+                error: Some(e),
+            }
+        }
     };
 
     if show_dialog {
@@ -79,8 +95,16 @@ pub fn save_screenshot(image_data_url: String, show_dialog: bool, app_handle: ta
         match dialog.save_file() {
             Some(path) => {
                 let result = match fs::write(&path, &png_bytes) {
-                    Ok(_) => SaveResult { success: true, file_path: Some(path.to_string_lossy().to_string()), error: None },
-                    Err(e) => SaveResult { success: false, file_path: None, error: Some(e.to_string()) },
+                    Ok(_) => SaveResult {
+                        success: true,
+                        file_path: Some(path.to_string_lossy().to_string()),
+                        error: None,
+                    },
+                    Err(e) => SaveResult {
+                        success: false,
+                        file_path: None,
+                        error: Some(e.to_string()),
+                    },
                 };
                 // Close overlay after dialog is done
                 if let Some(win) = app_handle.get_webview_window("overlay") {
@@ -94,7 +118,11 @@ pub fn save_screenshot(image_data_url: String, show_dialog: bool, app_handle: ta
                     win.show().ok();
                     win.set_focus().ok();
                 }
-                return SaveResult { success: false, file_path: None, error: Some("Cancelled".into()) };
+                return SaveResult {
+                    success: false,
+                    file_path: None,
+                    error: Some("Cancelled".into()),
+                };
             }
         }
     }
@@ -103,8 +131,16 @@ pub fn save_screenshot(image_data_url: String, show_dialog: bool, app_handle: ta
     let path = PathBuf::from(&dir).join(&filename);
 
     match fs::write(&path, &png_bytes) {
-        Ok(_) => SaveResult { success: true, file_path: Some(path.to_string_lossy().to_string()), error: None },
-        Err(e) => SaveResult { success: false, file_path: None, error: Some(e.to_string()) },
+        Ok(_) => SaveResult {
+            success: true,
+            file_path: Some(path.to_string_lossy().to_string()),
+            error: None,
+        },
+        Err(e) => SaveResult {
+            success: false,
+            file_path: None,
+            error: Some(e.to_string()),
+        },
     }
 }
 
