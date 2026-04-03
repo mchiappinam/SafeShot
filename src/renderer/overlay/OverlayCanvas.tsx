@@ -109,10 +109,12 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
     pipelineRef.current.setScreens(screens).then(() => {
       pipelineRef.current?.requestRender();
-      // Signal Rust to show the window now that the first frame is painted
-      if (window.__TAURI__) {
-        window.__TAURI__.core.invoke('show_overlay').catch(() => {});
-      }
+      // Wait for the actual paint before showing the window
+      requestAnimationFrame(() => {
+        if (window.__TAURI__) {
+          window.__TAURI__.core.invoke('show_overlay').catch(() => {});
+        }
+      });
     }).catch(console.error);
   }, [screens]);
 
