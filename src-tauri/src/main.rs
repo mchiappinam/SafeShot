@@ -220,7 +220,7 @@ fn start_capture(app: &AppHandle) {
         use raw_window_handle::HasWindowHandle;
         if let Ok(handle) = win.window_handle() {
             if let raw_window_handle::RawWindowHandle::Win32(h) = handle.as_ref() {
-                let hwnd = h.hwnd.get() as isize;
+                let hwnd = h.hwnd.get() as *mut std::ffi::c_void;
                 unsafe {
                     use windows_sys::Win32::UI::WindowsAndMessaging::*;
                     // Strip all frame styles: thick frame, caption, sysmenu, etc.
