@@ -71,20 +71,6 @@ export interface Rectangle {
   height: number;
 }
 
-// ─── Save ────────────────────────────────────────────────────────────
-
-export interface SaveOptions {
-  directory: string;
-  filename?: string;
-  showDialog: boolean;
-}
-
-export interface SaveResult {
-  success: boolean;
-  filePath?: string;
-  error?: string;
-}
-
 // ─── Toolbar ─────────────────────────────────────────────────────────
 
 export interface ToolbarPositions {
