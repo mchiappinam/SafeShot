@@ -32,7 +32,7 @@ fn main() {
 
     log("SafeShot starting...");
 
-    let result = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(capture::CaptureCache(std::sync::Mutex::new(Vec::new())))
         .invoke_handler(tauri::generate_handler![
@@ -87,12 +87,16 @@ fn main() {
             log("Setup complete. SafeShot ready");
             Ok(())
         })
-        .run(tauri::generate_context!());
+        .build(tauri::generate_context!())
+        .expect("error building tauri app")
+        .run(|_app, event| {
+            // Keep the app alive when all windows are closed (tray-only mode)
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                api.prevent_exit();
+            }
+        });
 
-    match result {
-        Ok(_) => log("SafeShot exited normally"),
-        Err(e) => log(&format!("SafeShot run failed: {}", e)),
-    }
+    log("SafeShot exited normally");
 }
 
 #[tauri::command]
@@ -129,6 +133,7 @@ fn start_capture(app: &AppHandle) {
         .always_on_top(true)
         .skip_taskbar(true)
         .focused(true)
+        .transparent(true)
         .build()
     {
         Ok(_) => log("Overlay window created"),
