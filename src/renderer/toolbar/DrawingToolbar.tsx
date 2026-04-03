@@ -9,14 +9,14 @@ interface DrawingToolbarProps {
   position: { x: number; y: number };
 }
 
-const TOOLS: { id: ToolType; label: string; title: string }[] = [
-  { id: 'pencil',   label: '✏️', title: 'Pencil' },
-  { id: 'line',     label: '╱',  title: 'Line' },
-  { id: 'arrow',    label: '➜',  title: 'Arrow' },
-  { id: 'sharpie',  label: '🖊', title: 'Sharpie' },
-  { id: 'circle',   label: '○',  title: 'Circle' },
-  { id: 'triangle', label: '△',  title: 'Triangle' },
-  { id: 'octagon',  label: '⬡',  title: 'Octagon' },
+const TOOLS: { id: ToolType; label: string; tooltip: string }[] = [
+  { id: 'pencil',   label: '✏️', tooltip: 'Pencil' },
+  { id: 'line',     label: '╱',  tooltip: 'Line' },
+  { id: 'arrow',    label: '➜',  tooltip: 'Arrow' },
+  { id: 'sharpie',  label: '🖊', tooltip: 'Sharpie' },
+  { id: 'circle',   label: '○',  tooltip: 'Circle' },
+  { id: 'triangle', label: '△',  tooltip: 'Triangle' },
+  { id: 'octagon',  label: '⬡',  tooltip: 'Octagon' },
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
@@ -42,41 +42,43 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         cursor: 'default',
       }}
     >
-      {TOOLS.map(({ id, label, title }) => (
+      {TOOLS.map(({ id, label, tooltip }) => (
+        <div key={id} style={{ position: 'relative' }} className="tooltip-wrap">
+          <button
+            onClick={() => handleToolClick(id)}
+            style={{
+              width: 32,
+              height: 32,
+              border: activeTool === id ? '2px solid #fff' : '2px solid transparent',
+              borderRadius: 4,
+              background: activeTool === id ? 'rgba(255,255,255,0.2)' : 'transparent',
+              color: '#fff',
+              fontSize: 16,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {label}
+          </button>
+          <span className="tooltip-text">{tooltip}</span>
+        </div>
+      ))}
+      <div style={{ position: 'relative' }} className="tooltip-wrap">
         <button
-          key={id}
-          title={title}
-          onClick={() => handleToolClick(id)}
+          onClick={onColorPickerOpen}
           style={{
             width: 32,
             height: 32,
-            border: activeTool === id ? '2px solid #fff' : '2px solid transparent',
+            border: '2px solid #fff',
             borderRadius: 4,
-            background: activeTool === id ? 'rgba(255,255,255,0.2)' : 'transparent',
-            color: '#fff',
-            fontSize: 16,
+            background: activeColor,
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
           }}
-        >
-          {label}
-        </button>
-      ))}
-      {/* Color picker trigger */}
-      <button
-        title="Color Picker"
-        onClick={onColorPickerOpen}
-        style={{
-          width: 32,
-          height: 32,
-          border: '2px solid #fff',
-          borderRadius: 4,
-          background: activeColor,
-          cursor: 'pointer',
-        }}
-      />
+        />
+        <span className="tooltip-text">Color Picker</span>
+      </div>
     </div>
   );
 };
