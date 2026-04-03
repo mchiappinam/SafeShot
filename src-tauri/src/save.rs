@@ -68,6 +68,8 @@ pub fn save_screenshot(image_data_url: String, show_dialog: bool, app_handle: ta
         if let Some(win) = app_handle.get_webview_window("overlay") {
             win.hide().ok();
         }
+        // Brief pause to let the window fully hide before the blocking dialog opens
+        std::thread::sleep(std::time::Duration::from_millis(100));
 
         let default_name = format!("Screenshot_{}.png", get_next_n(&dir));
         let dialog = rfd::FileDialog::new()

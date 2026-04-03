@@ -12,6 +12,7 @@ interface DrawingToolbarProps {
 const TOOLS: { id: ToolType; label: string; title: string }[] = [
   { id: 'pencil',   label: '✏️', title: 'Pencil' },
   { id: 'line',     label: '╱',  title: 'Line' },
+  { id: 'arrow',    label: '➜',  title: 'Arrow' },
   { id: 'sharpie',  label: '🖊', title: 'Sharpie' },
   { id: 'circle',   label: '○',  title: 'Circle' },
   { id: 'triangle', label: '△',  title: 'Triangle' },

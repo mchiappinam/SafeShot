@@ -1,6 +1,6 @@
 import { DIM_MASK_OPACITY, RESIZE_HANDLE_SIZE } from '../../shared/constants';
 import type { Annotation, ScreenData, Selection } from '../../shared/types';
-import { drawCircle, drawTriangle, drawOctagon, drawLine } from '../annotation/shapes';
+import { drawCircle, drawTriangle, drawOctagon, drawLine, drawArrow } from '../annotation/shapes';
 import { drawFreehand } from '../annotation/freehand';
 
 interface HandlePoint { x: number; y: number; }
@@ -25,6 +25,9 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation): void 
       break;
     case 'line':
       if (start && end) drawLine(ctx, start, end, ann.color, ann.strokeWidth);
+      break;
+    case 'arrow':
+      if (start && end) drawArrow(ctx, start, end, ann.color, ann.strokeWidth);
       break;
     case 'circle':
       if (start && end) drawCircle(ctx, start, end, ann.color, ann.strokeWidth);

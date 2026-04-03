@@ -43,7 +43,7 @@ export interface ResizeHandle {
 
 // Annotations
 
-export type ToolType = 'pencil' | 'line' | 'sharpie' | 'circle' | 'triangle' | 'octagon';
+export type ToolType = 'pencil' | 'line' | 'arrow' | 'sharpie' | 'circle' | 'triangle' | 'octagon';
 
 export interface Annotation {
   id: string;                   // UUID
