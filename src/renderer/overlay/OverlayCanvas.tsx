@@ -95,7 +95,6 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
 
   useEffect(() => {
     if (!pipelineRef.current || screens.length === 0) return;
-    const bounds = computeTotalBounds(screens);
     const canvas = canvasRef.current;
     if (canvas) {
       // Match canvas pixels to window CSS pixels to avoid coordinate mismatch

@@ -126,9 +126,10 @@ fn open_save_folder(_app: &AppHandle) {
 
 
 fn show_about(_app: &AppHandle) {
+    let version = env!("CARGO_PKG_VERSION");
     rfd::MessageDialog::new()
         .set_title("About SafeShot")
-        .set_description("SafeShot v1.1.0\n\nPrivacy-first screenshot tool.\nYour screenshots stay yours — always.\nNo cloud, no tracking, no compromises.\n\nDeveloped by Matheus Chiappina\nhttps://chiappina.com")
+        .set_description(&format!("SafeShot v{}\n\nPrivacy-first screenshot tool.\nYour screenshots stay yours — always.\nNo cloud, no tracking, no compromises.\n\nDeveloped by Matheus Chiappina\nhttps://chiappina.com", version))
         .set_level(rfd::MessageLevel::Info)
         .show();
 }

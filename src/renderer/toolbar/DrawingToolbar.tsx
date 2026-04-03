@@ -9,13 +9,13 @@ interface DrawingToolbarProps {
   position: { x: number; y: number };
 }
 
-const TOOLS: { id: ToolType; label: string }[] = [
-  { id: 'pencil',   label: '✏️ Pencil' },
-  { id: 'line',     label: '╱ Line' },
-  { id: 'sharpie',  label: '🖊 Sharpie' },
-  { id: 'circle',   label: '○ Circle' },
-  { id: 'triangle', label: '△ Triangle' },
-  { id: 'octagon',  label: '⬡ Octagon' },
+const TOOLS: { id: ToolType; label: string; title: string }[] = [
+  { id: 'pencil',   label: '✏️', title: 'Pencil' },
+  { id: 'line',     label: '╱',  title: 'Line' },
+  { id: 'sharpie',  label: '🖊', title: 'Sharpie' },
+  { id: 'circle',   label: '○',  title: 'Circle' },
+  { id: 'triangle', label: '△',  title: 'Triangle' },
+  { id: 'octagon',  label: '⬡',  title: 'Octagon' },
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
@@ -41,16 +41,14 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         cursor: 'default',
       }}
     >
-      {TOOLS.map(({ id, label }) => (
+      {TOOLS.map(({ id, label, title }) => (
         <button
           key={id}
-          title={id}
+          title={title}
           onClick={() => handleToolClick(id)}
           style={{
-            width: 'auto',
-            minWidth: 32,
+            width: 32,
             height: 32,
-            padding: '0 8px',
             border: activeTool === id ? '2px solid #fff' : '2px solid transparent',
             borderRadius: 4,
             background: activeTool === id ? 'rgba(255,255,255,0.2)' : 'transparent',
