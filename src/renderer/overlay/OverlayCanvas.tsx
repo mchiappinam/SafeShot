@@ -75,7 +75,10 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (!pipeline) return;
     const sel = selMgr?.getSelection() ?? selMgr?.getPreviewSelection() ?? null;
     pipeline.setSelection(sel);
-    pipeline.setAnnotations(annEng?.getAnnotations() ?? [], annEng?.getPreview() ?? null);
+    // Don't render text preview while textarea is open (avoids duplicate text)
+    const preview = annEng?.getPreview() ?? null;
+    const filteredPreview = preview?.tool === 'text' ? null : preview;
+    pipeline.setAnnotations(annEng?.getAnnotations() ?? [], filteredPreview);
     pipeline.requestRender();
     notifySelection();
   }, [notifySelection]);
