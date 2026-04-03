@@ -80,8 +80,12 @@ app.whenReady().then(async () => {
           frame: false, alwaysOnTop: true,
           skipTaskbar: true, resizable: false, focusable: true,
           fullscreenable: false, backgroundColor: '#000000',
+          // kiosk mode covers taskbar on Windows
+          kiosk: true,
           webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') },
         });
+        overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+        overlayWindow.focus();
         const htmlPath = path.join(__dirname, '..', '..', 'renderer', 'index.html');
         log('Loading: ' + htmlPath + ' exists=' + fs.existsSync(htmlPath));
         overlayWindow.loadFile(htmlPath);

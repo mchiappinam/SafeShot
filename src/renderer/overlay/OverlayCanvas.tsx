@@ -115,18 +115,28 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   }, []);
 
   useEffect(() => {
+    const dl = (window as Window & { _debugLog?: (m: string) => void })._debugLog;
+    dl?.('screens received: ' + screens.length);
     if (!pipelineRef.current || screens.length === 0) return;
     const bounds = computeTotalBounds(screens);
+    dl?.('bounds: ' + JSON.stringify(bounds));
     const canvas = canvasRef.current;
-    if (canvas) { canvas.width = bounds.width; canvas.height = bounds.height; }
-    // Use bounds starting at 0,0 for selection (canvas coords are relative)
+    if (canvas) {
+      canvas.width = bounds.width;
+      canvas.height = bounds.height;
+      dl?.('canvas size: ' + canvas.width + 'x' + canvas.height);
+    }
     selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: bounds.width, height: bounds.height });
-    pipelineRef.current.setScreens(screens).catch((err) => {
-      console.error('setScreens failed:', err);
-      // Show red background so user knows something went wrong
+    pipelineRef.current.setScreens(screens).then(() => {
+      dl?.('setScreens OK — bitmaps loaded');
+      pipelineRef.current?.requestRender();
+      dl?.('render requested');
+    }).catch((err) => {
+      dl?.('setScreens FAILED: ' + err);
       if (canvas) {
         const ctx = canvas.getContext('2d');
-        if (ctx) { ctx.fillStyle = 'rgba(255,0,0,0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        if (ctx) { ctx.fillStyle = 'rgba(255,0,0,0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#fff'; ctx.font = '20px monospace'; ctx.fillText('Error: ' + err, 20, 40); }
       }
     });
   }, [screens]);
