@@ -7,7 +7,6 @@ import type { OverlayCanvasHandle } from './overlay/OverlayCanvas';
 import DrawingToolbar from './toolbar/DrawingToolbar';
 import ActionToolbar from './toolbar/ActionToolbar';
 import ColorPicker from './toolbar/ColorPicker';
-import AboutDialog from './about/AboutDialog';
 import './toolbar/toolbar.css';
 
 declare global {
@@ -60,7 +59,6 @@ export default function App(): React.ReactElement {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -78,8 +76,10 @@ export default function App(): React.ReactElement {
     invoke<{ success: boolean; file_path?: string; error?: string }>('save_screenshot', {
       imageDataUrl: dataURL, showDialog: shiftHeld,
     }).then(result => {
-      if (result.success) invoke('close_overlay').catch(console.error);
-      else console.error('Save failed:', result.error);
+      // When showDialog=true, Rust handles closing the overlay itself
+      // When showDialog=false (quick save), close overlay on success
+      if (result.success && !shiftHeld) invoke('close_overlay').catch(console.error);
+      else if (!result.success && result.error !== 'Cancelled') console.error('Save failed:', result.error);
     });
   }, []);
 
@@ -137,8 +137,6 @@ export default function App(): React.ReactElement {
           onClose={() => setColorPickerOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 50, y: toolbarPositions.drawing.y }} />
       )}
-
-      {aboutOpen && <AboutDialog version="1.1.7" onClose={() => setAboutOpen(false)} />}
     </>
   );
 }

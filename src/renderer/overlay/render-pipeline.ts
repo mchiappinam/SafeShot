@@ -159,7 +159,6 @@ export class RenderPipeline {
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
       if (bmp) {
-        // Scale bitmap to fill the canvas (window) dimensions
         const sx = (s.bounds.x - this.offsetX) / this.totalWidth * w;
         const sy = (s.bounds.y - this.offsetY) / this.totalHeight * h;
         const sw = s.bounds.width / this.totalWidth * w;
@@ -168,22 +167,37 @@ export class RenderPipeline {
       }
     }
 
-    // Layer 1: dim mask with selection cutout
+    // Layer 1: dim mask over entire canvas, then redraw the selection area
+    // on top so it appears clear (not punched out, which would show the background)
     ctx.save();
-    ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = `rgba(0,0,0,${DIM_MASK_OPACITY})`;
     ctx.fillRect(0, 0, w, h);
-    if (this.selection) {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.fillStyle = 'rgba(0,0,0,1)';
-      ctx.fillRect(this.selection.x, this.selection.y, this.selection.width, this.selection.height);
-    }
     ctx.restore();
+
+    // Layer 2: redraw the selection region from bitmaps so it appears undimmed
+    if (this.selection) {
+      const sel = this.selection;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sel.x, sel.y, sel.width, sel.height);
+      ctx.clip();
+      for (const s of this.screens) {
+        const bmp = this.bitmaps.get(s.displayId);
+        if (bmp) {
+          const sx = (s.bounds.x - this.offsetX) / this.totalWidth * w;
+          const sy = (s.bounds.y - this.offsetY) / this.totalHeight * h;
+          const sw = s.bounds.width / this.totalWidth * w;
+          const sh = s.bounds.height / this.totalHeight * h;
+          ctx.drawImage(bmp, sx, sy, sw, sh);
+        }
+      }
+      ctx.restore();
+    }
 
     if (!this.selection) return;
     const sel = this.selection;
 
-    // Layer 2: annotations clipped to selection
+    // Layer 3: annotations clipped to selection
     if (this.annotations.length > 0 || this.preview) {
       ctx.save();
       ctx.beginPath();
@@ -194,11 +208,11 @@ export class RenderPipeline {
       ctx.restore();
     }
 
-    // Layer 3: selection border
+    // Layer 4: selection border
     this.drawSelectionBorder(sel);
-    // Layer 4: resize handles
+    // Layer 5: resize handles
     this.drawResizeHandles(sel);
-    // Layer 5: dimension label
+    // Layer 6: dimension label
     this.drawDimensionLabel(sel);
   }
 

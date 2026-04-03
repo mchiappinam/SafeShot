@@ -2,6 +2,7 @@ use base64::Engine;
 use serde::Serialize;
 use std::fs;
 use std::path::PathBuf;
+use tauri::Manager;
 
 #[derive(Serialize)]
 pub struct SaveResult {
@@ -51,7 +52,7 @@ fn decode_data_url(image_data_url: &str) -> Result<Vec<u8>, String> {
 }
 
 #[tauri::command]
-pub fn save_screenshot(image_data_url: String, show_dialog: bool) -> SaveResult {
+pub fn save_screenshot(image_data_url: String, show_dialog: bool, app_handle: tauri::AppHandle) -> SaveResult {
     let dir = get_save_directory();
     if let Err(e) = fs::create_dir_all(&dir) {
         return SaveResult { success: false, file_path: None, error: Some(e.to_string()) };
@@ -63,7 +64,11 @@ pub fn save_screenshot(image_data_url: String, show_dialog: bool) -> SaveResult 
     };
 
     if show_dialog {
-        // Use rfd for native save-as dialog
+        // Hide overlay first so the save dialog isn't obscured by the frozen screen
+        if let Some(win) = app_handle.get_webview_window("overlay") {
+            win.hide().ok();
+        }
+
         let default_name = format!("Screenshot_{}.png", get_next_n(&dir));
         let dialog = rfd::FileDialog::new()
             .set_file_name(&default_name)
@@ -71,12 +76,24 @@ pub fn save_screenshot(image_data_url: String, show_dialog: bool) -> SaveResult 
             .add_filter("PNG Image", &["png"]);
         match dialog.save_file() {
             Some(path) => {
-                return match fs::write(&path, &png_bytes) {
+                let result = match fs::write(&path, &png_bytes) {
                     Ok(_) => SaveResult { success: true, file_path: Some(path.to_string_lossy().to_string()), error: None },
                     Err(e) => SaveResult { success: false, file_path: None, error: Some(e.to_string()) },
                 };
+                // Close overlay after dialog is done
+                if let Some(win) = app_handle.get_webview_window("overlay") {
+                    win.close().ok();
+                }
+                return result;
             }
-            None => return SaveResult { success: false, file_path: None, error: Some("Cancelled".into()) },
+            None => {
+                // User cancelled - show overlay again
+                if let Some(win) = app_handle.get_webview_window("overlay") {
+                    win.show().ok();
+                    win.set_focus().ok();
+                }
+                return SaveResult { success: false, file_path: None, error: Some("Cancelled".into()) };
+            }
         }
     }
 
