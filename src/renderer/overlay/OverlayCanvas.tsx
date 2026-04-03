@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
-import type { CaptureState, HandlePosition, Rectangle, ScreenData, ToolType } from '../../shared/types';
+import type { CaptureState, HandlePosition, ScreenData, ToolType } from '../../shared/types';
 import { RenderPipeline } from './render-pipeline';
 import { CursorManager } from './cursor-manager';
 import { SelectionManager } from '../selection/SelectionManager';
@@ -23,17 +23,6 @@ export interface OverlayCanvasHandle {
   undo: () => void;
   redo: () => void;
   getSelectionDataURL: () => string | null;
-}
-
-function computeTotalBounds(screens: ScreenData[]): Rectangle {
-  if (screens.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const s of screens) {
-    minX = Math.min(minX, s.bounds.x); minY = Math.min(minY, s.bounds.y);
-    maxX = Math.max(maxX, s.bounds.x + s.bounds.width);
-    maxY = Math.max(maxY, s.bounds.y + s.bounds.height);
-  }
-  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
@@ -77,6 +66,25 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     pipeline.requestRender();
     notifySelection();
   }, [notifySelection]);
+
+  // Export only the selected region (frozen screen + annotations, no dim mask)
+  const getSelectionDataURL = useCallback((): string | null => {
+    const canvas = canvasRef.current;
+    const pipeline = pipelineRef.current;
+    const sel = selMgrRef.current?.getSelection();
+    if (!canvas || !pipeline || !sel) return null;
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = Math.round(sel.width);
+    exportCanvas.height = Math.round(sel.height);
+    const ectx = exportCanvas.getContext('2d');
+    if (!ectx) return null;
+
+    // Draw the portion of the main canvas that's inside the selection
+    ectx.drawImage(canvas, sel.x, sel.y, sel.width, sel.height, 0, 0, sel.width, sel.height);
+
+    return exportCanvas.toDataURL('image/png');
+  }, []);
 
   useImperativeHandle(ref, () => ({
     undo: () => { annEngRef.current?.undo(); notifyAnnotations(); syncPipeline(); },
@@ -165,27 +173,6 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     else if (state === 'annotating') { annEngRef.current?.finalizeStroke(); notifyAnnotations(); setCaptureState('area-finalized'); }
     syncPipeline();
   }, [syncPipeline, notifyAnnotations]);
-
-  // Export only the selected region (frozen screen + annotations, no dim mask)
-  const getSelectionDataURL = useCallback((): string | null => {
-    const canvas = canvasRef.current;
-    const pipeline = pipelineRef.current;
-    const sel = selMgrRef.current?.getSelection();
-    if (!canvas || !pipeline || !sel) return null;
-
-    const exportCanvas = document.createElement('canvas');
-    exportCanvas.width = Math.round(sel.width);
-    exportCanvas.height = Math.round(sel.height);
-    const ectx = exportCanvas.getContext('2d');
-    if (!ectx) return null;
-
-    // Draw the portion of the main canvas that's inside the selection
-    // But the main canvas has the dim overlay — we need to draw from the bitmaps directly
-    // For simplicity, draw from the main canvas selection area (which is unmasked)
-    ectx.drawImage(canvas, sel.x, sel.y, sel.width, sel.height, 0, 0, sel.width, sel.height);
-
-    return exportCanvas.toDataURL('image/png');
-  }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const canvas = canvasRef.current;
