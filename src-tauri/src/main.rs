@@ -84,7 +84,7 @@ fn main() {
                 Err(e) => log(&format!("PrtScn shortcut failed: {}", e)),
             }
 
-            log("Setup complete — SafeShot ready");
+            log("Setup complete. SafeShot ready");
             Ok(())
         })
         .run(tauri::generate_context!());
@@ -152,7 +152,7 @@ fn show_about(_app: &AppHandle) {
     let version = env!("CARGO_PKG_VERSION");
     rfd::MessageDialog::new()
         .set_title("About SafeShot")
-        .set_description(&format!("SafeShot v{}\n\nPrivacy-first screenshot tool.\nYour screenshots stay yours — always.\nNo cloud, no tracking, no compromises.\n\nDeveloped by Matheus Chiappina\nhttps://chiappina.com", version))
+        .set_description(&format!("SafeShot v{}\n\nPrivacy-first screenshot tool.\nYour screenshots stay yours, always.\nNo cloud, no tracking, no compromises.\n\nDeveloped by Matheus Chiappina\nhttps://chiappina.com", version))
         .set_level(rfd::MessageLevel::Info)
         .show();
 }

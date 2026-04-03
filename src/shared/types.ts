@@ -1,4 +1,4 @@
-// ─── Application State ───────────────────────────────────────────────
+// Application State
 
 export type CaptureState =
   | 'idle'
@@ -19,7 +19,7 @@ export type CursorStyle =
   | 'nw-resize' | 'n-resize' | 'ne-resize' | 'e-resize'
   | 'se-resize' | 's-resize' | 'sw-resize' | 'w-resize';
 
-// ─── Selection ───────────────────────────────────────────────────────
+// Selection
 
 export interface Selection {
   x: number;          // Top-left X in logical pixels
@@ -41,7 +41,7 @@ export interface ResizeHandle {
   cursor: CursorStyle;
 }
 
-// ─── Annotations ─────────────────────────────────────────────────────
+// Annotations
 
 export type ToolType = 'pencil' | 'line' | 'sharpie' | 'circle' | 'triangle' | 'octagon';
 
@@ -53,7 +53,7 @@ export interface Annotation {
   points: Point[];              // Freehand: all sampled points. Shapes/line: [start, end]
 }
 
-// ─── Screen Data ─────────────────────────────────────────────────────
+// Screen Data
 
 export interface ScreenData {
   displayId: string;
@@ -71,7 +71,7 @@ export interface Rectangle {
   height: number;
 }
 
-// ─── Toolbar ─────────────────────────────────────────────────────────
+// Toolbar
 
 export interface ToolbarPositions {
   drawing: ToolbarPosition;

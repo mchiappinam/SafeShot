@@ -18,7 +18,7 @@ echo "Updated version to $VERSION"
 
 # Commit if there are changes, otherwise just tag
 if git diff --quiet && git diff --cached --quiet; then
-  echo "No file changes — tagging current commit"
+  echo "No file changes, tagging current commit"
 else
   git add -A
   git commit -m "release: v$VERSION"
@@ -29,5 +29,5 @@ git push origin main
 git push origin "v$VERSION"
 
 echo ""
-echo "Released v$VERSION — CI will build installers."
+echo "Released v$VERSION. CI will build installers."
 echo "Check: https://github.com/mchiappinam/SafeShot/actions"

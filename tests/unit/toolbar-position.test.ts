@@ -44,7 +44,7 @@ describe('computeActionToolbarPosition', () => {
   });
 });
 
-describe('computeToolbarPositions — overlap prevention', () => {
+describe('computeToolbarPositions - overlap prevention', () => {
   it('drawing and action toolbars do not overlap for centered selection', () => {
     const sel = { x: 760, y: 390, width: 400, height: 300 };
     const { drawing, action } = computeToolbarPositions(sel, SCREEN);

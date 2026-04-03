@@ -74,7 +74,7 @@ export class RenderPipeline {
     this.totalWidth = maxX - this.offsetX || 1;
     this.totalHeight = maxY - this.offsetY || 1;
     await Promise.all(screens.map(async (s) => {
-      // Decode base64 data URL directly — avoids fetch() which CSP can block
+      // Decode base64 data URL directly, avoids fetch() which CSP can block
       const base64 = s.imageDataURL.replace(/^data:image\/\w+;base64,/, '');
       const binary = atob(base64);
       const bytes = new Uint8Array(binary.length);
@@ -155,7 +155,7 @@ export class RenderPipeline {
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // Layer 0: frozen screen bitmaps — scale to fill canvas
+    // Layer 0: frozen screen bitmaps, scale to fill canvas
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
       if (bmp) {

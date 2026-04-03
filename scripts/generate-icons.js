@@ -30,7 +30,7 @@ async function main() {
   // macOS .icns placeholder (Tauri converts from PNG)
   await sharp(Buffer.from(svg)).resize(512, 512).png().toFile(path.join(outDir, 'icon.icns'));
 
-  // Windows .ico — must be actual ICO format
+  // Windows .ico, must be actual ICO format
   // ICO format: header (6 bytes) + entry (16 bytes) + PNG data
   const pngBuf = await sharp(Buffer.from(svg)).resize(256, 256).png().toBuffer();
   const ico = createIco(pngBuf, 256, 256);

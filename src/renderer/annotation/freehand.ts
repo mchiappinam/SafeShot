@@ -23,7 +23,7 @@ export function drawFreehand(
   ctx.beginPath();
 
   if (points.length === 1) {
-    // Single point — draw a dot
+    // Single point, draw a dot
     ctx.arc(points[0].x, points[0].y, strokeWidth / 2, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
