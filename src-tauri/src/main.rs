@@ -13,7 +13,6 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut}
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
@@ -76,14 +75,18 @@ fn start_capture(app: &AppHandle) {
         .always_on_top(true)
         .skip_taskbar(true)
         .focused(true)
-        .transparent(false)
         .build()
         .expect("failed to create overlay window");
 }
 
-fn open_save_folder(app: &AppHandle) {
-    use tauri_plugin_shell::ShellExt;
+fn open_save_folder(_app: &AppHandle) {
     let dir = save::get_save_directory();
     std::fs::create_dir_all(&dir).ok();
-    app.shell().open(&dir, None).ok();
+    // Use std::process::Command as a simple cross-platform open
+    #[cfg(target_os = "windows")]
+    { std::process::Command::new("explorer").arg(&dir).spawn().ok(); }
+    #[cfg(target_os = "macos")]
+    { std::process::Command::new("open").arg(&dir).spawn().ok(); }
+    #[cfg(target_os = "linux")]
+    { std::process::Command::new("xdg-open").arg(&dir).spawn().ok(); }
 }
