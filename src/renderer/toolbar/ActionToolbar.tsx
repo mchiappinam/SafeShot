@@ -11,6 +11,19 @@ interface ActionToolbarProps {
   position: { x: number; y: number };
 }
 
+const TooltipButton: React.FC<{
+  label: string;
+  tooltip: string;
+  disabled?: boolean;
+  onClick: () => void;
+  style: React.CSSProperties;
+}> = ({ label, tooltip, disabled, onClick, style }) => (
+  <div style={{ position: 'relative', display: 'inline-block' }} className="tooltip-wrap">
+    <button style={style} onClick={onClick} disabled={disabled}>{label}</button>
+    <span className="tooltip-text">{tooltip}</span>
+  </div>
+);
+
 export const ActionToolbar: React.FC<ActionToolbarProps> = ({
   canUndo, canRedo, onUndo, onRedo, onSave, onCopy, onCancel, position,
 }) => {
@@ -32,11 +45,11 @@ export const ActionToolbar: React.FC<ActionToolbarProps> = ({
       background: 'rgba(30,30,30,0.92)', borderRadius: 8, padding: 6,
       zIndex: 1000, cursor: 'default',
     }}>
-      <button style={btnStyle()} onClick={onCancel} title="Cancel (ESC)">✕ Cancel</button>
-      <button style={btnStyle(!canUndo)} onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl+Z)">↩ Undo</button>
-      <button style={btnStyle(!canRedo)} onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl+Y)">↪ Redo</button>
-      <button style={btnStyle()} onClick={onCopy} title="Copy (Ctrl+C)">📋 Copy</button>
-      <button style={btnStyle()} onClick={onSave} title="Save (Ctrl+S)">💾 Save</button>
+      <TooltipButton label="✕" tooltip="Cancel (ESC)" onClick={onCancel} style={btnStyle()} />
+      <TooltipButton label="↩" tooltip="Undo (Ctrl+Z)" disabled={!canUndo} onClick={onUndo} style={btnStyle(!canUndo)} />
+      <TooltipButton label="↪" tooltip="Redo (Ctrl+Y)" disabled={!canRedo} onClick={onRedo} style={btnStyle(!canRedo)} />
+      <TooltipButton label="📋" tooltip="Copy (Ctrl+C)" onClick={onCopy} style={btnStyle()} />
+      <TooltipButton label="💾" tooltip="Save (Ctrl+S)" onClick={onSave} style={btnStyle()} />
     </div>
   );
 };

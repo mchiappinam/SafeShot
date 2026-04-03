@@ -11,3 +11,28 @@
   pointer-events: none;
   transition: opacity 150ms ease-in-out;
 }
+
+/* Custom tooltips (native title tooltips don't work on secondary monitors) */
+.tooltip-wrap .tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 100ms;
+  z-index: 9999;
+}
+
+.tooltip-wrap:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
