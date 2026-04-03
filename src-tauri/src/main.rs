@@ -82,7 +82,8 @@ fn start_capture(app: &AppHandle) {
 }
 
 fn open_save_folder(app: &AppHandle) {
+    use tauri_plugin_shell::ShellExt;
     let dir = save::get_save_directory();
     std::fs::create_dir_all(&dir).ok();
-    tauri::api::shell::open(&app.shell(), dir, None).ok();
+    app.shell().open(&dir, None).ok();
 }
