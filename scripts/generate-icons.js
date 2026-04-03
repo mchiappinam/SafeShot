@@ -19,31 +19,21 @@ async function main() {
       <circle cx="740" cy="280" r="40" fill="white"/>
     </svg>`;
 
-  const iconsDir = path.resolve(__dirname, '..', 'assets', 'icons');
-  fs.mkdirSync(iconsDir, { recursive: true });
-  await sharp(Buffer.from(svg)).resize(1024, 1024).png().toFile(path.join(iconsDir, 'icon.png'));
-  console.log('Created assets/icons/icon.png');
+  const outDir = path.resolve(__dirname, '..', 'src-tauri', 'icons');
+  fs.mkdirSync(outDir, { recursive: true });
 
-  const trayDir = path.resolve(__dirname, '..', 'assets', 'tray');
-  fs.mkdirSync(trayDir, { recursive: true });
+  // Tauri needs these specific sizes
+  await sharp(Buffer.from(svg)).resize(32, 32).png().toFile(path.join(outDir, '32x32.png'));
+  await sharp(Buffer.from(svg)).resize(128, 128).png().toFile(path.join(outDir, '128x128.png'));
+  await sharp(Buffer.from(svg)).resize(256, 256).png().toFile(path.join(outDir, '128x128@2x.png'));
+  await sharp(Buffer.from(svg)).resize(256, 256).png().toFile(path.join(outDir, 'icon.png'));
 
-  const traySvg = `
-    <svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="6" fill="#4A90D9"/>
-      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
-            font-family="Arial,sans-serif" font-weight="bold" font-size="14" fill="white">SS</text>
-    </svg>`;
-  await sharp(Buffer.from(traySvg)).resize(32, 32).png().toFile(path.join(trayDir, 'tray-icon.png'));
-  console.log('Created assets/tray/tray-icon.png');
+  // For Windows .ico — just use the 256x256 png, tauri-cli converts it
+  await sharp(Buffer.from(svg)).resize(256, 256).png().toFile(path.join(outDir, 'icon.ico'));
+  // For macOS .icns — same approach
+  await sharp(Buffer.from(svg)).resize(512, 512).png().toFile(path.join(outDir, 'icon.icns'));
 
-  const templateSvg = `
-    <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg">
-      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
-            font-family="Arial,sans-serif" font-weight="bold" font-size="11" fill="black">SS</text>
-    </svg>`;
-  await sharp(Buffer.from(templateSvg)).resize(22, 22).png().toFile(path.join(trayDir, 'tray-iconTemplate.png'));
-  console.log('Created assets/tray/tray-iconTemplate.png');
-  console.log('Done.');
+  console.log('Icons generated in src-tauri/icons/');
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
