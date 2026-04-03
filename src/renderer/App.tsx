@@ -54,6 +54,10 @@ export default function App(): React.ReactElement {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
       setScreens(mapScreenData(raw));
     }).catch(err => console.error('capture_screens failed:', err));
+    // Load last used color
+    invoke<string>('get_last_color').then(color => {
+      if (color) setActiveColor(color);
+    }).catch(() => {});
   }, []);
 
   // Close overlay only, don't exit the app
@@ -123,7 +127,7 @@ export default function App(): React.ReactElement {
 
       {colorPickerOpen && toolbarPositions && (
         <ColorPicker selectedColor={activeColor}
-          onColorChange={(c) => { setActiveColor(c); setColorPickerOpen(false); }}
+          onColorChange={(c) => { setActiveColor(c); setColorPickerOpen(false); invoke('set_last_color', { color: c }).catch(() => {}); }}
           onClose={() => setColorPickerOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 50, y: toolbarPositions.drawing.y }} />
       )}
