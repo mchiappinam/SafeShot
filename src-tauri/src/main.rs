@@ -13,13 +13,11 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut}
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
             capture::capture_screens,
             save::save_screenshot,
             save::get_next_filename,
+            save::copy_to_clipboard,
         ])
         .setup(|app| {
             // Build tray menu
@@ -63,11 +61,13 @@ fn main() {
 }
 
 fn start_capture(app: &AppHandle) {
-    // Don't open a second overlay
     if app.get_webview_window("overlay").is_some() {
         return;
     }
 
+    // For multi-monitor: compute bounding rect of all screens
+    // For now, use fullscreen on primary (Tauri handles this natively)
+    // TODO: span all monitors when Tauri supports multi-window spanning
     let _window = WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")
         .fullscreen(true)

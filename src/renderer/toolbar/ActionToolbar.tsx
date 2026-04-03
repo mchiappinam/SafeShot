@@ -1,11 +1,10 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 
 interface ActionToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
-  getImageDataURL: () => string;
   position: { x: number; y: number };
 }
 
