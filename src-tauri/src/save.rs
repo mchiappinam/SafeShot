@@ -11,6 +11,39 @@ pub struct SaveResult {
     pub error: Option<String>,
 }
 
+fn config_path() -> PathBuf {
+    let mut dir = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push("SafeShot");
+    fs::create_dir_all(&dir).ok();
+    dir.push("config.json");
+    dir
+}
+
+#[tauri::command]
+pub fn get_last_color() -> String {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(color) = json.get("lastColor").and_then(|v| v.as_str()) {
+                return color.to_string();
+            }
+        }
+    }
+    String::new()
+}
+
+#[tauri::command]
+pub fn set_last_color(color: String) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["lastColor"] = serde_json::json!(color);
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
 pub fn get_save_directory() -> String {
     // Use Pictures directory on all platforms
     let base = dirs::picture_dir().unwrap_or_else(|| {

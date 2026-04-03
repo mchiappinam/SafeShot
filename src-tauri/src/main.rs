@@ -7,7 +7,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{CheckMenuItem, Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, WebviewUrl, WebviewWindowBuilder,
 };
@@ -47,6 +47,8 @@ fn main() {
             save::save_screenshot,
             save::get_next_filename,
             save::copy_to_clipboard,
+            save::get_last_color,
+            save::set_last_color,
             close_overlay,
         ])
         .setup(|app| {
@@ -60,14 +62,17 @@ fn main() {
             }
 
             // Build tray menu
+            let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
             let capture_item =
                 MenuItem::with_id(app, "capture", "Capture Screenshot", true, None::<&str>)?;
             let open_folder =
                 MenuItem::with_id(app, "open_folder", "Open Save Folder", true, None::<&str>)?;
+            let autostart_item =
+                CheckMenuItem::with_id(app, "autostart", "Start on Boot", true, autostart_enabled, None::<&str>)?;
             let about_item = MenuItem::with_id(app, "about", "About", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit SafeShot", true, None::<&str>)?;
             let menu =
-                Menu::with_items(app, &[&capture_item, &open_folder, &about_item, &quit_item])?;
+                Menu::with_items(app, &[&capture_item, &open_folder, &autostart_item, &about_item, &quit_item])?;
             log("Tray menu built");
 
             let _tray = TrayIconBuilder::new()
@@ -77,6 +82,7 @@ fn main() {
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "capture" => start_capture(app),
                     "open_folder" => open_save_folder(app),
+                    "autostart" => toggle_autostart(app),
                     "about" => show_about(app),
                     "quit" => app.exit(0),
                     _ => {}
@@ -127,6 +133,18 @@ fn close_overlay(app: AppHandle) {
         win.close().ok();
     }
     log("Overlay closed");
+}
+
+fn toggle_autostart(app: &AppHandle) {
+    let autostart = app.autolaunch();
+    let enabled = autostart.is_enabled().unwrap_or(false);
+    if enabled {
+        autostart.disable().ok();
+        log("Autostart disabled");
+    } else {
+        autostart.enable().ok();
+        log("Autostart enabled");
+    }
 }
 
 fn start_capture(app: &AppHandle) {
