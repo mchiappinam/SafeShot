@@ -192,9 +192,12 @@ fn start_capture(app: &AppHandle) {
 
     log(&format!("Virtual desktop: {}x{} at ({},{})", total_w, total_h, min_x, min_y));
 
-    // Create window, then reposition with physical coordinates to avoid DPI scaling issues
+    // Create window at the virtual desktop bounds
+    // Screen coordinates from screenshots crate are logical (Windows MONITORINFOEX)
     let win = match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")
+        .position(min_x as f64, min_y as f64)
+        .inner_size(total_w as f64, total_h as f64)
         .decorations(false)
         .resizable(false)
         .maximizable(false)
@@ -211,11 +214,10 @@ fn start_capture(app: &AppHandle) {
         Err(e) => { log(&format!("Overlay window failed: {}", e)); return; },
     };
 
-    // Set exact position and size using physical pixels to bypass DPI scaling
-    use tauri::{PhysicalPosition, PhysicalSize};
-    win.set_position(PhysicalPosition::new(min_x, min_y)).ok();
-    win.set_size(PhysicalSize::new(total_w as u32, total_h as u32)).ok();
-    log(&format!("Window positioned: ({},{}) {}x{} physical", min_x, min_y, total_w, total_h));
+    // Re-apply position after creation to ensure it sticks
+    use tauri::LogicalPosition;
+    win.set_position(LogicalPosition::new(min_x as f64, min_y as f64)).ok();
+    log(&format!("Window positioned: ({},{}) {}x{}", min_x, min_y, total_w, total_h));
 }
 
 fn open_save_folder(_app: &AppHandle) {

@@ -108,17 +108,20 @@ export class RenderPipeline {
 
   /** Render only the screen bitmaps + annotations for the selection region (no dim, no border, no handles, no label). */
   renderCleanExport(sel: { x: number; y: number; width: number; height: number }, annotations: Annotation[], preview: Annotation | null): HTMLCanvasElement | null {
-    const w = Math.round(sel.width);
-    const h = Math.round(sel.height);
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.round(sel.width * dpr);
+    const h = Math.round(sel.height * dpr);
     if (w <= 0 || h <= 0) return null;
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = w;
     exportCanvas.height = h;
     const ctx = exportCanvas.getContext('2d');
     if (!ctx) return null;
+    ctx.scale(dpr, dpr);
 
-    // Draw screen bitmaps offset so selection region maps to 0,0
-    const cw = this.canvas.width, ch = this.canvas.height;
+    // Use logical dimensions for coordinate math
+    const cw = window.innerWidth;
+    const ch = window.innerHeight;
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
       if (bmp) {
@@ -154,8 +157,10 @@ export class RenderPipeline {
   }
 
   private renderFrame(): void {
-    const { ctx, canvas } = this;
-    const w = canvas.width, h = canvas.height;
+    const { ctx } = this;
+    // Use logical (CSS) dimensions since context is scaled by devicePixelRatio
+    const w = window.innerWidth;
+    const h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
 
     // Layer 0: frozen screen bitmaps, scale to fill canvas
