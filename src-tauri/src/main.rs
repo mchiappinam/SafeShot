@@ -193,7 +193,6 @@ fn start_capture(app: &AppHandle) {
     log(&format!("Virtual desktop: {}x{} at ({},{})", total_w, total_h, min_x, min_y));
 
     // Create window at the virtual desktop bounds
-    // Screen coordinates from screenshots crate are logical (Windows MONITORINFOEX)
     let win = match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")
         .position(min_x as f64, min_y as f64)
@@ -214,10 +213,45 @@ fn start_capture(app: &AppHandle) {
         Err(e) => { log(&format!("Overlay window failed: {}", e)); return; },
     };
 
-    // Re-apply position after creation to ensure it sticks
-    use tauri::LogicalPosition;
-    win.set_position(LogicalPosition::new(min_x as f64, min_y as f64)).ok();
-    log(&format!("Window positioned: ({},{}) {}x{}", min_x, min_y, total_w, total_h));
+    // On Windows: strip all window styles that cause invisible borders/title bar,
+    // then force exact position with SetWindowPos
+    #[cfg(target_os = "windows")]
+    {
+        use raw_window_handle::HasWindowHandle;
+        if let Ok(handle) = win.window_handle() {
+            if let raw_window_handle::RawWindowHandle::Win32(h) = handle.as_ref() {
+                let hwnd = h.hwnd.get() as isize;
+                unsafe {
+                    use windows_sys::Win32::UI::WindowsAndMessaging::*;
+                    // Strip all frame styles: thick frame, caption, sysmenu, etc.
+                    let style = GetWindowLongW(hwnd, GWL_STYLE);
+                    let clean = (style as u32
+                        & !(WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX)
+                    ) | WS_POPUP;
+                    SetWindowLongW(hwnd, GWL_STYLE, clean as i32);
+                    // Also strip extended styles (tool window border, etc.)
+                    let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+                    let clean_ex = ex_style as u32 & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+                    SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
+                    // Force exact position and size, bypassing DPI scaling
+                    SetWindowPos(
+                        hwnd, HWND_TOPMOST,
+                        min_x, min_y, total_w, total_h,
+                        SWP_FRAMECHANGED | SWP_NOACTIVATE,
+                    );
+                }
+                log(&format!("Win32: styles stripped, positioned at ({},{}) {}x{}", min_x, min_y, total_w, total_h));
+            }
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        use tauri::LogicalPosition;
+        win.set_position(LogicalPosition::new(min_x as f64, min_y as f64)).ok();
+    }
+
+    log(&format!("Window ready: ({},{}) {}x{}", min_x, min_y, total_w, total_h));
 }
 
 fn open_save_folder(_app: &AppHandle) {
