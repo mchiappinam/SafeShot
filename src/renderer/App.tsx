@@ -69,17 +69,17 @@ export default function App(): React.ReactElement {
     }).catch(err => console.error('capture_screens failed:', err));
   }, []);
 
-  // Fix 1: use window.close() which Tauri intercepts
+  // Close overlay only — don't exit the app
   const handleClose = useCallback(() => { window.close(); }, []);
 
   const handleSave = useCallback((dataURL: string, shiftHeld: boolean) => {
     invoke<{ success: boolean; file_path?: string; error?: string }>('save_screenshot', {
       imageDataUrl: dataURL, showDialog: shiftHeld,
     }).then(result => {
-      if (result.success) handleClose();
+      if (result.success) window.close();
       else console.error('Save failed:', result.error);
     });
-  }, [handleClose]);
+  }, []);
 
   const handleCopy = useCallback((dataURL: string) => {
     invoke('copy_to_clipboard', { imageDataUrl: dataURL }).catch(console.error);
@@ -120,8 +120,8 @@ export default function App(): React.ReactElement {
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
           <ActionToolbar canUndo={canUndo} canRedo={canRedo}
             onUndo={() => overlayRef.current?.undo()} onRedo={() => overlayRef.current?.redo()}
-            onSave={() => { const c = document.querySelector('canvas'); if (c) handleSave(c.toDataURL('image/png'), false); }}
-            onCopy={() => { const c = document.querySelector('canvas'); if (c) handleCopy(c.toDataURL('image/png')); }}
+            onSave={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleSave(d, false); }}
+            onCopy={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleCopy(d); }}
             onCancel={handleClose}
             position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y }} />
         </div>

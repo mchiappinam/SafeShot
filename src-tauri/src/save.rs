@@ -11,13 +11,10 @@ pub struct SaveResult {
 }
 
 pub fn get_save_directory() -> String {
-    let base = if cfg!(target_os = "macos") {
-        dirs::picture_dir().unwrap_or_else(|| PathBuf::from("."))
-    } else {
-        dirs::home_dir()
-            .map(|h| h.join("Images"))
-            .unwrap_or_else(|| PathBuf::from("."))
-    };
+    // Use Pictures directory on all platforms
+    let base = dirs::picture_dir().unwrap_or_else(|| {
+        dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join("Pictures")
+    });
     base.join("SafeShot").to_string_lossy().to_string()
 }
 

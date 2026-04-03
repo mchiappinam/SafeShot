@@ -17,8 +17,12 @@ export function computeDrawingToolbarPosition(sel: Selection, bounds: Rectangle)
   const rightX = sel.x + sel.width + TOOLBAR_GAP;
   const leftX = sel.x - DRAWING_TOOLBAR_WIDTH - TOOLBAR_GAP;
   const fitsRight = rightX + DRAWING_TOOLBAR_WIDTH <= bounds.x + bounds.width;
-  const side: 'left' | 'right' = fitsRight ? 'right' : 'left';
-  const x = fitsRight ? rightX : leftX;
+  const fitsLeft = leftX >= bounds.x;
+  let side: 'left' | 'right';
+  let x: number;
+  if (fitsRight) { side = 'right'; x = rightX; }
+  else if (fitsLeft) { side = 'left'; x = leftX; }
+  else { side = 'right'; x = bounds.x + bounds.width - DRAWING_TOOLBAR_WIDTH - TOOLBAR_GAP; } // overlay inside
   const y = Math.max(bounds.y, Math.min(sel.y, bounds.y + bounds.height - DRAWING_TOOLBAR_HEIGHT));
   return { x, y, side, edge: 'bottom' };
 }
@@ -29,8 +33,12 @@ export function computeActionToolbarPosition(
   const belowY = sel.y + sel.height + TOOLBAR_GAP;
   const aboveY = sel.y - ACTION_TOOLBAR_HEIGHT - TOOLBAR_GAP;
   const fitsBelow = belowY + ACTION_TOOLBAR_HEIGHT <= bounds.y + bounds.height;
-  const edge: 'top' | 'bottom' = fitsBelow ? 'bottom' : 'top';
-  let y = fitsBelow ? belowY : aboveY;
+  const fitsAbove = aboveY >= bounds.y;
+  let edge: 'top' | 'bottom';
+  let y: number;
+  if (fitsBelow) { edge = 'bottom'; y = belowY; }
+  else if (fitsAbove) { edge = 'top'; y = aboveY; }
+  else { edge = 'bottom'; y = bounds.y + bounds.height - ACTION_TOOLBAR_HEIGHT - TOOLBAR_GAP; } // overlay inside
   const x = Math.max(bounds.x, Math.min(sel.x, bounds.x + bounds.width - ACTION_TOOLBAR_WIDTH));
 
   const drawingRight = drawing.x + DRAWING_TOOLBAR_WIDTH;
