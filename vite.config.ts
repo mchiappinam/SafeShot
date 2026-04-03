@@ -7,17 +7,17 @@ export default defineConfig({
   root: 'src/renderer',
   base: './',
   build: {
-    outDir: resolve(__dirname, 'dist/renderer'),
+    outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'src/renderer/index.html'),
-      },
-    },
   },
   resolve: {
     alias: {
       '@shared': resolve(__dirname, 'src/shared'),
     },
+  },
+  // Tauri expects a fixed port in dev
+  server: {
+    port: 5173,
+    strictPort: true,
   },
 });
