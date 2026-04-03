@@ -9,7 +9,8 @@ export function drawCircle(
   start: Point,
   end: Point,
   color: string,
-  strokeWidth: number
+  strokeWidth: number,
+  solid: boolean = false
 ): void {
   ctx.save();
 
@@ -18,14 +19,14 @@ export function drawCircle(
   const w = Math.abs(end.x - start.x);
   const h = Math.abs(end.y - start.y);
 
-  ctx.strokeStyle = color;
   ctx.lineWidth = strokeWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
   ctx.beginPath();
   ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
-  ctx.stroke();
+  if (solid) { ctx.fillStyle = color; ctx.fill(); }
+  else { ctx.strokeStyle = color; ctx.stroke(); }
 
   ctx.restore();
 }
@@ -40,7 +41,8 @@ export function drawTriangle(
   start: Point,
   end: Point,
   color: string,
-  strokeWidth: number
+  strokeWidth: number,
+  solid: boolean = false
 ): void {
   ctx.save();
 
@@ -49,17 +51,17 @@ export function drawTriangle(
   const w = Math.abs(end.x - start.x);
   const h = Math.abs(end.y - start.y);
 
-  ctx.strokeStyle = color;
   ctx.lineWidth = strokeWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
   ctx.beginPath();
-  ctx.moveTo(x + w / 2, y);       // apex top-center
-  ctx.lineTo(x + w, y + h);       // bottom-right
-  ctx.lineTo(x, y + h);           // bottom-left
+  ctx.moveTo(x + w / 2, y);
+  ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x, y + h);
   ctx.closePath();
-  ctx.stroke();
+  if (solid) { ctx.fillStyle = color; ctx.fill(); }
+  else { ctx.strokeStyle = color; ctx.stroke(); }
 
   ctx.restore();
 }
@@ -73,23 +75,21 @@ export function drawOctagon(
   start: Point,
   end: Point,
   color: string,
-  strokeWidth: number
+  strokeWidth: number,
+  solid: boolean = false
 ): void {
   ctx.save();
 
-  // Use the distance from center to drag point as radius
   const cx = (start.x + end.x) / 2;
   const cy = (start.y + end.y) / 2;
   const r = Math.max(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) / 2;
 
-  ctx.strokeStyle = color;
   ctx.lineWidth = strokeWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
   ctx.beginPath();
   for (let i = 0; i < 8; i++) {
-    // Start rotated so the top edge is flat (like a stop sign)
     const angle = (Math.PI * 2 * i) / 8 - Math.PI / 8;
     const px = cx + r * Math.cos(angle);
     const py = cy + r * Math.sin(angle);
@@ -97,7 +97,8 @@ export function drawOctagon(
     else ctx.lineTo(px, py);
   }
   ctx.closePath();
-  ctx.stroke();
+  if (solid) { ctx.fillStyle = color; ctx.fill(); }
+  else { ctx.strokeStyle = color; ctx.stroke(); }
 
   ctx.restore();
 }
@@ -175,7 +176,8 @@ export function drawSquare(
   start: Point,
   end: Point,
   color: string,
-  strokeWidth: number
+  strokeWidth: number,
+  solid: boolean = false
 ): void {
   ctx.save();
 
@@ -184,14 +186,12 @@ export function drawSquare(
   const w = Math.abs(end.x - start.x);
   const h = Math.abs(end.y - start.y);
 
-  ctx.strokeStyle = color;
   ctx.lineWidth = strokeWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.stroke();
+  if (solid) { ctx.fillStyle = color; ctx.fillRect(x, y, w, h); }
+  else { ctx.strokeStyle = color; ctx.beginPath(); ctx.rect(x, y, w, h); ctx.stroke(); }
 
   ctx.restore();
 }
@@ -221,24 +221,3 @@ export function drawText(
   ctx.restore();
 }
 
-/**
- * Fill a rectangular area with a solid color.
- */
-export function drawFill(
-  ctx: CanvasRenderingContext2D,
-  start: Point,
-  end: Point,
-  color: string
-): void {
-  ctx.save();
-
-  const x = Math.min(start.x, end.x);
-  const y = Math.min(start.y, end.y);
-  const w = Math.abs(end.x - start.x);
-  const h = Math.abs(end.y - start.y);
-
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, w, h);
-
-  ctx.restore();
-}

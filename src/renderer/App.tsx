@@ -51,6 +51,7 @@ export default function App(): React.ReactElement {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [thicknessOpen, setThicknessOpen] = useState(false);
   const [strokeWidth, setStrokeWidth] = useState(2);
+  const [solid, setSolid] = useState(false);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -105,6 +106,7 @@ export default function App(): React.ReactElement {
         activeTool={activeTool}
         activeColor={activeColor}
         strokeWidth={strokeWidth}
+        solid={solid}
         onStateChange={handleStateChange}
         onAnnotationsChange={handleAnnotationsChange}
         onSelectionChange={handleSelectionChange}
@@ -119,6 +121,7 @@ export default function App(): React.ReactElement {
             onColorPickerOpen={() => { setColorPickerOpen(true); setThicknessOpen(false); }}
             onThicknessOpen={() => { setThicknessOpen(true); setColorPickerOpen(false); }}
             activeColor={activeColor} strokeWidth={strokeWidth}
+            solid={solid} onSolidToggle={() => setSolid(s => !s)}
             position={{ x: toolbarPositions.drawing.x, y: toolbarPositions.drawing.y }} />
         </div>
       )}

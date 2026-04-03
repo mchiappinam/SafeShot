@@ -8,6 +8,8 @@ interface DrawingToolbarProps {
   onThicknessOpen: () => void;
   activeColor: string;
   strokeWidth: number;
+  solid: boolean;
+  onSolidToggle: () => void;
   position: { x: number; y: number };
 }
 
@@ -21,11 +23,10 @@ const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }
   { id: 'triangle', label: '△',  tooltip: 'Triangle' },
   { id: 'octagon',  label: '⬡',  tooltip: 'Octagon' },
   { id: 'text',     label: 'T',  tooltip: 'Text' },
-  { id: 'fill',     label: '🪣', tooltip: 'Fill' },
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
-  activeTool, onToolSelect, onColorPickerOpen, onThicknessOpen, activeColor, strokeWidth, position,
+  activeTool, onToolSelect, onColorPickerOpen, onThicknessOpen, activeColor, strokeWidth, solid, onSolidToggle, position,
 }) => {
   const handleToolClick = (tool: ToolType) => {
     onToolSelect(activeTool === tool ? null : tool);
@@ -70,6 +71,13 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
           <span className="tooltip-text">{tooltip}</span>
         </div>
       ))}
+      <div style={{ position: 'relative' }} className="tooltip-wrap">
+        <button onClick={onSolidToggle}
+          style={{ ...btnStyle(false), border: '2px solid #fff' }}>
+          {solid ? '◼' : '◻'}
+        </button>
+        <span className="tooltip-text">{solid ? 'Solid (click for hollow)' : 'Hollow (click for solid)'}</span>
+      </div>
       <div style={{ position: 'relative' }} className="tooltip-wrap">
         <button onClick={onColorPickerOpen}
           style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 2, background: activeColor, cursor: 'pointer' }}

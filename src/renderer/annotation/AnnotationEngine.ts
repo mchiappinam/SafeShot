@@ -16,6 +16,7 @@ export class AnnotationEngine {
   private tool: ToolType | null = null;
   private color: string = DEFAULT_COLOR;
   private customStrokeWidth: number = STROKE_WIDTH.pencil;
+  private solidFill: boolean = false;
   private stack = new UndoRedoStack();
   private preview: Annotation | null = null;
   private currentPoints: Point[] = [];
@@ -24,6 +25,7 @@ export class AnnotationEngine {
   setTool(tool: ToolType | null): void { this.tool = tool; }
   setColor(color: string): void { this.color = color; }
   setCustomStrokeWidth(w: number): void { this.customStrokeWidth = w; }
+  setSolid(solid: boolean): void { this.solidFill = solid; }
   getColor(): string { return this.color; }
 
   getTextInput(): { point: Point; text: string } | null { return this.textInput; }
@@ -48,6 +50,7 @@ export class AnnotationEngine {
       color: this.color,
       strokeWidth: strokeWidthForTool(this.tool, this.customStrokeWidth),
       points: [point],
+      solid: this.solidFill,
     };
   }
 
