@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-read -p "Version (e.g. 1.1.0): " VERSION
+CURRENT=$(grep '"version"' package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+echo "Latest Version Published: $CURRENT"
+read -p "Enter new version: " VERSION
 
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "Invalid version format. Use semver like 1.1.0"
