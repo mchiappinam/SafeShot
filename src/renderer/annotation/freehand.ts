@@ -9,11 +9,13 @@ export function drawFreehand(
   ctx: CanvasRenderingContext2D,
   points: Point[],
   color: string,
-  strokeWidth: number
+  strokeWidth: number,
+  opacity: number = 1.0
 ): void {
   if (points.length === 0) return;
 
   ctx.save();
+  ctx.globalAlpha = opacity;
 
   ctx.strokeStyle = color;
   ctx.lineWidth = strokeWidth;

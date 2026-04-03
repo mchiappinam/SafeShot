@@ -40,6 +40,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   captureStateRef.current = captureState;
   const activeToolRef = useRef(activeTool);
   activeToolRef.current = activeTool;
+  const [textInput, setTextInput] = useState<{ x: number; y: number; text: string } | null>(null);
 
   useEffect(() => { annEngRef.current?.setTool(activeTool); }, [activeTool]);
   useEffect(() => { annEngRef.current?.setColor(activeColor); }, [activeColor]);
@@ -152,12 +153,33 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       const handle = getHoveredHandle(x, y);
       if (handle) { selMgr?.startResize(handle); setCaptureState('resizing'); syncPipeline(); return; }
       const inside = hitTestSelection({ x, y }, sel);
-      if (inside && activeToolRef.current !== null) { annEng?.startStroke({ x, y }); setCaptureState('annotating'); }
+      if (inside && activeToolRef.current === 'text') {
+        // Finalize any existing text first
+        if (textInput) {
+          annEng?.updateText(textInput.text);
+          annEng?.finalizeText();
+          notifyAnnotations();
+        }
+        annEng?.startStroke({ x, y });
+        setTextInput({ x, y, text: '' });
+        syncPipeline();
+        return;
+      }
+      if (inside && activeToolRef.current !== null) {
+        // Finalize pending text if switching to another tool action
+        if (textInput) {
+          annEng?.updateText(textInput.text);
+          annEng?.finalizeText();
+          setTextInput(null);
+          notifyAnnotations();
+        }
+        annEng?.startStroke({ x, y }); setCaptureState('annotating');
+      }
       else if (inside) { selMgr?.startMove({ x, y }); setCaptureState('moving'); }
-      else { selMgr?.discardSelection(); annEng?.clear(); notifyAnnotations(); selMgr?.startSelection({ x, y }); setCaptureState('selecting'); }
+      else { selMgr?.discardSelection(); annEng?.clear(); setTextInput(null); notifyAnnotations(); selMgr?.startSelection({ x, y }); setCaptureState('selecting'); }
     }
     syncPipeline();
-  }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations, onClose]);
+  }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations, onClose, textInput]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = getCoords(e);
@@ -208,10 +230,49 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   }, [handleKeyDown]);
 
   return (
-    <canvas ref={canvasRef}
-      style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
-      onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
-      onContextMenu={(e) => e.preventDefault()} />
+    <>
+      <canvas ref={canvasRef}
+        style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
+        onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
+        onContextMenu={(e) => e.preventDefault()} />
+      {textInput && (
+        <textarea
+          autoFocus
+          value={textInput.text}
+          onChange={(e) => {
+            const val = e.target.value;
+            setTextInput(prev => prev ? { ...prev, text: val } : null);
+            annEngRef.current?.updateText(val);
+            syncPipeline();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              annEngRef.current?.updateText(textInput.text);
+              annEngRef.current?.finalizeText();
+              setTextInput(null);
+              notifyAnnotations();
+              syncPipeline();
+              e.stopPropagation();
+            }
+          }}
+          style={{
+            position: 'fixed',
+            left: textInput.x,
+            top: textInput.y,
+            minWidth: 100,
+            minHeight: 24,
+            background: 'transparent',
+            border: '1px dashed rgba(255,255,255,0.5)',
+            color: annEngRef.current?.getColor() ?? '#FF0000',
+            font: '16px sans-serif',
+            outline: 'none',
+            resize: 'both',
+            zIndex: 2000,
+            padding: 2,
+          }}
+        />
+      )}
+    </>
   );
 });
 

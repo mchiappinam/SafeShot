@@ -11,12 +11,15 @@ interface DrawingToolbarProps {
 
 const TOOLS: { id: ToolType; label: string; tooltip: string }[] = [
   { id: 'pencil',   label: '✏️', tooltip: 'Pencil' },
+  { id: 'sharpie',  label: '🖍️', tooltip: 'Highlighter' },
   { id: 'line',     label: '╱',  tooltip: 'Line' },
   { id: 'arrow',    label: '➜',  tooltip: 'Arrow' },
-  { id: 'sharpie',  label: '🖊', tooltip: 'Sharpie' },
+  { id: 'square',   label: '▢',  tooltip: 'Rectangle' },
   { id: 'circle',   label: '○',  tooltip: 'Circle' },
   { id: 'triangle', label: '△',  tooltip: 'Triangle' },
   { id: 'octagon',  label: '⬡',  tooltip: 'Octagon' },
+  { id: 'text',     label: 'T',  tooltip: 'Text' },
+  { id: 'fill',     label: '🪣', tooltip: 'Fill' },
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({

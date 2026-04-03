@@ -170,3 +170,79 @@ export function drawLine(
 
   ctx.restore();
 }
+
+/**
+ * Draw a rectangle (square) bounded by the drag rectangle.
+ */
+export function drawSquare(
+  ctx: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  color: string,
+  strokeWidth: number
+): void {
+  ctx.save();
+
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
+  const w = Math.abs(end.x - start.x);
+  const h = Math.abs(end.y - start.y);
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = strokeWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Draw text at the given position with transparent background.
+ */
+export function drawText(
+  ctx: CanvasRenderingContext2D,
+  position: Point,
+  text: string,
+  color: string,
+  fontSize: number
+): void {
+  if (!text) return;
+  ctx.save();
+
+  ctx.font = `${fontSize}px sans-serif`;
+  ctx.fillStyle = color;
+  ctx.textBaseline = 'top';
+
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], position.x, position.y + i * (fontSize + 2));
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Fill a rectangular area with a solid color.
+ */
+export function drawFill(
+  ctx: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  color: string
+): void {
+  ctx.save();
+
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
+  const w = Math.abs(end.x - start.x);
+  const h = Math.abs(end.y - start.y);
+
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+
+  ctx.restore();
+}
