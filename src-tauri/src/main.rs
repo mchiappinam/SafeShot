@@ -59,7 +59,7 @@ fn main() {
                     match event.id.as_ref() {
                         "capture" => start_capture(app),
                         "open_folder" => open_save_folder(app),
-                        "about" => { /* TODO */ }
+                        "about" => show_about(app),
                         "quit" => app.exit(0),
                         _ => {}
                     }
@@ -122,4 +122,13 @@ fn open_save_folder(_app: &AppHandle) {
     { std::process::Command::new("open").arg(&dir).spawn().ok(); }
     #[cfg(target_os = "linux")]
     { std::process::Command::new("xdg-open").arg(&dir).spawn().ok(); }
+}
+
+
+fn show_about(_app: &AppHandle) {
+    rfd::MessageDialog::new()
+        .set_title("About SafeShot")
+        .set_description("SafeShot v1.1.0\n\nPrivacy-first screenshot tool.\nYour screenshots stay yours — always.\nNo cloud, no tracking, no compromises.\n\nDeveloped by Matheus Chiappina\nhttps://chiappina.com")
+        .set_level(rfd::MessageLevel::Info)
+        .show();
 }

@@ -49,8 +49,10 @@ export class RenderPipeline {
   private rafId: number | null = null;
   private running = false;
   private dirty = false;
-  private offsetX = 0; // offset to translate virtual screen coords to canvas coords
+  private offsetX = 0;
   private offsetY = 0;
+  private totalWidth = 1;
+  private totalHeight = 1;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -67,6 +69,10 @@ export class RenderPipeline {
     // Compute offset so virtual screen coords map to canvas 0,0
     this.offsetX = Math.min(...screens.map(s => s.bounds.x));
     this.offsetY = Math.min(...screens.map(s => s.bounds.y));
+    const maxX = Math.max(...screens.map(s => s.bounds.x + s.bounds.width));
+    const maxY = Math.max(...screens.map(s => s.bounds.y + s.bounds.height));
+    this.totalWidth = maxX - this.offsetX || 1;
+    this.totalHeight = maxY - this.offsetY || 1;
     await Promise.all(screens.map(async (s) => {
       // Decode base64 data URL directly — avoids fetch() which CSP can block
       const base64 = s.imageDataURL.replace(/^data:image\/\w+;base64,/, '');
@@ -110,10 +116,17 @@ export class RenderPipeline {
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // Layer 0: frozen screen bitmaps
+    // Layer 0: frozen screen bitmaps — scale to fill canvas
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
-      if (bmp) ctx.drawImage(bmp, s.bounds.x - this.offsetX, s.bounds.y - this.offsetY, s.bounds.width, s.bounds.height);
+      if (bmp) {
+        // Scale bitmap to fill the canvas (window) dimensions
+        const sx = (s.bounds.x - this.offsetX) / this.totalWidth * w;
+        const sy = (s.bounds.y - this.offsetY) / this.totalHeight * h;
+        const sw = s.bounds.width / this.totalWidth * w;
+        const sh = s.bounds.height / this.totalHeight * h;
+        ctx.drawImage(bmp, sx, sy, sw, sh);
+      }
     }
 
     // Layer 1: dim mask with selection cutout

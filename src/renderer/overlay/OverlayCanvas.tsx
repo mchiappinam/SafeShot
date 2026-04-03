@@ -97,8 +97,12 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (!pipelineRef.current || screens.length === 0) return;
     const bounds = computeTotalBounds(screens);
     const canvas = canvasRef.current;
-    if (canvas) { canvas.width = bounds.width; canvas.height = bounds.height; }
-    selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: bounds.width, height: bounds.height });
+    if (canvas) {
+      // Match canvas pixels to window CSS pixels to avoid coordinate mismatch
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
     pipelineRef.current.setScreens(screens).then(() => {
       pipelineRef.current?.requestRender();
     }).catch(console.error);
