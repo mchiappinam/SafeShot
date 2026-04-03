@@ -50,6 +50,7 @@ fn main() {
             save::get_last_color,
             save::set_last_color,
             close_overlay,
+            show_overlay,
         ])
         .setup(|app| {
             log("Setup starting...");
@@ -140,6 +141,15 @@ fn close_overlay(app: AppHandle) {
     log("Overlay closed");
 }
 
+#[tauri::command]
+fn show_overlay(app: AppHandle) {
+    if let Some(win) = app.get_webview_window("overlay") {
+        win.show().ok();
+        win.set_focus().ok();
+    }
+    log("Overlay shown");
+}
+
 fn toggle_autostart(app: &AppHandle) {
     let autostart = app.autolaunch();
     let enabled = autostart.is_enabled().unwrap_or(false);
@@ -159,29 +169,42 @@ fn start_capture(app: &AppHandle) {
     log("Starting capture...");
 
     // Capture screens BEFORE opening the overlay so we don't screenshot our own window
-    match capture::do_capture() {
+    let screens = match capture::do_capture() {
         Ok(data) => {
             log(&format!("Captured {} displays", data.len()));
             let cache = app.state::<capture::CaptureCache>();
-            *cache.0.lock().unwrap() = data;
+            *cache.0.lock().unwrap() = data.clone();
+            data
         }
         Err(e) => {
             log(&format!("Capture failed: {}", e));
             return;
         }
-    }
+    };
+
+    // Compute virtual desktop bounds spanning all monitors
+    let min_x = screens.iter().map(|s| s.x).min().unwrap_or(0);
+    let min_y = screens.iter().map(|s| s.y).min().unwrap_or(0);
+    let max_x = screens.iter().map(|s| s.x + s.width as i32).max().unwrap_or(1920);
+    let max_y = screens.iter().map(|s| s.y + s.height as i32).max().unwrap_or(1080);
+    let total_w = (max_x - min_x) as f64;
+    let total_h = (max_y - min_y) as f64;
+
+    log(&format!("Virtual desktop: {}x{} at ({},{})", total_w, total_h, min_x, min_y));
 
     match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")
-        .fullscreen(true)
+        .position(min_x as f64, min_y as f64)
+        .inner_size(total_w, total_h)
         .decorations(false)
         .always_on_top(true)
         .skip_taskbar(true)
         .focused(true)
         .transparent(true)
+        .visible(false)
         .build()
     {
-        Ok(_) => log("Overlay window created"),
+        Ok(_) => log("Overlay window created (hidden)"),
         Err(e) => log(&format!("Overlay window failed: {}", e)),
     }
 }
