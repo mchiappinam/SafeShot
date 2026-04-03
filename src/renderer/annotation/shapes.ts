@@ -77,14 +77,10 @@ export function drawOctagon(
 ): void {
   ctx.save();
 
-  const x = Math.min(start.x, end.x);
-  const y = Math.min(start.y, end.y);
-  const w = Math.abs(end.x - start.x);
-  const h = Math.abs(end.y - start.y);
-
-  // Octagon cut fraction: 1 - 1/sqrt(2) ≈ 0.2929
-  const cx = w * (1 - 1 / Math.SQRT2) / 2;
-  const cy = h * (1 - 1 / Math.SQRT2) / 2;
+  // Use the smaller dimension to make a regular octagon
+  const cx = (start.x + end.x) / 2;
+  const cy = (start.y + end.y) / 2;
+  const r = Math.min(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) / 2;
 
   ctx.strokeStyle = color;
   ctx.lineWidth = strokeWidth;
@@ -92,14 +88,14 @@ export function drawOctagon(
   ctx.lineJoin = 'round';
 
   ctx.beginPath();
-  ctx.moveTo(x + cx, y);
-  ctx.lineTo(x + w - cx, y);
-  ctx.lineTo(x + w, y + cy);
-  ctx.lineTo(x + w, y + h - cy);
-  ctx.lineTo(x + w - cx, y + h);
-  ctx.lineTo(x + cx, y + h);
-  ctx.lineTo(x, y + h - cy);
-  ctx.lineTo(x, y + cy);
+  for (let i = 0; i < 8; i++) {
+    // Start rotated so the top edge is flat (like a stop sign)
+    const angle = (Math.PI * 2 * i) / 8 - Math.PI / 8;
+    const px = cx + r * Math.cos(angle);
+    const py = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
   ctx.closePath();
   ctx.stroke();
 
