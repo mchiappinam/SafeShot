@@ -103,12 +103,8 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (!pipelineRef.current || screens.length === 0) return;
     const canvas = canvasRef.current;
     if (canvas) {
-      // Use devicePixelRatio for crisp rendering on HiDPI displays
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      const ctx = canvas.getContext('2d');
-      if (ctx) ctx.scale(dpr, dpr);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
     selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
     pipelineRef.current.setScreens(screens).then(() => {

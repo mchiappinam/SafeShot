@@ -7,20 +7,9 @@ import {
 export function computeToolbarPositions(
   selection: Selection,
   screenBounds: Rectangle,
-  monitors?: Rectangle[],
 ): ToolbarPositions {
-  // Find the monitor that contains the selection center
-  const cx = selection.x + selection.width / 2;
-  const cy = selection.y + selection.height / 2;
-  let bounds = screenBounds;
-  if (monitors && monitors.length > 0) {
-    const monitor = monitors.find(m =>
-      cx >= m.x && cx < m.x + m.width && cy >= m.y && cy < m.y + m.height
-    );
-    if (monitor) bounds = monitor;
-  }
-  const drawing = computeDrawingToolbarPosition(selection, bounds);
-  const action = computeActionToolbarPosition(selection, bounds, drawing);
+  const drawing = computeDrawingToolbarPosition(selection, screenBounds);
+  const action = computeActionToolbarPosition(selection, screenBounds, drawing);
   return { drawing, action };
 }
 

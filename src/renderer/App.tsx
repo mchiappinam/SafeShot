@@ -86,21 +86,10 @@ export default function App(): React.ReactElement {
   const handleAnnotationsChange = useCallback((undo: boolean, redo: boolean) => { setCanUndo(undo); setCanRedo(redo); }, []);
   const handleSelectionChange = useCallback((sel: { x: number; y: number; width: number; height: number } | null) => setSelection(sel), []);
 
-  // Use window dimensions as bounds since toolbars are positioned in window coordinates
+  // Use window dimensions as bounds for toolbar clamping
   const bounds: Rectangle = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
-  // Compute per-monitor bounds in canvas coordinates for toolbar clamping
-  const monitorBounds: Rectangle[] = screens.map(s => {
-    const minX = Math.min(...screens.map(sc => sc.bounds.x));
-    const minY = Math.min(...screens.map(sc => sc.bounds.y));
-    return {
-      x: s.bounds.x - minX,
-      y: s.bounds.y - minY,
-      width: s.bounds.width,
-      height: s.bounds.height,
-    };
-  });
   const showToolbars = captureState === 'area-finalized' && selection !== null;
-  const toolbarPositions = selection ? computeToolbarPositions(selection, bounds, monitorBounds) : null;
+  const toolbarPositions = selection ? computeToolbarPositions(selection, bounds) : null;
 
   return (
     <>
