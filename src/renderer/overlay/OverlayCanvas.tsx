@@ -122,9 +122,12 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     }).catch(console.error);
   }, [screens]);
 
-  const getCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement> | MouseEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    // Clamp to canvas bounds so selection can't go outside
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+    return { x, y };
   }, []);
 
   const getHoveredHandle = useCallback((x: number, y: number): HandlePosition | null => {
