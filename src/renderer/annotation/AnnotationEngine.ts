@@ -6,15 +6,16 @@ function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function strokeWidthForTool(tool: ToolType): number {
-  if (tool === 'pencil') return STROKE_WIDTH.pencil;
-  if (tool === 'sharpie') return STROKE_WIDTH.sharpie;
+function strokeWidthForTool(tool: ToolType, customWidth?: number): number {
+  if (tool === 'pencil') return customWidth ?? STROKE_WIDTH.pencil;
+  if (tool === 'sharpie') return customWidth ? customWidth * 2 : STROKE_WIDTH.sharpie;
   return STROKE_WIDTH.shapes;
 }
 
 export class AnnotationEngine {
   private tool: ToolType | null = null;
   private color: string = DEFAULT_COLOR;
+  private customStrokeWidth: number = STROKE_WIDTH.pencil;
   private stack = new UndoRedoStack();
   private preview: Annotation | null = null;
   private currentPoints: Point[] = [];
@@ -23,6 +24,7 @@ export class AnnotationEngine {
 
   setTool(tool: ToolType | null): void { this.tool = tool; }
   setColor(color: string): void { this.color = color; }
+  setCustomStrokeWidth(w: number): void { this.customStrokeWidth = w; }
   getColor(): string { return this.color; }
   setOnTextChange(cb: (() => void) | null): void { this.onTextChange = cb; }
 
@@ -47,7 +49,7 @@ export class AnnotationEngine {
       id: generateId(),
       tool: this.tool,
       color: this.color,
-      strokeWidth: strokeWidthForTool(this.tool),
+      strokeWidth: strokeWidthForTool(this.tool, this.customStrokeWidth),
       points: [point],
     };
   }

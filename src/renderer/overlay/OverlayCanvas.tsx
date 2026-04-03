@@ -11,6 +11,7 @@ export interface OverlayCanvasProps {
   screens: ScreenData[];
   activeTool: ToolType | null;
   activeColor: string;
+  strokeWidth: number;
   onStateChange: (state: CaptureState) => void;
   onAnnotationsChange: (canUndo: boolean, canRedo: boolean) => void;
   onSelectionChange: (sel: { x: number; y: number; width: number; height: number } | null) => void;
@@ -26,7 +27,7 @@ export interface OverlayCanvasHandle {
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
-  screens, activeTool, activeColor, onStateChange, onAnnotationsChange, onSelectionChange,
+  screens, activeTool, activeColor, strokeWidth, onStateChange, onAnnotationsChange, onSelectionChange,
   onClose, onSave, onCopy,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -44,6 +45,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
 
   useEffect(() => { annEngRef.current?.setTool(activeTool); }, [activeTool]);
   useEffect(() => { annEngRef.current?.setColor(activeColor); }, [activeColor]);
+  useEffect(() => { annEngRef.current?.setCustomStrokeWidth(strokeWidth); }, [strokeWidth]);
   useEffect(() => { onStateChange(captureState); }, [captureState, onStateChange]);
 
   const notifyAnnotations = useCallback(() => {
