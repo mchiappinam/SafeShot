@@ -35,7 +35,5 @@
       }
     }
   },
-  "plugins": {
-    "global-shortcut": {}
-  }
+  "plugins": {}
 }
