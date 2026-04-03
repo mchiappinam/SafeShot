@@ -25,6 +25,13 @@ app.whenReady().then(async () => {
   try {
     await lifecycleManager.initialize();
     log('Lifecycle initialized');
+
+    // Deny all permission requests (geolocation, notifications, etc.)
+    const { session } = await import('electron');
+    session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+      callback(false);
+    });
+    session.defaultSession.setPermissionCheckHandler(() => false);
     if (process.platform === 'win32') {
       try { (await import('./platform/windows')).applyPrtScnOverride(); log('PrtScn override applied'); } catch (e) { log('PrtScn override failed: ' + e); }
     }
@@ -70,9 +77,9 @@ app.whenReady().then(async () => {
 
         overlayWindow = new BrowserWindow({
           x: minX, y: minY, width: totalWidth, height: totalHeight,
-          transparent: true, frame: false, alwaysOnTop: true,
+          frame: false, alwaysOnTop: true,
           skipTaskbar: true, resizable: false, focusable: true,
-          fullscreenable: false,
+          fullscreenable: false, backgroundColor: '#000000',
           webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') },
         });
         const htmlPath = path.join(__dirname, '..', '..', 'renderer', 'index.html');
