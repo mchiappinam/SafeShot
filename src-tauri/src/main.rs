@@ -34,6 +34,7 @@ fn main() {
 
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .manage(capture::CaptureCache(std::sync::Mutex::new(Vec::new())))
         .invoke_handler(tauri::generate_handler![
             capture::capture_screens,
             save::save_screenshot,
@@ -107,6 +108,19 @@ fn start_capture(app: &AppHandle) {
         return;
     }
     log("Starting capture...");
+
+    // Capture screens BEFORE opening the overlay so we don't screenshot our own window
+    match capture::do_capture() {
+        Ok(data) => {
+            log(&format!("Captured {} displays", data.len()));
+            let cache = app.state::<capture::CaptureCache>();
+            *cache.0.lock().unwrap() = data;
+        }
+        Err(e) => {
+            log(&format!("Capture failed: {}", e));
+            return;
+        }
+    }
 
     match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")

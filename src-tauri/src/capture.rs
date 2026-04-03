@@ -1,6 +1,8 @@
 use base64::Engine;
 use screenshots::Screen;
 use serde::Serialize;
+use std::sync::Mutex;
+use tauri::State;
 
 #[derive(Serialize, Clone)]
 pub struct ScreenData {
@@ -13,8 +15,11 @@ pub struct ScreenData {
     pub image_data_url: String,
 }
 
-#[tauri::command]
-pub fn capture_screens() -> Result<Vec<ScreenData>, String> {
+/// Holds pre-captured screen data so the overlay window doesn't capture itself.
+pub struct CaptureCache(pub Mutex<Vec<ScreenData>>);
+
+/// Capture all screens right now (called from Rust before the overlay opens).
+pub fn do_capture() -> Result<Vec<ScreenData>, String> {
     let screens = Screen::all().map_err(|e| e.to_string())?;
     let mut results = Vec::new();
 
@@ -45,7 +50,16 @@ pub fn capture_screens() -> Result<Vec<ScreenData>, String> {
         });
     }
 
-    // Sort left-to-right, top-to-bottom
     results.sort_by(|a, b| a.x.cmp(&b.x).then(a.y.cmp(&b.y)));
     Ok(results)
+}
+
+/// Frontend calls this to get the pre-captured data.
+#[tauri::command]
+pub fn capture_screens(cache: State<'_, CaptureCache>) -> Result<Vec<ScreenData>, String> {
+    let data = cache.0.lock().map_err(|e| e.to_string())?;
+    if data.is_empty() {
+        return Err("No capture data available".into());
+    }
+    Ok(data.clone())
 }
