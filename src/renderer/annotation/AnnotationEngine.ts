@@ -20,13 +20,11 @@ export class AnnotationEngine {
   private preview: Annotation | null = null;
   private currentPoints: Point[] = [];
   private textInput: { point: Point; text: string } | null = null;
-  private onTextChange: (() => void) | null = null;
 
   setTool(tool: ToolType | null): void { this.tool = tool; }
   setColor(color: string): void { this.color = color; }
   setCustomStrokeWidth(w: number): void { this.customStrokeWidth = w; }
   getColor(): string { return this.color; }
-  setOnTextChange(cb: (() => void) | null): void { this.onTextChange = cb; }
 
   getTextInput(): { point: Point; text: string } | null { return this.textInput; }
 
@@ -40,7 +38,6 @@ export class AnnotationEngine {
 
     if (this.tool === 'text') {
       this.textInput = { point, text: '' };
-      this.onTextChange?.();
       return;
     }
 
@@ -65,7 +62,6 @@ export class AnnotationEngine {
       points: [this.textInput.point],
       text,
     };
-    this.onTextChange?.();
   }
 
   finalizeText(): void {
@@ -109,5 +105,5 @@ export class AnnotationEngine {
   canRedo(): boolean { return this.stack.canRedo(); }
   getAnnotations(): Annotation[] { return this.stack.getAnnotations(); }
   getPreview(): Annotation | null { return this.preview; }
-  clear(): void { this.stack.clear(); this.preview = null; this.currentPoints = []; }
+  clear(): void { this.stack.clear(); this.preview = null; this.currentPoints = []; this.textInput = null; }
 }

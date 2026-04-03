@@ -46,6 +46,16 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   useEffect(() => { annEngRef.current?.setTool(activeTool); }, [activeTool]);
   useEffect(() => { annEngRef.current?.setColor(activeColor); }, [activeColor]);
   useEffect(() => { annEngRef.current?.setCustomStrokeWidth(strokeWidth); }, [strokeWidth]);
+  // Finalize text input when switching tools
+  useEffect(() => {
+    if (textInput && activeTool !== 'text') {
+      annEngRef.current?.updateText(textInput.text);
+      annEngRef.current?.finalizeText();
+      setTextInput(null);
+      notifyAnnotations();
+      syncPipeline();
+    }
+  }, [activeTool]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { onStateChange(captureState); }, [captureState, onStateChange]);
 
   const notifyAnnotations = useCallback(() => {
@@ -248,13 +258,14 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
             syncPipeline();
           }}
           onKeyDown={(e) => {
+            // Stop all key events from reaching the global handler while typing
+            e.stopPropagation();
             if (e.key === 'Escape') {
               annEngRef.current?.updateText(textInput.text);
               annEngRef.current?.finalizeText();
               setTextInput(null);
               notifyAnnotations();
               syncPipeline();
-              e.stopPropagation();
             }
           }}
           style={{
