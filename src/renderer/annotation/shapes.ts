@@ -107,6 +107,45 @@ export function drawOctagon(
 }
 
 /**
+ * Draw a straight line from start to end with an arrowhead at the end.
+ */
+export function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  color: string,
+  strokeWidth: number
+): void {
+  ctx.save();
+
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = strokeWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Draw the line
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.lineTo(end.x, end.y);
+  ctx.stroke();
+
+  // Draw arrowhead
+  const angle = Math.atan2(end.y - start.y, end.x - start.x);
+  const headLen = Math.max(10, strokeWidth * 5);
+  const headAngle = Math.PI / 6;
+
+  ctx.beginPath();
+  ctx.moveTo(end.x, end.y);
+  ctx.lineTo(end.x - headLen * Math.cos(angle - headAngle), end.y - headLen * Math.sin(angle - headAngle));
+  ctx.lineTo(end.x - headLen * Math.cos(angle + headAngle), end.y - headLen * Math.sin(angle + headAngle));
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
  * Draw a straight line from start to end.
  * Requirements: 6.5, 6.6
  */

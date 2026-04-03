@@ -21,17 +21,6 @@ function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   return window.__TAURI__.core.invoke(cmd, args) as Promise<T>;
 }
 
-function computeTotalBounds(screens: ScreenData[]): Rectangle {
-  if (screens.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const s of screens) {
-    minX = Math.min(minX, s.bounds.x); minY = Math.min(minY, s.bounds.y);
-    maxX = Math.max(maxX, s.bounds.x + s.bounds.width);
-    maxY = Math.max(maxY, s.bounds.y + s.bounds.height);
-  }
-  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-}
-
 interface TauriScreenData {
   display_id: string;
   x: number; y: number; width: number; height: number;
@@ -93,7 +82,8 @@ export default function App(): React.ReactElement {
   const handleAnnotationsChange = useCallback((undo: boolean, redo: boolean) => { setCanUndo(undo); setCanRedo(redo); }, []);
   const handleSelectionChange = useCallback((sel: { x: number; y: number; width: number; height: number } | null) => setSelection(sel), []);
 
-  const bounds = computeTotalBounds(screens);
+  // Use window dimensions as bounds since toolbars are positioned in window coordinates
+  const bounds: Rectangle = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
   const showToolbars = captureState === 'area-finalized' && selection !== null;
   const toolbarPositions = selection ? computeToolbarPositions(selection, bounds) : null;
 
