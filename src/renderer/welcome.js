@@ -16,6 +16,7 @@ function doClose() {
 }
 
 document.getElementById('close-btn').addEventListener('click', doClose);
+document.getElementById('close-x').addEventListener('click', doClose);
 
 document.getElementById('dev-link').addEventListener('click', function() {
   if (window.__TAURI__) {
