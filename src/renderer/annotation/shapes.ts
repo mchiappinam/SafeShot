@@ -120,26 +120,31 @@ export function drawArrow(
 ): void {
   ctx.save();
 
+  const angle = Math.atan2(end.y - start.y, end.x - start.x);
+  const headLen = Math.max(14, strokeWidth * 6);
+  const headAngle = Math.PI / 8;
+
+  // Shorten the line so it ends at the base of the arrowhead
+  const lineEndX = end.x - headLen * Math.cos(angle);
+  const lineEndY = end.y - headLen * Math.sin(angle);
+
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = strokeWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // Draw the line
+  // Draw the line (stops at arrowhead base)
   ctx.beginPath();
   ctx.moveTo(start.x, start.y);
-  ctx.lineTo(end.x, end.y);
+  ctx.lineTo(lineEndX, lineEndY);
   ctx.stroke();
 
-  // Draw arrowhead
-  const angle = Math.atan2(end.y - start.y, end.x - start.x);
-  const headLen = Math.max(10, strokeWidth * 5);
-  const headAngle = Math.PI / 6;
-
+  // Draw pointy arrowhead
   ctx.beginPath();
   ctx.moveTo(end.x, end.y);
   ctx.lineTo(end.x - headLen * Math.cos(angle - headAngle), end.y - headLen * Math.sin(angle - headAngle));
+  ctx.lineTo(end.x - headLen * 0.6 * Math.cos(angle), end.y - headLen * 0.6 * Math.sin(angle));
   ctx.lineTo(end.x - headLen * Math.cos(angle + headAngle), end.y - headLen * Math.sin(angle + headAngle));
   ctx.closePath();
   ctx.fill();
