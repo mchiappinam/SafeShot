@@ -254,7 +254,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         onContextMenu={(e) => e.preventDefault()} />
       {textInput && (
         <textarea
-          autoFocus
+          ref={(el) => { if (el) setTimeout(() => el.focus(), 0); }}
           value={textInput.text}
           onChange={(e) => {
             const val = e.target.value;
