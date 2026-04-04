@@ -140,8 +140,9 @@ export class AnnotationEngine {
     if (ann.tool === 'text') {
       const [start] = ann.points;
       if (!start) return false;
-      const textW = (ann.text?.length ?? 0) * 9;
-      const textH = 20;
+      const fontSize = ann.textSize ?? 16;
+      const textW = (ann.text?.length ?? 0) * fontSize * 0.6;
+      const textH = fontSize + 4;
       return p.x >= start.x && p.x <= start.x + textW && p.y >= start.y && p.y <= start.y + textH;
     }
     if (ann.tool === 'pencil' || ann.tool === 'sharpie') {

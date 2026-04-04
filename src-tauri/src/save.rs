@@ -86,23 +86,6 @@ pub fn get_save_directory() -> String {
     base.join("SafeShot").to_string_lossy().to_string()
 }
 
-fn get_next_n(directory: &str) -> u32 {
-    let mut max_n = 0u32;
-    if let Ok(entries) = fs::read_dir(directory) {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().to_string();
-            if let Some(rest) = name.strip_prefix("Screenshot_") {
-                if let Some(num_str) = rest.strip_suffix(".png") {
-                    if let Ok(n) = num_str.parse::<u32>() {
-                        max_n = max_n.max(n);
-                    }
-                }
-            }
-        }
-    }
-    max_n + 1
-}
-
 fn timestamp_filename() -> String {
     let now = chrono::Local::now();
     format!("SafeShot_{}.png", now.format("%Y-%m-%d_%H-%M-%S"))
