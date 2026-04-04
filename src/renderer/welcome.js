@@ -1,18 +1,18 @@
 let seconds = 10;
 const timerEl = document.getElementById('timer');
-const interval = setInterval(() => {
+const interval = setInterval(function() {
   seconds--;
-  if (seconds <= 0) { clearInterval(interval); closeWindow(); }
-  else { timerEl.textContent = 'Closing in ' + seconds + 's'; }
+  if (seconds <= 0) { clearInterval(interval); doClose(); }
+  else { timerEl.textContent = seconds; }
 }, 1000);
 
-function closeWindow() {
+function doClose() {
   clearInterval(interval);
-  if (window.__TAURI__) {
-    window.__TAURI__.core.invoke('close_welcome').catch(() => window.close());
-  } else {
+  try {
+    window.__TAURI__.core.invoke('close_welcome');
+  } catch(e) {
     window.close();
   }
 }
 
-document.getElementById('close-btn').addEventListener('click', closeWindow);
+document.getElementById('close-btn').addEventListener('click', doClose);
