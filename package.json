@@ -1,6 +1,6 @@
 {
   "name": "safeshot",
-  "version": "0.1.45",
+  "version": "0.1.46",
   "description": "Privacy-first screenshot tool for Windows and macOS",
   "private": true,
   "scripts": {
