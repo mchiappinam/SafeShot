@@ -32,7 +32,11 @@ if git diff --quiet && git diff --cached --quiet; then
   echo "No file changes, tagging current commit"
 else
   git add -A
-  git commit -m "release: v$VERSION"
+  if [ "$BUILD_TYPE" = "4" ]; then
+    git commit -m "Release v$VERSION"
+  else
+    git commit -m "v$VERSION"
+  fi
 fi
 
 case $BUILD_TYPE in
