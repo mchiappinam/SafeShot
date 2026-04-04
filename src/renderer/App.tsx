@@ -8,6 +8,7 @@ import DrawingToolbar from './toolbar/DrawingToolbar';
 import ActionToolbar from './toolbar/ActionToolbar';
 import ColorPicker from './toolbar/ColorPicker';
 import ThicknessPicker from './toolbar/ThicknessPicker';
+import TextFormatBar from './toolbar/TextFormatBar';
 import './toolbar/toolbar.css';
 
 declare global {
@@ -52,6 +53,11 @@ export default function App(): React.ReactElement {
   const [thicknessOpen, setThicknessOpen] = useState(false);
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [solid, setSolid] = useState(false);
+  const [textBold, setTextBold] = useState(false);
+  const [textItalic, setTextItalic] = useState(false);
+  const [textUnderline, setTextUnderline] = useState(false);
+  const [textHighlight, setTextHighlight] = useState(false);
+  const [textSize, setTextSize] = useState(16);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -107,6 +113,8 @@ export default function App(): React.ReactElement {
         activeColor={activeColor}
         strokeWidth={strokeWidth}
         solid={solid}
+        textBold={textBold} textItalic={textItalic} textUnderline={textUnderline}
+        textHighlight={textHighlight} textSize={textSize}
         onStateChange={handleStateChange}
         onAnnotationsChange={handleAnnotationsChange}
         onSelectionChange={handleSelectionChange}
@@ -151,6 +159,18 @@ export default function App(): React.ReactElement {
           onChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); }}
           onClose={() => setThicknessOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
+      )}
+
+      {activeTool === 'text' && toolbarPositions && (
+        <TextFormatBar
+          bold={textBold} italic={textItalic} underline={textUnderline}
+          highlight={textHighlight} size={textSize}
+          onBoldToggle={() => setTextBold(v => !v)}
+          onItalicToggle={() => setTextItalic(v => !v)}
+          onUnderlineToggle={() => setTextUnderline(v => !v)}
+          onHighlightToggle={() => setTextHighlight(v => !v)}
+          onSizeChange={setTextSize}
+          position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y - 50 }} />
       )}
     </>
   );

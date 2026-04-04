@@ -45,7 +45,7 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation): void 
       if (start && end) drawSquare(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
       break;
     case 'text':
-      if (start && ann.text) drawText(ctx, start, ann.text, ann.color, 16);
+      if (start && ann.text) drawText(ctx, start, ann.text, ann.color, ann.textSize ?? 16, ann.textBold, ann.textItalic, ann.textUnderline, ann.textHighlight);
       break;
   }
 }

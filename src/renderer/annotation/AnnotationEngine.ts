@@ -23,11 +23,22 @@ export class AnnotationEngine {
   private textInput: { point: Point; text: string } | null = null;
   private movingAnnotationId: string | null = null;
   private moveLastPoint: Point | null = null;
+  private textBold = false;
+  private textItalic = false;
+  private textUnderline = false;
+  private textHighlight = false;
+  private textSize = 16;
 
   setTool(tool: ToolType | null): void { this.tool = tool; }
   setColor(color: string): void { this.color = color; }
   setCustomStrokeWidth(w: number): void { this.customStrokeWidth = w; }
   setSolid(solid: boolean): void { this.solidFill = solid; }
+  setTextBold(v: boolean): void { this.textBold = v; }
+  setTextItalic(v: boolean): void { this.textItalic = v; }
+  setTextUnderline(v: boolean): void { this.textUnderline = v; }
+  setTextHighlight(v: boolean): void { this.textHighlight = v; }
+  setTextSize(v: number): void { this.textSize = v; }
+  getTextFormatting() { return { bold: this.textBold, italic: this.textItalic, underline: this.textUnderline, highlight: this.textHighlight, size: this.textSize }; }
   getColor(): string { return this.color; }
 
   getTextInput(): { point: Point; text: string } | null { return this.textInput; }
@@ -63,9 +74,14 @@ export class AnnotationEngine {
       id: generateId(),
       tool: 'text',
       color: this.color,
-      strokeWidth: 16,
+      strokeWidth: this.textSize,
       points: [this.textInput.point],
       text,
+      textBold: this.textBold,
+      textItalic: this.textItalic,
+      textUnderline: this.textUnderline,
+      textHighlight: this.textHighlight,
+      textSize: this.textSize,
     };
   }
 
@@ -79,9 +95,14 @@ export class AnnotationEngine {
       id: generateId(),
       tool: 'text',
       color: this.color,
-      strokeWidth: 16,
+      strokeWidth: this.textSize,
       points: [this.textInput.point],
       text: this.textInput.text,
+      textBold: this.textBold,
+      textItalic: this.textItalic,
+      textUnderline: this.textUnderline,
+      textHighlight: this.textHighlight,
+      textSize: this.textSize,
     });
     this.textInput = null;
     this.preview = null;

@@ -53,6 +53,11 @@ export interface Annotation {
   points: Point[];
   text?: string;
   solid?: boolean;
+  textBold?: boolean;
+  textItalic?: boolean;
+  textUnderline?: boolean;
+  textHighlight?: boolean;
+  textSize?: number;
 }
 
 // Screen Data
