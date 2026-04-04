@@ -19,7 +19,7 @@ const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }
   { id: 'line',     label: '╱',  tooltip: 'Line' },
   { id: 'arrow',    label: '➜',  tooltip: 'Arrow' },
   { id: 'square',   label: '▢',  tooltip: 'Rectangle' },
-  { id: 'circle',   label: '⬤',  tooltip: 'Circle', fontSize: 20 },
+  { id: 'circle',   label: '○',  tooltip: 'Circle', fontSize: 22 },
   { id: 'triangle', label: '△',  tooltip: 'Triangle' },
   { id: 'octagon',  label: '⬡',  tooltip: 'Octagon' },
   { id: 'text',     label: 'T',  tooltip: 'Text' },

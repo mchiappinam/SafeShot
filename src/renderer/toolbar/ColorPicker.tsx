@@ -33,7 +33,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         left: x,
         top: y,
         background: 'rgba(30,30,30,0.95)',
-        borderRadius: 8,
+        borderRadius: 2,
         padding: 10,
         zIndex: 1001,
         cursor: 'default',
