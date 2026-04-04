@@ -187,7 +187,7 @@ fn main() {
                         WebviewUrl::App("welcome.html".into()),
                     )
                     .title("Welcome to SafeShot")
-                    .inner_size(400.0, 320.0)
+                    .inner_size(420.0, 400.0)
                     .resizable(false)
                     .maximizable(false)
                     .minimizable(false)
@@ -236,24 +236,14 @@ fn close_about(app: AppHandle) {
 
 #[tauri::command]
 fn open_url(url: String) {
+    // Only allow known safe URLs
+    if url != "https://chiappina.com" { return; }
     #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("cmd")
-            .args(["/c", "start", &url])
-            .spawn()
-            .ok();
-    }
+    { std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().ok(); }
     #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open").arg(&url).spawn().ok();
-    }
+    { std::process::Command::new("open").arg(&url).spawn().ok(); }
     #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open")
-            .arg(&url)
-            .spawn()
-            .ok();
-    }
+    { std::process::Command::new("xdg-open").arg(&url).spawn().ok(); }
 }
 
 #[tauri::command]
@@ -371,8 +361,8 @@ fn start_capture(app: &AppHandle) {
                         & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                     // Padding: less on top (it's already flush), more on sides/bottom
-                    let pad_top = 2;
-                    let pad = 8;
+                    let pad_top = 4;
+                    let pad = 12;
                     SetWindowPos(
                         hwnd,
                         HWND_TOPMOST,
