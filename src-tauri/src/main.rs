@@ -59,6 +59,7 @@ fn main() {
             save::set_last_thickness,
             close_overlay,
             close_welcome,
+            close_about,
             open_url,
             show_overlay,
         ])
@@ -201,6 +202,13 @@ fn close_welcome(app: AppHandle) {
 }
 
 #[tauri::command]
+fn close_about(app: AppHandle) {
+    if let Some(win) = app.get_webview_window("about") {
+        win.close().ok();
+    }
+}
+
+#[tauri::command]
 fn open_url(url: String) {
     #[cfg(target_os = "windows")]
     { std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().ok(); }
@@ -304,7 +312,7 @@ fn start_capture(app: &AppHandle) {
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                     // Padding: less on top (it's already flush), more on sides/bottom
                     let pad_top = 2;
-                    let pad = 10;
+                    let pad = 12;
                     SetWindowPos(
                         hwnd, HWND_TOPMOST,
                         min_x - pad, min_y - pad_top, total_w + pad * 2, total_h + pad_top + pad,
@@ -367,10 +375,11 @@ fn show_about(app: &AppHandle) {
         WebviewUrl::App("about.html".into()),
     )
         .title("About SafeShot")
-        .inner_size(480.0, 420.0)
+        .inner_size(420.0, 380.0)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)
+        .decorations(false)
         .center()
         .build();
 }

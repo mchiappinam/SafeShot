@@ -36,9 +36,16 @@
     .timer { font-size: 10px; color: rgba(179,195,218,0.3); margin-top: 12px; }
     .credit { font-size: 10px; color: rgba(179,195,218,0.3); margin-top: 16px; }
     .credit a { color: rgba(42,227,255,0.5); text-decoration: none; cursor: pointer; }
+    .close-x {
+      position: fixed; top: 8px; right: 12px;
+      background: none; border: none; color: rgba(255,255,255,0.3);
+      font-size: 18px; cursor: pointer; transition: color 0.15s;
+    }
+    .close-x:hover { color: #fff; }
   </style>
 </head>
 <body>
+  <button class="close-x" id="close-x">&times;</button>
   <div class="logo">🛡️</div>
   <h1>SafeShot</h1>
   <p class="subtitle">Welcome</p>
