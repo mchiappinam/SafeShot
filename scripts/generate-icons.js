@@ -4,7 +4,7 @@ const fs = require('fs');
 async function main() {
   const sharp = require('sharp');
 
-  // SafeShot logo: shield with camera lens, using Brand brand colors
+  // SafeShot logo: shield with camera lens
   const svg = `
     <svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
       <defs>

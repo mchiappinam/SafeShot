@@ -1,6 +1,6 @@
 # SafeShot
 
-Privacy-first screenshot tool for Windows and macOS. Inspired by similar tools.
+Privacy-first screenshot tool for Windows and macOS.
 
 Fast screen capture with area selection, annotation tools, and local-only save/copy. Zero network capabilities, no cloud, no telemetry, no tracking.
 
