@@ -35,7 +35,6 @@
       cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px;
     }
     .btn:hover { background: rgba(42,227,255,0.2); border-color: rgba(42,227,255,0.4); }
-    .timer { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 8px; }
     .credit { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 10px; }
     .credit a { color: #2AE3FF; text-decoration: none; cursor: pointer; }
     .heart { color: #FF4488; animation: pulse 1.2s ease-in-out infinite; display: inline-block; }
@@ -63,17 +62,16 @@
     <div class="shortcut"><div class="shortcut-key">Ctrl+S</div><span class="shortcut-label">Save</span></div>
     <div class="shortcut"><div class="shortcut-key">ESC</div><span class="shortcut-label">Cancel</span></div>
   </div>
-  <button class="btn" id="close-btn">Got it</button>
-  <p class="timer" id="timer">60</p>
+  <button class="btn" id="close-btn">Got it (60)</button>
   <p class="credit">Made with <span class="heart">&#10084;</span> by <a id="dev-link">Matheus Chiappina</a></p>
   <p class="version-link" id="version-link">SafeShot v1.1.44</p>
   <script>
     var seconds = 60;
-    var timerEl = document.getElementById('timer');
+    var btnEl = document.getElementById('close-btn');
     var iv = setInterval(function() {
       seconds--;
       if (seconds <= 0) { clearInterval(iv); doClose(); }
-      else { timerEl.textContent = seconds; }
+      else { btnEl.textContent = 'Got it (' + seconds + ')'; }
     }, 1000);
     function doClose() {
       clearInterval(iv);
