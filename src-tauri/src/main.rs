@@ -11,8 +11,8 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, WebviewUrl, WebviewWindowBuilder,
 };
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
 fn log(msg: &str) {
     if let Some(mut dir) = dirs::data_local_dir() {
@@ -45,6 +45,9 @@ fn main() {
     log("SafeShot starting...");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {
+            // Second instance tried to launch, just ignore it
+        }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(capture::CaptureCache(std::sync::Mutex::new(Vec::new())))
@@ -80,12 +83,17 @@ fn main() {
                 if !welcomed {
                     // Mark as welcomed and enable autostart
                     let mut json = if let Ok(data) = std::fs::read_to_string(&path) {
-                        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+                        serde_json::from_str::<serde_json::Value>(&data)
+                            .unwrap_or(serde_json::json!({}))
                     } else {
                         serde_json::json!({})
                     };
                     json["welcomed"] = serde_json::json!(true);
-                    std::fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+                    std::fs::write(
+                        &path,
+                        serde_json::to_string_pretty(&json).unwrap_or_default(),
+                    )
+                    .ok();
                     let autostart = app.autolaunch();
                     if !autostart.is_enabled().unwrap_or(false) {
                         autostart.enable().ok();
@@ -103,12 +111,26 @@ fn main() {
                 MenuItem::with_id(app, "capture", "Capture Screenshot", true, None::<&str>)?;
             let open_folder =
                 MenuItem::with_id(app, "open_folder", "Open Save Folder", true, None::<&str>)?;
-            let autostart_item =
-                CheckMenuItem::with_id(app, "autostart", "Start on Boot", true, autostart_enabled, None::<&str>)?;
+            let autostart_item = CheckMenuItem::with_id(
+                app,
+                "autostart",
+                "Start on Boot",
+                true,
+                autostart_enabled,
+                None::<&str>,
+            )?;
             let about_item = MenuItem::with_id(app, "about", "About", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit SafeShot", true, None::<&str>)?;
-            let menu =
-                Menu::with_items(app, &[&capture_item, &open_folder, &autostart_item, &about_item, &quit_item])?;
+            let menu = Menu::with_items(
+                app,
+                &[
+                    &capture_item,
+                    &open_folder,
+                    &autostart_item,
+                    &about_item,
+                    &quit_item,
+                ],
+            )?;
             log("Tray menu built");
 
             let _tray = TrayIconBuilder::new()
@@ -120,7 +142,10 @@ fn main() {
                     "open_folder" => open_save_folder(app),
                     "autostart" => toggle_autostart(app),
                     "about" => show_about(app),
-                    "quit" => { log("Quit requested"); std::process::exit(0); },
+                    "quit" => {
+                        log("Quit requested");
+                        std::process::exit(0);
+                    }
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -157,18 +182,19 @@ fn main() {
                     // Small delay to let the tray icon appear first
                     std::thread::sleep(std::time::Duration::from_millis(500));
                     let _ = WebviewWindowBuilder::new(
-                        &handle, "welcome",
+                        &handle,
+                        "welcome",
                         WebviewUrl::App("welcome.html".into()),
                     )
-                        .title("Welcome to SafeShot")
-                        .inner_size(400.0, 320.0)
-                        .resizable(false)
-                        .maximizable(false)
-                        .minimizable(false)
-                        .decorations(false)
-                        .always_on_top(true)
-                        .center()
-                        .build();
+                    .title("Welcome to SafeShot")
+                    .inner_size(400.0, 320.0)
+                    .resizable(false)
+                    .maximizable(false)
+                    .minimizable(false)
+                    .decorations(false)
+                    .always_on_top(true)
+                    .center()
+                    .build();
                 });
                 log("First run: welcome notification shown");
             }
@@ -211,11 +237,23 @@ fn close_about(app: AppHandle) {
 #[tauri::command]
 fn open_url(url: String) {
     #[cfg(target_os = "windows")]
-    { std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().ok(); }
+    {
+        std::process::Command::new("cmd")
+            .args(["/c", "start", &url])
+            .spawn()
+            .ok();
+    }
     #[cfg(target_os = "macos")]
-    { std::process::Command::new("open").arg(&url).spawn().ok(); }
+    {
+        std::process::Command::new("open").arg(&url).spawn().ok();
+    }
     #[cfg(target_os = "linux")]
-    { std::process::Command::new("xdg-open").arg(&url).spawn().ok(); }
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&url)
+            .spawn()
+            .ok();
+    }
 }
 
 #[tauri::command]
@@ -262,12 +300,23 @@ fn start_capture(app: &AppHandle) {
     // Compute virtual desktop bounds spanning all monitors
     let min_x = screens.iter().map(|s| s.x).min().unwrap_or(0);
     let min_y = screens.iter().map(|s| s.y).min().unwrap_or(0);
-    let max_x = screens.iter().map(|s| s.x + s.width as i32).max().unwrap_or(1920);
-    let max_y = screens.iter().map(|s| s.y + s.height as i32).max().unwrap_or(1080);
+    let max_x = screens
+        .iter()
+        .map(|s| s.x + s.width as i32)
+        .max()
+        .unwrap_or(1920);
+    let max_y = screens
+        .iter()
+        .map(|s| s.y + s.height as i32)
+        .max()
+        .unwrap_or(1080);
     let total_w = max_x - min_x;
     let total_h = max_y - min_y;
 
-    log(&format!("Virtual desktop: {}x{} at ({},{})", total_w, total_h, min_x, min_y));
+    log(&format!(
+        "Virtual desktop: {}x{} at ({},{})",
+        total_w, total_h, min_x, min_y
+    ));
 
     // Create window at the virtual desktop bounds
     let win = match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
@@ -286,8 +335,14 @@ fn start_capture(app: &AppHandle) {
         .visible(false)
         .build()
     {
-        Ok(w) => { log("Overlay window created (hidden)"); w },
-        Err(e) => { log(&format!("Overlay window failed: {}", e)); return; },
+        Ok(w) => {
+            log("Overlay window created (hidden)");
+            w
+        }
+        Err(e) => {
+            log(&format!("Overlay window failed: {}", e));
+            return;
+        }
     };
 
     // On Windows: strip all window styles that cause invisible borders/title bar,
@@ -303,19 +358,28 @@ fn start_capture(app: &AppHandle) {
                     // Strip all frame styles: thick frame, caption, sysmenu, etc.
                     let style = GetWindowLongW(hwnd, GWL_STYLE);
                     let clean = (style as u32
-                        & !(WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX)
-                    ) | WS_POPUP;
+                        & !(WS_THICKFRAME
+                            | WS_CAPTION
+                            | WS_SYSMENU
+                            | WS_MAXIMIZEBOX
+                            | WS_MINIMIZEBOX))
+                        | WS_POPUP;
                     SetWindowLongW(hwnd, GWL_STYLE, clean as i32);
                     // Also strip extended styles (tool window border, etc.)
                     let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
-                    let clean_ex = ex_style as u32 & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+                    let clean_ex = ex_style as u32
+                        & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                     // Padding: less on top (it's already flush), more on sides/bottom
                     let pad_top = 2;
                     let pad = 8;
                     SetWindowPos(
-                        hwnd, HWND_TOPMOST,
-                        min_x - pad, min_y - pad_top, total_w + pad * 2, total_h + pad_top + pad,
+                        hwnd,
+                        HWND_TOPMOST,
+                        min_x - pad,
+                        min_y - pad_top,
+                        total_w + pad * 2,
+                        total_h + pad_top + pad,
                         SWP_FRAMECHANGED | SWP_NOACTIVATE,
                     );
 
@@ -329,7 +393,10 @@ fn start_capture(app: &AppHandle) {
                         std::mem::size_of::<u32>() as u32,
                     );
                 }
-                log(&format!("Win32: styles stripped, positioned at ({},{}) {}x{}", min_x, min_y, total_w, total_h));
+                log(&format!(
+                    "Win32: styles stripped, positioned at ({},{}) {}x{}",
+                    min_x, min_y, total_w, total_h
+                ));
             }
         }
     }
@@ -337,10 +404,14 @@ fn start_capture(app: &AppHandle) {
     #[cfg(not(target_os = "windows"))]
     {
         use tauri::LogicalPosition;
-        win.set_position(LogicalPosition::new(min_x as f64, min_y as f64)).ok();
+        win.set_position(LogicalPosition::new(min_x as f64, min_y as f64))
+            .ok();
     }
 
-    log(&format!("Window ready: ({},{}) {}x{}", min_x, min_y, total_w, total_h));
+    log(&format!(
+        "Window ready: ({},{}) {}x{}",
+        min_x, min_y, total_w, total_h
+    ));
 }
 
 fn open_save_folder(_app: &AppHandle) {
@@ -370,10 +441,7 @@ fn show_about(app: &AppHandle) {
     if app.get_webview_window("about").is_some() {
         return;
     }
-    let _ = WebviewWindowBuilder::new(
-        app, "about",
-        WebviewUrl::App("about.html".into()),
-    )
+    let _ = WebviewWindowBuilder::new(app, "about", WebviewUrl::App("about.html".into()))
         .title("About SafeShot")
         .inner_size(420.0, 380.0)
         .resizable(false)

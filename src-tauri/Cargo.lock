@@ -4017,13 +4017,14 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "safeshot"
-version = "0.1.8"
+version = "0.1.33"
 dependencies = [
  "arboard",
  "base64 0.22.1",
  "chrono",
  "dirs 6.0.0",
  "image 0.25.10",
+ "raw-window-handle",
  "rfd",
  "screenshots",
  "serde",
@@ -4032,6 +4033,8 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-autostart",
  "tauri-plugin-global-shortcut",
+ "tauri-plugin-single-instance",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4804,6 +4807,21 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "tauri-plugin-single-instance"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc61e4822b8f74d68278e09161d3e3fdd1b14b9eb781e24edccaabf10c420e8c"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "thiserror 2.0.18",
+ "tracing",
+ "windows-sys 0.60.2",
+ "zbus",
 ]
 
 [[package]]
