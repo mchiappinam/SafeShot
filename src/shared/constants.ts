@@ -1,7 +1,7 @@
 // Annotation Defaults
 
 /** Default annotation color (Requirement 6.15) */
-export const DEFAULT_COLOR = '#2322F0';
+export const DEFAULT_COLOR = '#ff0000';
 
 /** Stroke widths per tool (Requirements 6.5, 6.8) */
 export const STROKE_WIDTH = {
@@ -39,8 +39,8 @@ export const TOOLBAR_GAP = 8;
 
 /** Preset color palette, at least 12 colors (Requirement 6.13) */
 export const PRESET_COLORS: string[] = [
-  '#2322F0', // Blue (default)
-  '#FF0000', // Red
+  '#FF0000', // Red (default)
+  '#2322F0', // Nice Blue
   '#FF6600', // Orange
   '#FFFF00', // Yellow
   '#00FF00', // Lime
