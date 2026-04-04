@@ -39,7 +39,7 @@ export const TOOLBAR_GAP = 8;
 
 /** Preset color palette, at least 12 colors (Requirement 6.13) */
 export const PRESET_COLORS: string[] = [
-  '#2322F0', // Brand Blue (default)
+  '#2322F0', // Blue (default)
   '#FF0000', // Red
   '#FF6600', // Orange
   '#FFFF00', // Yellow
