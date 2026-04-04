@@ -64,13 +64,30 @@ fn main() {
         .setup(|app| {
             log("Setup starting...");
 
-            // On first run, enable autostart and show welcome notification
+            // Check if this is a first run (no "welcomed" key in config)
             let first_run = {
                 let path = save::config_path();
-                if !path.exists() {
-                    std::fs::write(&path, "{}").ok();
+                let welcomed = if let Ok(data) = std::fs::read_to_string(&path) {
+                    serde_json::from_str::<serde_json::Value>(&data)
+                        .ok()
+                        .and_then(|j| j.get("welcomed").and_then(|v| v.as_bool()))
+                        .unwrap_or(false)
+                } else {
+                    false
+                };
+                if !welcomed {
+                    // Mark as welcomed and enable autostart
+                    let mut json = if let Ok(data) = std::fs::read_to_string(&path) {
+                        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+                    } else {
+                        serde_json::json!({})
+                    };
+                    json["welcomed"] = serde_json::json!(true);
+                    std::fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
                     let autostart = app.autolaunch();
-                    autostart.enable().ok();
+                    if !autostart.is_enabled().unwrap_or(false) {
+                        autostart.enable().ok();
+                    }
                     log("First run: autostart enabled");
                     true
                 } else {
@@ -101,7 +118,7 @@ fn main() {
                     "open_folder" => open_save_folder(app),
                     "autostart" => toggle_autostart(app),
                     "about" => show_about(app),
-                    "quit" => app.exit(0),
+                    "quit" => { log("Quit requested"); std::process::exit(0); },
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -330,11 +347,19 @@ fn open_save_folder(_app: &AppHandle) {
     }
 }
 
-fn show_about(_app: &AppHandle) {
-    let version = env!("CARGO_PKG_VERSION");
-    rfd::MessageDialog::new()
-        .set_title("About SafeShot")
-        .set_description(&format!("SafeShot v{}\n\nPrivacy-first screenshot tool.\nYour screenshots stay yours, always.\nNo cloud, no tracking, no compromises.\n\nDeveloped by Matheus Chiappina\nhttps://chiappina.com", version))
-        .set_level(rfd::MessageLevel::Info)
-        .show();
+fn show_about(app: &AppHandle) {
+    if app.get_webview_window("about").is_some() {
+        return;
+    }
+    let _ = WebviewWindowBuilder::new(
+        app, "about",
+        WebviewUrl::App("about.html".into()),
+    )
+        .title("About SafeShot")
+        .inner_size(480.0, 420.0)
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(false)
+        .center()
+        .build();
 }
