@@ -13,6 +13,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),
         welcome: resolve(__dirname, 'src/renderer/welcome.html'),
+        about: resolve(__dirname, 'src/renderer/about.html'),
       },
     },
   },
