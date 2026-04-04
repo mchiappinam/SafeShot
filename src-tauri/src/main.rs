@@ -187,7 +187,7 @@ fn main() {
                         WebviewUrl::App("welcome.html".into()),
                     )
                     .title("Welcome to SafeShot")
-                    .inner_size(420.0, 400.0)
+                    .inner_size(420.0, 440.0)
                     .resizable(false)
                     .maximizable(false)
                     .minimizable(false)
@@ -237,7 +237,7 @@ fn close_about(app: AppHandle) {
 #[tauri::command]
 fn open_url(url: String) {
     // Only allow known safe URLs
-    if url != "https://chiappina.com" { return; }
+    if url != "https://chiappina.com" && url != "https://github.com/mchiappinam/SafeShot" { return; }
     #[cfg(target_os = "windows")]
     { std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().ok(); }
     #[cfg(target_os = "macos")]
@@ -362,7 +362,7 @@ fn start_capture(app: &AppHandle) {
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                     // Padding: less on top (it's already flush), more on sides/bottom
                     let pad_top = 2;
-                    let pad = 8;
+                    let pad = 11;
                     SetWindowPos(
                         hwnd,
                         HWND_TOPMOST,

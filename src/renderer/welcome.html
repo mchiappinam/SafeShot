@@ -12,16 +12,17 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       user-select: none; overflow: hidden;
     }
-    .logo { width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
+    .logo { width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); cursor: pointer; -webkit-user-drag: none; }
     h1 {
       font-size: 24px; font-weight: 800; margin-bottom: 4px;
       background: linear-gradient(90deg, #fff, #2AE3FF);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
     .subtitle { font-size: 12px; color: rgba(229,237,246,0.5); margin-bottom: 16px; }
-    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 16px; }
-    .desc { font-size: 12px; color: rgba(229,237,246,0.55); margin-bottom: 18px; text-align: center; line-height: 1.6; max-width: 340px; }
-    .shortcuts { display: flex; gap: 20px; margin-bottom: 20px; }
+    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 14px; }
+    .desc { font-size: 12px; color: rgba(229,237,246,0.55); margin-bottom: 14px; text-align: center; line-height: 1.6; max-width: 340px; }
+    .how { font-size: 11px; color: rgba(42,227,255,0.7); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1.5px; }
+    .shortcuts { display: flex; gap: 20px; margin-bottom: 18px; }
     .shortcut { display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .shortcut-key {
       background: rgba(42,227,255,0.12); border: 1px solid rgba(42,227,255,0.25);
@@ -35,7 +36,7 @@
     }
     .btn:hover { background: rgba(42,227,255,0.2); border-color: rgba(42,227,255,0.4); }
     .timer { font-size: 10px; color: rgba(179,195,218,0.25); margin-top: 8px; }
-    .credit { font-size: 10px; color: rgba(229,237,246,0.45); margin-top: 12px; }
+    .credit { font-size: 10px; color: rgba(229,237,246,0.45); margin-top: 10px; }
     .credit a { color: #2AE3FF; text-decoration: none; cursor: pointer; }
     .heart { color: #FF4488; animation: pulse 1.2s ease-in-out infinite; display: inline-block; }
     @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
@@ -49,11 +50,12 @@
 </head>
 <body>
   <button class="close-x" id="close-x">&times;</button>
-  <img class="logo" src="./logo.png" alt="SafeShot" />
+  <img class="logo" id="logo" src="./logo.png" alt="SafeShot" draggable="false" />
   <h1>SafeShot</h1>
   <p class="subtitle">Privacy-first screenshot tool</p>
   <div class="divider"></div>
   <p class="desc">SafeShot lives in your system tray. Capture, annotate, and save screenshots instantly. Everything stays on your machine.</p>
+  <p class="how">How to use</p>
   <div class="shortcuts">
     <div class="shortcut"><div class="shortcut-key">PrtScn</div><span class="shortcut-label">Capture</span></div>
     <div class="shortcut"><div class="shortcut-key">Ctrl+C</div><span class="shortcut-label">Copy</span></div>
@@ -61,10 +63,10 @@
     <div class="shortcut"><div class="shortcut-key">ESC</div><span class="shortcut-label">Cancel</span></div>
   </div>
   <button class="btn" id="close-btn">Got it</button>
-  <p class="timer" id="timer">10</p>
+  <p class="timer" id="timer">60</p>
   <p class="credit">Made with <span class="heart">&#10084;</span> by <a id="dev-link">Matheus Chiappina</a></p>
   <script>
-    var seconds = 10;
+    var seconds = 60;
     var timerEl = document.getElementById('timer');
     var iv = setInterval(function() {
       seconds--;
@@ -76,8 +78,12 @@
       if (window.__TAURI__) window.__TAURI__.core.invoke('close_welcome');
       else window.close();
     }
+    function openRepo() {
+      if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://github.com/mchiappinam/SafeShot' });
+    }
     document.getElementById('close-btn').addEventListener('click', doClose);
     document.getElementById('close-x').addEventListener('click', doClose);
+    document.getElementById('logo').addEventListener('click', openRepo);
     document.getElementById('dev-link').addEventListener('click', function() {
       if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' });
     });
