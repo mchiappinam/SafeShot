@@ -130,7 +130,8 @@ export default function App(): React.ReactElement {
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
           <ActionToolbar canUndo={canUndo} canRedo={canRedo}
             onUndo={() => overlayRef.current?.undo()} onRedo={() => overlayRef.current?.redo()}
-            onSave={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleSave(d, true); }}
+            onSave={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleSave(d, false); }}
+            onSaveAs={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleSave(d, true); }}
             onCopy={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleCopy(d); }}
             onCancel={handleClose}
             position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y }} />

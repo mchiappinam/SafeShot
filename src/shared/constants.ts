@@ -31,7 +31,7 @@ export const TOOLBAR_FADE_DURATION_MS = 150;
 /** Toolbar dimensions for positioning calculations (Requirements 9.4-9.7) */
 export const DRAWING_TOOLBAR_WIDTH = 80;
 export const DRAWING_TOOLBAR_HEIGHT = 228;
-export const ACTION_TOOLBAR_WIDTH = 280;
+export const ACTION_TOOLBAR_WIDTH = 320;
 export const ACTION_TOOLBAR_HEIGHT = 40;
 export const TOOLBAR_GAP = 8;
 
