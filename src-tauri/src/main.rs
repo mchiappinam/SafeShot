@@ -52,6 +52,7 @@ fn main() {
             save::get_last_thickness,
             save::set_last_thickness,
             close_overlay,
+            close_welcome,
             show_overlay,
         ])
         .setup(|app| {
@@ -126,21 +127,23 @@ fn main() {
 
             // Show welcome notification on first run
             if first_run {
-                std::thread::spawn(|| {
-                    rfd::MessageDialog::new()
-                        .set_title("Welcome to SafeShot!")
-                        .set_description(
-                            "SafeShot is running in your system tray.\n\n\
-                            How to use:\n\
-                            - Press Print Screen to capture your screen\n\
-                            - Or click the SafeShot tray icon near the clock\n\n\
-                            After capturing, drag to select an area, then:\n\
-                            - Ctrl+C to copy\n\
-                            - Ctrl+S to save\n\
-                            - ESC to cancel"
-                        )
-                        .set_level(rfd::MessageLevel::Info)
-                        .show();
+                let handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    // Small delay to let the tray icon appear first
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    let _ = WebviewWindowBuilder::new(
+                        &handle, "welcome",
+                        WebviewUrl::App("welcome.html".into()),
+                    )
+                        .title("Welcome to SafeShot")
+                        .inner_size(380.0, 260.0)
+                        .resizable(false)
+                        .maximizable(false)
+                        .minimizable(false)
+                        .decorations(false)
+                        .always_on_top(true)
+                        .center()
+                        .build();
                 });
                 log("First run: welcome notification shown");
             }
@@ -164,6 +167,13 @@ fn close_overlay(app: AppHandle) {
         win.close().ok();
     }
     log("Overlay closed");
+}
+
+#[tauri::command]
+fn close_welcome(app: AppHandle) {
+    if let Some(win) = app.get_webview_window("welcome") {
+        win.close().ok();
+    }
 }
 
 #[tauri::command]
