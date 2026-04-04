@@ -60,6 +60,10 @@ export class CursorManager {
     } else if (hoveredHandle !== null) {
       cursor = HANDLE_CURSOR_MAP[hoveredHandle];
     } else if (captureState === 'selecting' || captureState === 'annotating') {
+      cursor = activeTool === 'hand' ? 'grabbing' : 'crosshair';
+    } else if (selection !== null && activeTool === 'hand') {
+      cursor = 'grab';
+    } else if (selection !== null && activeTool === 'eyedropper') {
       cursor = 'crosshair';
     } else if (selection !== null && activeTool !== null) {
       cursor = 'crosshair';
