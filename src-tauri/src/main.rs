@@ -236,7 +236,7 @@ fn start_capture(app: &AppHandle) {
                     let clean_ex = ex_style as u32 & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                     // Force exact position and size with slight oversize to cover any gaps
-                    let pad = 8;
+                    let pad = 12;
                     SetWindowPos(
                         hwnd, HWND_TOPMOST,
                         min_x - pad, min_y - pad, total_w + pad * 2, total_h + pad * 2,
