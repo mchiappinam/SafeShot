@@ -12,30 +12,33 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       user-select: none; overflow: hidden;
     }
-    .logo { font-size: 44px; margin-bottom: 14px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
+    .logo { width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
     h1 {
-      font-size: 24px; font-weight: 800; margin-bottom: 6px;
+      font-size: 24px; font-weight: 800; margin-bottom: 4px;
       background: linear-gradient(90deg, #fff, #2AE3FF);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .subtitle { font-size: 12px; color: rgba(229,237,246,0.5); margin-bottom: 24px; }
-    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 24px; }
-    .shortcuts { display: flex; gap: 28px; margin-bottom: 28px; }
-    .shortcut { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .subtitle { font-size: 12px; color: rgba(229,237,246,0.5); margin-bottom: 16px; }
+    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 16px; }
+    .desc { font-size: 12px; color: rgba(229,237,246,0.55); margin-bottom: 18px; text-align: center; line-height: 1.6; max-width: 340px; }
+    .shortcuts { display: flex; gap: 20px; margin-bottom: 20px; }
+    .shortcut { display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .shortcut-key {
       background: rgba(42,227,255,0.12); border: 1px solid rgba(42,227,255,0.25);
-      padding: 8px 16px; font-family: monospace; font-size: 13px; color: #2AE3FF;
+      padding: 6px 14px; font-family: monospace; font-size: 12px; color: #2AE3FF;
     }
-    .shortcut-label { font-size: 10px; color: rgba(179,195,218,0.5); text-transform: uppercase; letter-spacing: 1px; }
+    .shortcut-label { font-size: 9px; color: rgba(179,195,218,0.5); text-transform: uppercase; letter-spacing: 1px; }
     .btn {
       background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-      color: #fff; padding: 8px 32px; font-size: 13px;
+      color: #fff; padding: 7px 28px; font-size: 12px;
       cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px;
     }
     .btn:hover { background: rgba(42,227,255,0.2); border-color: rgba(42,227,255,0.4); }
-    .timer { font-size: 10px; color: rgba(179,195,218,0.3); margin-top: 12px; }
-    .credit { font-size: 10px; color: rgba(179,195,218,0.3); margin-top: 16px; }
-    .credit a { color: rgba(42,227,255,0.5); text-decoration: none; cursor: pointer; }
+    .timer { font-size: 10px; color: rgba(179,195,218,0.25); margin-top: 8px; }
+    .credit { font-size: 10px; color: rgba(229,237,246,0.45); margin-top: 12px; }
+    .credit a { color: #2AE3FF; text-decoration: none; cursor: pointer; }
+    .heart { color: #FF4488; animation: pulse 1.2s ease-in-out infinite; display: inline-block; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
     .close-x {
       position: fixed; top: 8px; right: 12px;
       background: none; border: none; color: rgba(255,255,255,0.3);
@@ -46,10 +49,11 @@
 </head>
 <body>
   <button class="close-x" id="close-x">&times;</button>
-  <div class="logo">🛡️</div>
+  <img class="logo" src="./logo.png" alt="SafeShot" />
   <h1>SafeShot</h1>
-  <p class="subtitle">Welcome</p>
+  <p class="subtitle">Privacy-first screenshot tool</p>
   <div class="divider"></div>
+  <p class="desc">SafeShot lives in your system tray. Capture, annotate, and save screenshots instantly. Everything stays on your machine.</p>
   <div class="shortcuts">
     <div class="shortcut"><div class="shortcut-key">PrtScn</div><span class="shortcut-label">Capture</span></div>
     <div class="shortcut"><div class="shortcut-key">Ctrl+C</div><span class="shortcut-label">Copy</span></div>
@@ -58,7 +62,25 @@
   </div>
   <button class="btn" id="close-btn">Got it</button>
   <p class="timer" id="timer">10</p>
-  <p class="credit">by <a id="dev-link">chiappina.com</a></p>
-  <script src="./welcome.js"></script>
+  <p class="credit">Made with <span class="heart">&#10084;</span> by <a id="dev-link">Matheus Chiappina</a></p>
+  <script>
+    var seconds = 10;
+    var timerEl = document.getElementById('timer');
+    var iv = setInterval(function() {
+      seconds--;
+      if (seconds <= 0) { clearInterval(iv); doClose(); }
+      else { timerEl.textContent = seconds; }
+    }, 1000);
+    function doClose() {
+      clearInterval(iv);
+      if (window.__TAURI__) window.__TAURI__.core.invoke('close_welcome');
+      else window.close();
+    }
+    document.getElementById('close-btn').addEventListener('click', doClose);
+    document.getElementById('close-x').addEventListener('click', doClose);
+    document.getElementById('dev-link').addEventListener('click', function() {
+      if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' });
+    });
+  </script>
 </body>
 </html>

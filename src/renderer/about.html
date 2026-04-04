@@ -12,25 +12,28 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       user-select: none; overflow: hidden;
     }
-    .logo { font-size: 44px; margin-bottom: 14px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
+    .logo { width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
     h1 {
-      font-size: 24px; font-weight: 800; margin-bottom: 6px;
+      font-size: 24px; font-weight: 800; margin-bottom: 4px;
       background: linear-gradient(90deg, #fff, #2AE3FF);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .version { font-size: 11px; color: rgba(179,195,218,0.5); font-family: monospace; letter-spacing: 1px; margin-bottom: 20px; }
-    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 20px; }
-    .mission { font-size: 13px; line-height: 1.7; color: rgba(229,237,246,0.6); margin-bottom: 24px; max-width: 320px; text-align: center; }
-    .features { display: flex; gap: 20px; margin-bottom: 24px; }
-    .feature { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .version { font-size: 11px; color: rgba(179,195,218,0.5); font-family: monospace; letter-spacing: 1px; margin-bottom: 16px; }
+    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 16px; }
+    .mission { font-size: 13px; line-height: 1.7; color: rgba(229,237,246,0.6); margin-bottom: 20px; max-width: 320px; text-align: center; }
+    .features { display: flex; gap: 16px; margin-bottom: 20px; }
+    .feature { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .feature-icon {
-      font-size: 18px; width: 36px; height: 36px;
+      font-size: 16px; width: 34px; height: 34px;
       display: flex; align-items: center; justify-content: center;
       background: rgba(42,227,255,0.12); border: 1px solid rgba(42,227,255,0.25);
     }
-    .feature-label { font-size: 10px; color: rgba(179,195,218,0.5); text-transform: uppercase; letter-spacing: 1px; }
-    .credit { font-size: 10px; color: rgba(179,195,218,0.3); }
-    .credit a { color: rgba(42,227,255,0.5); text-decoration: none; cursor: pointer; }
+    .feature-label { font-size: 9px; color: rgba(179,195,218,0.5); text-transform: uppercase; letter-spacing: 1px; }
+    .tagline { font-size: 11px; color: rgba(229,237,246,0.4); margin-bottom: 16px; }
+    .credit { font-size: 10px; color: rgba(229,237,246,0.45); }
+    .credit a { color: #2AE3FF; text-decoration: none; cursor: pointer; }
+    .heart { color: #FF4488; animation: pulse 1.2s ease-in-out infinite; display: inline-block; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
     .close-x {
       position: fixed; top: 8px; right: 12px;
       background: none; border: none; color: rgba(255,255,255,0.3);
@@ -41,28 +44,25 @@
 </head>
 <body>
   <button class="close-x" id="close-x">&times;</button>
-  <div class="logo">🛡️</div>
+  <img class="logo" src="./logo.png" alt="SafeShot" />
   <h1>SafeShot</h1>
-  <p class="version" id="version"></p>
   <div class="divider"></div>
-  <p class="mission">Privacy-first screenshot tool.<br>No cloud. No tracking. No compromises.</p>
+  <p class="mission">Privacy-first screenshot tool for Windows and macOS.<br>Your screenshots stay yours, always.</p>
   <div class="features">
     <div class="feature"><div class="feature-icon">🔒</div><span class="feature-label">Private</span></div>
     <div class="feature"><div class="feature-icon">⚡</div><span class="feature-label">Fast</span></div>
     <div class="feature"><div class="feature-icon">🎨</div><span class="feature-label">Annotate</span></div>
     <div class="feature"><div class="feature-icon">💻</div><span class="feature-label">Local</span></div>
+    <div class="feature"><div class="feature-icon">🌐</div><span class="feature-label">Offline</span></div>
   </div>
-  <p class="credit">by <a id="dev-link">chiappina.com</a></p>
+  <p class="tagline">No cloud. No tracking. No compromises.</p>
+  <p class="credit">Made with <span class="heart">&#10084;</span> by <a id="dev-link">Matheus Chiappina</a></p>
   <script>
     document.getElementById('close-x').addEventListener('click', function() {
-      if (window.__TAURI__) {
-        window.__TAURI__.core.invoke('close_about').catch(function() {});
-      }
+      if (window.__TAURI__) window.__TAURI__.core.invoke('close_about');
     });
     document.getElementById('dev-link').addEventListener('click', function() {
-      if (window.__TAURI__) {
-        window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' }).catch(function() {});
-      }
+      if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' });
     });
   </script>
 </body>
