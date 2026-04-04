@@ -45,8 +45,9 @@ fn main() {
     log("SafeShot starting...");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {
-            // Second instance tried to launch, just ignore it
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // Second instance tried to launch, trigger a capture on the running instance
+            start_capture(app);
         }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
