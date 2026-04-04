@@ -12,14 +12,13 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       user-select: none; overflow: hidden;
     }
-    .logo { width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
+    .logo { width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); cursor: pointer; -webkit-user-drag: none; }
     h1 {
       font-size: 24px; font-weight: 800; margin-bottom: 4px;
       background: linear-gradient(90deg, #fff, #2AE3FF);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .version { font-size: 11px; color: rgba(179,195,218,0.5); font-family: monospace; letter-spacing: 1px; margin-bottom: 16px; }
-    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 16px; }
+    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin: 12px 0 16px; }
     .mission { font-size: 13px; line-height: 1.7; color: rgba(229,237,246,0.6); margin-bottom: 20px; max-width: 320px; text-align: center; }
     .features { display: flex; gap: 16px; margin-bottom: 20px; }
     .feature { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -44,7 +43,7 @@
 </head>
 <body>
   <button class="close-x" id="close-x">&times;</button>
-  <img class="logo" src="./logo.png" alt="SafeShot" />
+  <img class="logo" id="logo" src="./logo.png" alt="SafeShot" draggable="false" />
   <h1>SafeShot</h1>
   <div class="divider"></div>
   <p class="mission">Privacy-first screenshot tool for Windows and macOS.<br>Your screenshots stay yours, always.</p>
@@ -60,6 +59,9 @@
   <script>
     document.getElementById('close-x').addEventListener('click', function() {
       if (window.__TAURI__) window.__TAURI__.core.invoke('close_about');
+    });
+    document.getElementById('logo').addEventListener('click', function() {
+      if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://github.com/mchiappinam/SafeShot' });
     });
     document.getElementById('dev-link').addEventListener('click', function() {
       if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' });
