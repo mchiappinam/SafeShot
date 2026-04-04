@@ -25,9 +25,9 @@ SafeShot is a lightweight screenshot tool that lives in your system tray. Captur
 
 We got tired of screenshot tools that phone home, upload your images to unknown servers, or come bundled with trackers and bloatware. Many popular alternatives are developed overseas with questionable privacy practices and opaque data handling.
 
-SafeShot is different. Built in the USA with security as the foundation, not an afterthought. The app has zero network capabilities by design. It physically cannot connect to the internet. Your screenshots never leave your machine, period.
+SafeShot is different. Built in the USA 🇺🇸 with security as the foundation, not an afterthought. The app has zero network capabilities by design. It physically cannot connect to the internet. Your screenshots never leave your machine, period.
 
-Oh, and the installer is under 8 MB.
+Oh, and the installer is under 4 MB.
 
 ## Download and Install
 
@@ -92,7 +92,7 @@ Right-click the SafeShot icon in your system tray for:
 - Auto-start on boot
 - Saves to your Pictures/SafeShot folder
 - Remembers your last color and thickness
-- Tiny installer (~8 MB)
+- Tiny installer (~4 MB)
 - Zero network access, fully offline
 
 ## Privacy
@@ -107,7 +107,7 @@ SafeShot has **zero network capabilities**. It cannot connect to the internet. Y
 
 ## License
 
-MIT, see [LICENSE](LICENSE)
+Proprietary. Free to use, no distribution or modification permitted. See [LICENSE](LICENSE).
 
 ## Author
 
