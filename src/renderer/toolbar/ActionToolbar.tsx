@@ -6,6 +6,7 @@ interface ActionToolbarProps {
   onUndo: () => void;
   onRedo: () => void;
   onSave: () => void;
+  onSaveAs: () => void;
   onCopy: () => void;
   onCancel: () => void;
   position: { x: number; y: number };
@@ -25,7 +26,7 @@ const TooltipButton: React.FC<{
 );
 
 export const ActionToolbar: React.FC<ActionToolbarProps> = ({
-  canUndo, canRedo, onUndo, onRedo, onSave, onCopy, onCancel, position,
+  canUndo, canRedo, onUndo, onRedo, onSave, onSaveAs, onCopy, onCancel, position,
 }) => {
   const btnStyle = (disabled = false): React.CSSProperties => ({
     padding: '4px 10px',
@@ -50,6 +51,7 @@ export const ActionToolbar: React.FC<ActionToolbarProps> = ({
       <TooltipButton label="↪" tooltip="Redo (Ctrl+Y)" disabled={!canRedo} onClick={onRedo} style={btnStyle(!canRedo)} />
       <TooltipButton label="📋" tooltip="Copy (Ctrl+C)" onClick={onCopy} style={btnStyle()} />
       <TooltipButton label="💾" tooltip="Save (Ctrl+S)" onClick={onSave} style={btnStyle()} />
+      <TooltipButton label="📂" tooltip="Save As (Ctrl+Shift+S)" onClick={onSaveAs} style={btnStyle()} />
     </div>
   );
 };

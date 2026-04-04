@@ -161,6 +161,18 @@ fn main() {
                 .build(app)?;
             log("Tray icon created");
 
+            // On Windows 11, disable the built-in Snipping Tool PrtScn override
+            #[cfg(target_os = "windows")]
+            {
+                use std::process::Command;
+                // Set registry key to disable Windows Snipping Tool PrtScn capture
+                Command::new("reg")
+                    .args(["add", r"HKCU\Control Panel\Keyboard", "/v", "PrintScreenKeyForSnippingEnabled", "/t", "REG_DWORD", "/d", "0", "/f"])
+                    .output()
+                    .ok();
+                log("Windows PrtScn Snipping Tool override disabled");
+            }
+
             // Register PrtScn global shortcut
             let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
             let app_handle = app.handle().clone();

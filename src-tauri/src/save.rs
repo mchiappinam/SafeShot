@@ -3,6 +3,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
+use chrono;
 
 #[derive(Serialize)]
 pub struct SaveResult {
@@ -102,10 +103,14 @@ fn get_next_n(directory: &str) -> u32 {
     max_n + 1
 }
 
+fn timestamp_filename() -> String {
+    let now = chrono::Local::now();
+    format!("SafeShot_{}.png", now.format("%Y-%m-%d_%H-%M-%S"))
+}
+
 #[tauri::command]
 pub fn get_next_filename() -> String {
-    let dir = get_save_directory();
-    format!("Screenshot_{}.png", get_next_n(&dir))
+    timestamp_filename()
 }
 
 fn decode_data_url(image_data_url: &str) -> Result<Vec<u8>, String> {
@@ -151,7 +156,7 @@ pub fn save_screenshot(
         // Brief pause to let the window fully hide before the blocking dialog opens
         std::thread::sleep(std::time::Duration::from_millis(100));
 
-        let default_name = format!("Screenshot_{}.png", get_next_n(&dir));
+        let default_name = timestamp_filename();
         let dialog = rfd::FileDialog::new()
             .set_file_name(&default_name)
             .set_directory(&dir)
@@ -191,7 +196,7 @@ pub fn save_screenshot(
         }
     }
 
-    let filename = format!("Screenshot_{}.png", get_next_n(&dir));
+    let filename = timestamp_filename();
     let path = PathBuf::from(&dir).join(&filename);
 
     match fs::write(&path, &png_bytes) {
