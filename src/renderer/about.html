@@ -39,6 +39,7 @@
       font-size: 18px; cursor: pointer; transition: color 0.15s;
     }
     .close-x:hover { color: #fff; }
+    .version-link { font-size: 9px !important; color: rgba(179,195,218,0.25); margin-top: 6px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -56,7 +57,7 @@
   </div>
   <p class="tagline">No cloud. No tracking. No compromises.</p>
   <p class="credit">Made with <span class="heart">&#10084;</span> by <a id="dev-link">Matheus Chiappina</a></p>
-  <p style="font-size:9px; color:rgba(179,195,218,0.3); margin-top:8px; cursor:pointer;" id="version-link">SafeShot v1.1.35</p>
+  <p class="version-link" id="version-link">SafeShot v1.1.35</p>
   <script>
     document.getElementById('close-x').addEventListener('click', function() {
       if (window.__TAURI__) window.__TAURI__.core.invoke('close_about');

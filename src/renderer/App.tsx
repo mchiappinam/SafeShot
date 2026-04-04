@@ -50,7 +50,7 @@ export default function App(): React.ReactElement {
   const [canRedo, setCanRedo] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [thicknessOpen, setThicknessOpen] = useState(false);
-  const [strokeWidth, setStrokeWidth] = useState(2);
+  const [strokeWidth, setStrokeWidth] = useState(4);
   const [solid, setSolid] = useState(false);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 

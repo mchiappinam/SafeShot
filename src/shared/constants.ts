@@ -5,7 +5,7 @@ export const DEFAULT_COLOR = '#2322F0';
 
 /** Stroke widths per tool (Requirements 6.5, 6.8) */
 export const STROKE_WIDTH = {
-  pencil: 2,
+  pencil: 4,
   sharpie: 8,
   shapes: 2,   // line, circle, triangle, octagon
 } as const;
