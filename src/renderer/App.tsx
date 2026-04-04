@@ -27,6 +27,8 @@ interface TauriScreenData {
   display_id: string;
   x: number; y: number; width: number; height: number;
   scale_factor: number;
+  native_width: number;
+  native_height: number;
   image_data_url: string;
 }
 
@@ -36,8 +38,8 @@ function mapScreenData(raw: TauriScreenData[]): ScreenData[] {
     bounds: { x: s.x, y: s.y, width: s.width, height: s.height },
     scaleFactor: s.scale_factor,
     imageDataURL: s.image_data_url,
-    nativeWidth: s.width,
-    nativeHeight: s.height,
+    nativeWidth: s.native_width,
+    nativeHeight: s.native_height,
   }));
 }
 
