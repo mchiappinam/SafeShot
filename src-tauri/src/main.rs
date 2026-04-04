@@ -57,17 +57,19 @@ fn main() {
         .setup(|app| {
             log("Setup starting...");
 
-            // On first run, enable autostart. After that, respect user's choice.
-            {
+            // On first run, enable autostart and show welcome notification
+            let first_run = {
                 let path = save::config_path();
                 if !path.exists() {
-                    // Create config file to mark first run complete
                     std::fs::write(&path, "{}").ok();
                     let autostart = app.autolaunch();
                     autostart.enable().ok();
                     log("First run: autostart enabled");
+                    true
+                } else {
+                    false
                 }
-            }
+            };
 
             // Build tray menu
             let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
@@ -121,6 +123,27 @@ fn main() {
             }
 
             log("Setup complete. SafeShot ready");
+
+            // Show welcome notification on first run
+            if first_run {
+                std::thread::spawn(|| {
+                    rfd::MessageDialog::new()
+                        .set_title("Welcome to SafeShot!")
+                        .set_description(
+                            "SafeShot is running in your system tray.\n\n\
+                            How to use:\n\
+                            - Press Print Screen to capture your screen\n\
+                            - Or click the SafeShot tray icon near the clock\n\n\
+                            After capturing, drag to select an area, then:\n\
+                            - Ctrl+C to copy\n\
+                            - Ctrl+S to save\n\
+                            - ESC to cancel"
+                        )
+                        .set_level(rfd::MessageLevel::Info)
+                        .show();
+                });
+                log("First run: welcome notification shown");
+            }
             Ok(())
         })
         .build(tauri::generate_context!())
