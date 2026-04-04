@@ -21,6 +21,8 @@ export class AnnotationEngine {
   private preview: Annotation | null = null;
   private currentPoints: Point[] = [];
   private textInput: { point: Point; text: string } | null = null;
+  private movingAnnotationId: string | null = null;
+  private moveLastPoint: Point | null = null;
 
   setTool(tool: ToolType | null): void { this.tool = tool; }
   setColor(color: string): void { this.color = color; }
@@ -101,6 +103,60 @@ export class AnnotationEngine {
     this.preview = null;
     this.currentPoints = [];
   }
+
+  /** Hit-test annotations at a point (topmost first). Returns the annotation id or null. */
+  hitTestAnnotation(point: Point): string | null {
+    const anns = this.stack.getAnnotations();
+    for (let i = anns.length - 1; i >= 0; i--) {
+      const ann = anns[i];
+      if (this.isPointNearAnnotation(point, ann)) return ann.id;
+    }
+    return null;
+  }
+
+  private isPointNearAnnotation(p: Point, ann: Annotation): boolean {
+    const tolerance = Math.max(ann.strokeWidth, 8);
+    if (ann.tool === 'text') {
+      const [start] = ann.points;
+      if (!start) return false;
+      const textW = (ann.text?.length ?? 0) * 9;
+      const textH = 20;
+      return p.x >= start.x && p.x <= start.x + textW && p.y >= start.y && p.y <= start.y + textH;
+    }
+    if (ann.tool === 'pencil' || ann.tool === 'sharpie') {
+      return ann.points.some(pt => Math.hypot(p.x - pt.x, p.y - pt.y) <= tolerance);
+    }
+    // For shapes with 2 points (start, end), check bounding box
+    if (ann.points.length >= 2) {
+      const [s, e] = ann.points;
+      const minX = Math.min(s.x, e.x) - tolerance;
+      const maxX = Math.max(s.x, e.x) + tolerance;
+      const minY = Math.min(s.y, e.y) - tolerance;
+      const maxY = Math.max(s.y, e.y) + tolerance;
+      return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+    }
+    return false;
+  }
+
+  startMoveAnnotation(id: string, point: Point): void {
+    this.movingAnnotationId = id;
+    this.moveLastPoint = point;
+  }
+
+  updateMoveAnnotation(point: Point): void {
+    if (!this.movingAnnotationId || !this.moveLastPoint) return;
+    const dx = point.x - this.moveLastPoint.x;
+    const dy = point.y - this.moveLastPoint.y;
+    this.moveLastPoint = point;
+    this.stack.moveAnnotation(this.movingAnnotationId, dx, dy);
+  }
+
+  finalizeMoveAnnotation(): void {
+    this.movingAnnotationId = null;
+    this.moveLastPoint = null;
+  }
+
+  isMovingAnnotation(): boolean { return this.movingAnnotationId !== null; }
 
   undo(): boolean { return this.stack.undo(); }
   redo(): boolean { return this.stack.redo(); }

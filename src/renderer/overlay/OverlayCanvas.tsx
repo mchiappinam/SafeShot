@@ -19,6 +19,7 @@ export interface OverlayCanvasProps {
   onClose: () => void;
   onSave: (dataURL: string, shiftHeld: boolean) => void;
   onCopy: (dataURL: string) => void;
+  onColorPick?: (color: string) => void;
 }
 
 export interface OverlayCanvasHandle {
@@ -29,7 +30,7 @@ export interface OverlayCanvasHandle {
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
   screens, activeTool, activeColor, strokeWidth, solid, onStateChange, onAnnotationsChange, onSelectionChange,
-  onClose, onSave, onCopy,
+  onClose, onSave, onCopy, onColorPick,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pipelineRef = useRef<RenderPipeline | null>(null);
@@ -170,6 +171,23 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       const handle = getHoveredHandle(x, y);
       if (handle) { selMgr?.startResize(handle); setCaptureState('resizing'); syncPipeline(); return; }
       const inside = hitTestSelection({ x, y }, sel);
+      // Eyedropper: pick color from canvas pixel
+      if (inside && activeToolRef.current === 'eyedropper') {
+        const color = pipelineRef.current?.getPixelColor(x, y);
+        if (color && onColorPick) onColorPick(color);
+        syncPipeline();
+        return;
+      }
+      // Hand tool: move existing annotations
+      if (inside && activeToolRef.current === 'hand') {
+        const hitId = annEng?.hitTestAnnotation({ x, y });
+        if (hitId) {
+          annEng?.startMoveAnnotation(hitId, { x, y });
+          setCaptureState('annotating');
+        }
+        syncPipeline();
+        return;
+      }
       if (inside && activeToolRef.current === 'text') {
         // Finalize any existing text first
         if (textInput) {
@@ -204,7 +222,10 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (state === 'selecting') selMgrRef.current?.updateSelection({ x, y });
     else if (state === 'resizing') selMgrRef.current?.updateResize({ x, y });
     else if (state === 'moving') selMgrRef.current?.updateMove({ x, y });
-    else if (state === 'annotating') annEngRef.current?.updateStroke({ x, y });
+    else if (state === 'annotating') {
+      if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.updateMoveAnnotation({ x, y });
+      else annEngRef.current?.updateStroke({ x, y });
+    }
     cursorRef.current?.update({
       captureState: state, selection: selMgrRef.current?.getSelection() ?? null,
       activeTool: activeToolRef.current, mouseX: x, mouseY: y,
@@ -218,7 +239,11 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (state === 'selecting') { const sel = selMgrRef.current?.finalizeSelection(); setCaptureState(sel ? 'area-finalized' : 'capturing'); }
     else if (state === 'resizing') { selMgrRef.current?.finalizeResize(); setCaptureState('area-finalized'); }
     else if (state === 'moving') { selMgrRef.current?.finalizeMove(); setCaptureState('area-finalized'); }
-    else if (state === 'annotating') { annEngRef.current?.finalizeStroke(); notifyAnnotations(); setCaptureState('area-finalized'); }
+    else if (state === 'annotating') {
+      if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.finalizeMoveAnnotation();
+      else annEngRef.current?.finalizeStroke();
+      notifyAnnotations(); setCaptureState('area-finalized');
+    }
     syncPipeline();
   }, [syncPipeline, notifyAnnotations]);
 

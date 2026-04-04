@@ -113,6 +113,7 @@ export default function App(): React.ReactElement {
         onClose={handleClose}
         onSave={handleSave}
         onCopy={handleCopy}
+        onColorPick={(c) => { setActiveColor(c); invoke('set_last_color', { color: c }).catch(() => {}); }}
       />
 
       {showToolbars && toolbarPositions && (
