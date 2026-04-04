@@ -14,8 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Add Cargo to PATH
-        shell: cmd
-        run: echo %USERPROFILE%\.cargo\bin>> %GITHUB_PATH%
+        shell: powershell
+        run: |
+          $cargoPath = "$env:USERPROFILE\.cargo\bin"
+          Write-Output "Cargo path: $cargoPath"
+          Add-Content $env:GITHUB_PATH $cargoPath
       - name: Build
         shell: cmd
         run: |
