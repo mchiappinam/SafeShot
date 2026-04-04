@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/mchiappinam/SafeShot/releases/latest">
-    <img src="https://img.shields.io/github/v/release/mchiappinam/SafeShot?color=2322F0&label=Download&style=for-the-badge" alt="Download" />
+    <img src="https://img.shields.io/github/v/tag/mchiappinam/SafeShot?color=2322F0&label=Download&style=for-the-badge" alt="Download" />
   </a>
 </p>
 
