@@ -221,7 +221,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         annEng?.startStroke({ x, y }); setCaptureState('annotating');
       }
       else if (inside) { selMgr?.startMove({ x, y }); setCaptureState('moving'); }
-      else { selMgr?.discardSelection(); annEng?.clear(); setTextInput(null); notifyAnnotations(); selMgr?.startSelection({ x, y }); setCaptureState('selecting'); }
+      else { selMgr?.discardSelection(); setTextInput(null); notifyAnnotations(); selMgr?.startSelection({ x, y }); setCaptureState('selecting'); }
     }
     syncPipeline();
   }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations, onClose, textInput]);
