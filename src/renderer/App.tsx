@@ -71,6 +71,13 @@ export default function App(): React.ReactElement {
     invoke<number>('get_last_thickness').then(t => {
       if (t > 0) setStrokeWidth(t);
     }).catch(() => {});
+    invoke<Record<string, unknown>>('get_text_settings').then(ts => {
+      if (ts.bold !== undefined) setTextBold(ts.bold as boolean);
+      if (ts.italic !== undefined) setTextItalic(ts.italic as boolean);
+      if (ts.underline !== undefined) setTextUnderline(ts.underline as boolean);
+      if (ts.highlight !== undefined) setTextHighlight(ts.highlight as boolean);
+      if (ts.size !== undefined) setTextSize(ts.size as number);
+    }).catch(() => {});
   }, []);
 
   // Close overlay only, don't exit the app
@@ -96,6 +103,10 @@ export default function App(): React.ReactElement {
   }, []);
 
   const handleStateChange = useCallback((state: CaptureState) => setCaptureState(state), []);
+
+  const saveTextSettings = useCallback((s: Record<string, unknown>) => {
+    invoke('set_text_settings', { settings: s }).catch(() => {});
+  }, []);
   const handleAnnotationsChange = useCallback((undo: boolean, redo: boolean) => { setCanUndo(undo); setCanRedo(redo); }, []);
   const handleSelectionChange = useCallback((sel: { x: number; y: number; width: number; height: number } | null) => setSelection(sel), []);
 
@@ -165,11 +176,11 @@ export default function App(): React.ReactElement {
         <TextFormatBar
           bold={textBold} italic={textItalic} underline={textUnderline}
           highlight={textHighlight} size={textSize}
-          onBoldToggle={() => setTextBold(v => !v)}
-          onItalicToggle={() => setTextItalic(v => !v)}
-          onUnderlineToggle={() => setTextUnderline(v => !v)}
-          onHighlightToggle={() => setTextHighlight(v => !v)}
-          onSizeChange={setTextSize}
+          onBoldToggle={() => { setTextBold(v => { const n = !v; saveTextSettings({ bold: n, italic: textItalic, underline: textUnderline, highlight: textHighlight, size: textSize }); return n; }); }}
+          onItalicToggle={() => { setTextItalic(v => { const n = !v; saveTextSettings({ bold: textBold, italic: n, underline: textUnderline, highlight: textHighlight, size: textSize }); return n; }); }}
+          onUnderlineToggle={() => { setTextUnderline(v => { const n = !v; saveTextSettings({ bold: textBold, italic: textItalic, underline: n, highlight: textHighlight, size: textSize }); return n; }); }}
+          onHighlightToggle={() => { setTextHighlight(v => { const n = !v; saveTextSettings({ bold: textBold, italic: textItalic, underline: textUnderline, highlight: n, size: textSize }); return n; }); }}
+          onSizeChange={(s) => { setTextSize(s); saveTextSettings({ bold: textBold, italic: textItalic, underline: textUnderline, highlight: textHighlight, size: s }); }}
           position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y - 50 }} />
       )}
     </>

@@ -60,6 +60,8 @@ fn main() {
             save::set_last_color,
             save::get_last_thickness,
             save::set_last_thickness,
+            save::get_text_settings,
+            save::set_text_settings,
             close_overlay,
             close_welcome,
             close_about,

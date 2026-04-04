@@ -76,6 +76,31 @@ pub fn set_last_thickness(thickness: u32) {
     .ok();
 }
 
+#[tauri::command]
+pub fn get_text_settings() -> serde_json::Value {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(ts) = json.get("textSettings") {
+                return ts.clone();
+            }
+        }
+    }
+    serde_json::json!({})
+}
+
+#[tauri::command]
+pub fn set_text_settings(settings: serde_json::Value) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["textSettings"] = settings;
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
 pub fn get_save_directory() -> String {
     // Use Pictures directory on all platforms
     let base = dirs::picture_dir().unwrap_or_else(|| {
