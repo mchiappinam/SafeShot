@@ -7,9 +7,9 @@ function generateId(): string {
 }
 
 function strokeWidthForTool(tool: ToolType, customWidth?: number): number {
-  if (tool === 'pencil') return customWidth ?? STROKE_WIDTH.pencil;
-  if (tool === 'sharpie') return customWidth ? customWidth * 2 : STROKE_WIDTH.sharpie;
-  return STROKE_WIDTH.shapes;
+  const w = customWidth ?? STROKE_WIDTH.pencil;
+  if (tool === 'sharpie') return w * 2;
+  return w;
 }
 
 export class AnnotationEngine {
