@@ -11,17 +11,14 @@ permissions:
 jobs:
   build-windows:
     runs-on: self-hosted
+    env:
+      CARGO_HOME: C:\Users\mchia\.cargo
     steps:
       - uses: actions/checkout@v4
-      - name: Add Cargo to PATH
-        shell: powershell
-        run: |
-          $cargoPath = "$env:USERPROFILE\.cargo\bin"
-          Write-Output "Cargo path: $cargoPath"
-          Add-Content $env:GITHUB_PATH $cargoPath
       - name: Build
         shell: cmd
         run: |
+          set "PATH=C:\Users\mchia\.cargo\bin;%PATH%"
           rustc --version
           cargo --version
           node --version
@@ -29,6 +26,7 @@ jobs:
           if errorlevel 1 exit /b 1
           call node scripts/generate-icons.js
           if errorlevel 1 exit /b 1
+          set "PATH=C:\Users\mchia\.cargo\bin;%PATH%"
           call npx tauri build
           if errorlevel 1 exit /b 1
       - uses: actions/upload-artifact@v4
