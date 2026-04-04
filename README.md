@@ -5,7 +5,7 @@
 <h1 align="center">SafeShot</h1>
 
 <p align="center">
-  <strong>Privacy-first screenshot tool for Windows</strong><br>
+  <strong>Privacy-first screenshot tool for Windows and macOS</strong><br>
   Your screenshots stay yours. No cloud. No tracking. No compromises.
 </p>
 
@@ -24,7 +24,7 @@ SafeShot is a lightweight screenshot tool that lives in your system tray. Captur
 ## Download and Install
 
 1. Go to the [latest release](https://github.com/mchiappinam/SafeShot/releases/latest)
-2. Download the `.exe` installer
+2. Download the `.exe` installer (Windows) or `.dmg` (macOS)
 3. Run the installer and follow the prompts
 4. SafeShot will appear in your system tray (near the clock)
 
@@ -94,6 +94,7 @@ SafeShot has **zero network capabilities**. It cannot connect to the internet. Y
 ## System Requirements
 
 - Windows 10 or later
+- macOS 11 (Big Sur) or later
 - ~20 MB disk space
 
 ## License
