@@ -54,28 +54,12 @@
     <span class="kbd">Ctrl+S</span> save &nbsp;
     <span class="kbd">ESC</span> cancel
   </p>
-  <button class="close-btn" onclick="closeWindow()">Got it</button>
+  <button class="close-btn" id="close-btn">Got it</button>
   <p class="timer" id="timer">Closing in 10s</p>
   <p style="font-size:10px; color:rgba(179,195,218,0.4); margin-top:10px;">
     Developed by <a href="https://chiappina.com" target="_blank" style="color:#2AE3FF; text-decoration:none;">Matheus Chiappina</a>
     &nbsp;|&nbsp; chiappina.com
   </p>
-  <script>
-    let seconds = 10;
-    const timerEl = document.getElementById('timer');
-    const interval = setInterval(() => {
-      seconds--;
-      if (seconds <= 0) { clearInterval(interval); closeWindow(); }
-      else { timerEl.textContent = 'Closing in ' + seconds + 's'; }
-    }, 1000);
-    function closeWindow() {
-      clearInterval(interval);
-      if (window.__TAURI__) {
-        window.__TAURI__.core.invoke('close_welcome').catch(() => window.close());
-      } else {
-        window.close();
-      }
-    }
-  </script>
+  <script src="./welcome.js"></script>
 </body>
 </html>
