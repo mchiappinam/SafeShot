@@ -129,16 +129,19 @@ export class RenderPipeline {
 
   /** Render only the screen bitmaps + annotations for the selection region (no dim, no border, no handles, no label). */
   renderCleanExport(sel: { x: number; y: number; width: number; height: number }, annotations: Annotation[], preview: Annotation | null): HTMLCanvasElement | null {
-    const dpr = window.devicePixelRatio || 1;
-    const w = Math.round(sel.width * dpr);
-    const h = Math.round(sel.height * dpr);
+    // Use the highest scale factor from the screens for export quality
+    const maxScale = this.screens.length > 0
+      ? Math.max(...this.screens.map(s => s.nativeWidth / s.bounds.width || 1))
+      : window.devicePixelRatio || 1;
+    const w = Math.round(sel.width * maxScale);
+    const h = Math.round(sel.height * maxScale);
     if (w <= 0 || h <= 0) return null;
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = w;
     exportCanvas.height = h;
     const ctx = exportCanvas.getContext('2d');
     if (!ctx) return null;
-    ctx.scale(dpr, dpr);
+    ctx.scale(maxScale, maxScale);
 
     // Use logical dimensions for coordinate math
     const cw = window.innerWidth;

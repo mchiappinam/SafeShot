@@ -12,6 +12,8 @@ pub struct ScreenData {
     pub width: u32,
     pub height: u32,
     pub scale_factor: f64,
+    pub native_width: u32,
+    pub native_height: u32,
     pub image_data_url: String,
 }
 
@@ -47,6 +49,8 @@ pub fn do_capture() -> Result<Vec<ScreenData>, String> {
             width: info.width,
             height: info.height,
             scale_factor: info.scale_factor as f64,
+            native_width: image.width(),
+            native_height: image.height(),
             image_data_url: data_url,
         });
     }
