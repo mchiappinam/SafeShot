@@ -49,15 +49,15 @@ export function computeActionToolbarPosition(
   const overlapsY = y < drawingBottom && actionBottom > drawing.y;
 
   if (overlapsX && overlapsY) {
-    // Slide action toolbar to start after the drawing toolbar horizontally
-    const newX = drawing.x + DRAWING_TOOLBAR_WIDTH + TOOLBAR_GAP;
-    if (newX + ACTION_TOOLBAR_WIDTH <= bounds.x + bounds.width) {
-      return { x: newX, y, side: 'left', edge };
-    }
-    // If no room to the right, try left of drawing toolbar
+    // Slide action toolbar to the left of the drawing toolbar
     const leftX = drawing.x - ACTION_TOOLBAR_WIDTH - TOOLBAR_GAP;
     if (leftX >= bounds.x) {
       return { x: leftX, y, side: 'left', edge };
+    }
+    // If no room to the left, try right of drawing toolbar
+    const rightX = drawing.x + DRAWING_TOOLBAR_WIDTH + TOOLBAR_GAP;
+    if (rightX + ACTION_TOOLBAR_WIDTH <= bounds.x + bounds.width) {
+      return { x: rightX, y, side: 'left', edge };
     }
     // Last resort: push below drawing toolbar
     y = drawing.y + DRAWING_TOOLBAR_HEIGHT + TOOLBAR_GAP;
