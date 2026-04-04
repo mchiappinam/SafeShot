@@ -11,10 +11,12 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 echo ""
-echo "  1) Windows only        (tag: v$VERSION-beta)"
-echo "  2) macOS only          (tag: v$VERSION-beta-mac)"
-echo "  3) Windows + macOS     (tag: v$VERSION-beta-all)"
-echo "  4) Full release (both) (tag: v$VERSION)"
+echo "  1) Windows only              (tag: v$VERSION-beta)"
+echo "  2) macOS ARM only            (tag: v$VERSION-beta-mac-arm)"
+echo "  3) macOS Intel only          (tag: v$VERSION-beta-mac-x64)"
+echo "  4) macOS both                (tag: v$VERSION-beta-mac)"
+echo "  5) Windows + macOS both      (tag: v$VERSION-beta-all)"
+echo "  6) Full release (all)        (tag: v$VERSION)"
 read -p "Choose [1]: " BUILD_TYPE
 BUILD_TYPE=${BUILD_TYPE:-1}
 
@@ -22,7 +24,6 @@ BUILD_TYPE=${BUILD_TYPE:-1}
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
 sed -i "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" src-tauri/tauri.conf.json
-sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$VERSION\"/" src/renderer/App.tsx
 sed -i "s/SafeShot v[0-9]*\.[0-9]*\.[0-9]*/SafeShot v$VERSION/g" src/renderer/welcome.html src/renderer/about.html
 
 echo "Updated version to $VERSION"
@@ -32,8 +33,8 @@ if git diff --quiet && git diff --cached --quiet; then
   echo "No file changes, tagging current commit"
 else
   git add -A
-  if [ "$BUILD_TYPE" = "4" ]; then
-    git commit -m "Release v$VERSION"
+  if [ "$BUILD_TYPE" = "6" ]; then
+    git commit -m "release v$VERSION"
   else
     git commit -m "v$VERSION"
   fi
@@ -41,9 +42,11 @@ fi
 
 case $BUILD_TYPE in
   1) TAG="v$VERSION-beta" ;;
-  2) TAG="v$VERSION-beta-mac" ;;
-  3) TAG="v$VERSION-beta-all" ;;
-  4) TAG="v$VERSION" ;;
+  2) TAG="v$VERSION-beta-mac-arm" ;;
+  3) TAG="v$VERSION-beta-mac-x64" ;;
+  4) TAG="v$VERSION-beta-mac" ;;
+  5) TAG="v$VERSION-beta-all" ;;
+  6) TAG="v$VERSION" ;;
   *) TAG="v$VERSION-beta" ;;
 esac
 
@@ -55,8 +58,10 @@ echo ""
 echo "Tagged: $TAG"
 case $BUILD_TYPE in
   1) echo "Building: Windows only" ;;
-  2) echo "Building: macOS only" ;;
-  3) echo "Building: Windows + macOS" ;;
-  4) echo "Building: Windows + macOS + GitHub Release" ;;
+  2) echo "Building: macOS ARM only" ;;
+  3) echo "Building: macOS Intel only" ;;
+  4) echo "Building: macOS ARM + Intel" ;;
+  5) echo "Building: Windows + macOS ARM + Intel" ;;
+  6) echo "Building: all platforms + GitHub Release" ;;
 esac
 echo "Check: https://github.com/mchiappinam/SafeShot/actions"
