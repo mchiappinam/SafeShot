@@ -10,6 +10,12 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
+echo ""
+echo "  1) Tag only (build, no GitHub Release)"
+echo "  2) Full release (build + GitHub Release)"
+read -p "Choose [1]: " RELEASE_TYPE
+RELEASE_TYPE=${RELEASE_TYPE:-1}
+
 # Update version in all files
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
 sed -i "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
@@ -27,10 +33,22 @@ else
   git commit -m "release: v$VERSION"
 fi
 
-git tag "v$VERSION"
+if [[ "$RELEASE_TYPE" == "2" ]]; then
+  TAG="v$VERSION"
+  echo "Creating release tag: $TAG"
+else
+  TAG="v$VERSION-beta"
+  echo "Creating beta tag: $TAG"
+fi
+
+git tag "$TAG"
 git push origin main
-git push origin "v$VERSION"
+git push origin "$TAG"
 
 echo ""
-echo "Released v$VERSION. CI will build installers."
+if [[ "$RELEASE_TYPE" == "2" ]]; then
+  echo "Released $TAG. CI will build installers and create a GitHub Release."
+else
+  echo "Tagged $TAG. CI will build installers (no GitHub Release)."
+fi
 echo "Check: https://github.com/mchiappinam/SafeShot/actions"

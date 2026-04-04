@@ -60,7 +60,9 @@ pub fn get_last_thickness() -> u32 {
         }
     }
     4
-}#[tauri::command]
+}
+
+#[tauri::command]
 pub fn set_last_thickness(thickness: u32) {
     let path = config_path();
     let mut json = if let Ok(data) = fs::read_to_string(&path) {
