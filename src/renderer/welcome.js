@@ -16,3 +16,9 @@ function doClose() {
 }
 
 document.getElementById('close-btn').addEventListener('click', doClose);
+
+document.getElementById('dev-link').addEventListener('click', function() {
+  if (window.__TAURI__) {
+    window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' }).catch(function() {});
+  }
+});

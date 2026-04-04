@@ -8,71 +8,50 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: linear-gradient(160deg, #020A51 0%, #2322F0 60%, #9F38FA 100%);
-      color: #fff;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      overflow: hidden;
+      color: #fff; height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      user-select: none; overflow: hidden;
     }
-    .logo { font-size: 40px; margin-bottom: 16px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
+    .logo { font-size: 44px; margin-bottom: 14px; filter: drop-shadow(0 2px 8px rgba(42,227,255,0.4)); }
     h1 {
-      font-size: 22px; font-weight: 700; margin-bottom: 24px;
+      font-size: 24px; font-weight: 800; margin-bottom: 6px;
       background: linear-gradient(90deg, #fff, #2AE3FF);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .shortcuts {
-      display: flex; gap: 32px; margin-bottom: 28px;
-    }
-    .shortcut {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-    }
+    .subtitle { font-size: 12px; color: rgba(229,237,246,0.5); margin-bottom: 24px; }
+    .divider { width: 50px; height: 2px; background: linear-gradient(90deg, #2AE3FF, #9F38FA); margin-bottom: 24px; }
+    .shortcuts { display: flex; gap: 28px; margin-bottom: 28px; }
+    .shortcut { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .shortcut-key {
-      background: rgba(42,227,255,0.12);
-      border: 1px solid rgba(42,227,255,0.25);
-      padding: 8px 16px;
-      font-family: monospace; font-size: 13px; color: #2AE3FF;
-      letter-spacing: 0.5px;
+      background: rgba(42,227,255,0.12); border: 1px solid rgba(42,227,255,0.25);
+      padding: 8px 16px; font-family: monospace; font-size: 13px; color: #2AE3FF;
     }
-    .shortcut-label { font-size: 11px; color: rgba(229,237,246,0.6); }
+    .shortcut-label { font-size: 10px; color: rgba(179,195,218,0.5); text-transform: uppercase; letter-spacing: 1px; }
     .btn {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
       color: #fff; padding: 8px 32px; font-size: 13px;
       cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px;
     }
     .btn:hover { background: rgba(42,227,255,0.2); border-color: rgba(42,227,255,0.4); }
-    .timer { font-size: 10px; color: rgba(179,195,218,0.35); margin-top: 12px; }
+    .timer { font-size: 10px; color: rgba(179,195,218,0.3); margin-top: 12px; }
     .credit { font-size: 10px; color: rgba(179,195,218,0.3); margin-top: 16px; }
-    .credit a { color: rgba(42,227,255,0.5); text-decoration: none; }
+    .credit a { color: rgba(42,227,255,0.5); text-decoration: none; cursor: pointer; }
   </style>
 </head>
 <body>
   <div class="logo">🛡️</div>
-  <h1>Welcome to SafeShot</h1>
+  <h1>SafeShot</h1>
+  <p class="subtitle">Welcome</p>
+  <div class="divider"></div>
   <div class="shortcuts">
-    <div class="shortcut">
-      <div class="shortcut-key">PrtScn</div>
-      <span class="shortcut-label">Capture</span>
-    </div>
-    <div class="shortcut">
-      <div class="shortcut-key">Ctrl+C</div>
-      <span class="shortcut-label">Copy</span>
-    </div>
-    <div class="shortcut">
-      <div class="shortcut-key">Ctrl+S</div>
-      <span class="shortcut-label">Save</span>
-    </div>
-    <div class="shortcut">
-      <div class="shortcut-key">ESC</div>
-      <span class="shortcut-label">Cancel</span>
-    </div>
+    <div class="shortcut"><div class="shortcut-key">PrtScn</div><span class="shortcut-label">Capture</span></div>
+    <div class="shortcut"><div class="shortcut-key">Ctrl+C</div><span class="shortcut-label">Copy</span></div>
+    <div class="shortcut"><div class="shortcut-key">Ctrl+S</div><span class="shortcut-label">Save</span></div>
+    <div class="shortcut"><div class="shortcut-key">ESC</div><span class="shortcut-label">Cancel</span></div>
   </div>
   <button class="btn" id="close-btn">Got it</button>
   <p class="timer" id="timer">10</p>
-  <p class="credit">by <a href="https://chiappina.com" target="_blank">chiappina.com</a></p>
+  <p class="credit">by <a id="dev-link">chiappina.com</a></p>
   <script src="./welcome.js"></script>
 </body>
 </html>
