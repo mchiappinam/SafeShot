@@ -209,18 +209,49 @@ export function drawText(
   position: Point,
   text: string,
   color: string,
-  fontSize: number
+  fontSize: number,
+  bold?: boolean,
+  italic?: boolean,
+  underline?: boolean,
+  highlight?: boolean
 ): void {
   if (!text) return;
   ctx.save();
 
-  ctx.font = `${fontSize}px sans-serif`;
-  ctx.fillStyle = color;
+  const style = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${fontSize}px sans-serif`;
+  ctx.font = style;
   ctx.textBaseline = 'top';
 
   const lines = text.split('\n');
+  const lineHeight = fontSize + 4;
+
   for (let i = 0; i < lines.length; i++) {
-    ctx.fillText(lines[i], position.x, position.y + i * (fontSize + 2));
+    const lx = position.x;
+    const ly = position.y + i * lineHeight;
+
+    // Highlight background (Instagram-style)
+    if (highlight) {
+      const metrics = ctx.measureText(lines[i]);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.3;
+      ctx.fillRect(lx - 2, ly - 1, metrics.width + 4, lineHeight);
+      ctx.globalAlpha = 1;
+    }
+
+    // Text
+    ctx.fillStyle = color;
+    ctx.fillText(lines[i], lx, ly);
+
+    // Underline
+    if (underline) {
+      const metrics = ctx.measureText(lines[i]);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(1, fontSize / 12);
+      ctx.beginPath();
+      ctx.moveTo(lx, ly + fontSize + 1);
+      ctx.lineTo(lx + metrics.width, ly + fontSize + 1);
+      ctx.stroke();
+    }
   }
 
   ctx.restore();

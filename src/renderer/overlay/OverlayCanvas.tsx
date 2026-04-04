@@ -13,6 +13,11 @@ export interface OverlayCanvasProps {
   activeColor: string;
   strokeWidth: number;
   solid: boolean;
+  textBold: boolean;
+  textItalic: boolean;
+  textUnderline: boolean;
+  textHighlight: boolean;
+  textSize: number;
   onStateChange: (state: CaptureState) => void;
   onAnnotationsChange: (canUndo: boolean, canRedo: boolean) => void;
   onSelectionChange: (sel: { x: number; y: number; width: number; height: number } | null) => void;
@@ -29,7 +34,7 @@ export interface OverlayCanvasHandle {
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
-  screens, activeTool, activeColor, strokeWidth, solid, onStateChange, onAnnotationsChange, onSelectionChange,
+  screens, activeTool, activeColor, strokeWidth, solid, textBold, textItalic, textUnderline, textHighlight, textSize, onStateChange, onAnnotationsChange, onSelectionChange,
   onClose, onSave, onCopy, onColorPick,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,6 +54,11 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   useEffect(() => { annEngRef.current?.setColor(activeColor); }, [activeColor]);
   useEffect(() => { annEngRef.current?.setCustomStrokeWidth(strokeWidth); }, [strokeWidth]);
   useEffect(() => { annEngRef.current?.setSolid(solid); }, [solid]);
+  useEffect(() => { annEngRef.current?.setTextBold(textBold); }, [textBold]);
+  useEffect(() => { annEngRef.current?.setTextItalic(textItalic); }, [textItalic]);
+  useEffect(() => { annEngRef.current?.setTextUnderline(textUnderline); }, [textUnderline]);
+  useEffect(() => { annEngRef.current?.setTextHighlight(textHighlight); }, [textHighlight]);
+  useEffect(() => { annEngRef.current?.setTextSize(textSize); }, [textSize]);
   // Finalize text input when switching tools
   useEffect(() => {
     if (textInput && activeTool !== 'text') {
@@ -305,10 +315,11 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
             top: textInput.y,
             minWidth: 100,
             minHeight: 24,
-            background: 'transparent',
+            background: textHighlight ? `${annEngRef.current?.getColor() ?? '#FF0000'}4D` : 'transparent',
             border: '1px dashed rgba(255,255,255,0.5)',
             color: annEngRef.current?.getColor() ?? '#FF0000',
-            font: '16px sans-serif',
+            font: `${textItalic ? 'italic ' : ''}${textBold ? 'bold ' : ''}${textSize}px sans-serif`,
+            textDecoration: textUnderline ? 'underline' : 'none',
             outline: 'none',
             resize: 'both',
             zIndex: 2000,
