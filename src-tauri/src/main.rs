@@ -59,6 +59,7 @@ fn main() {
             save::set_last_thickness,
             close_overlay,
             close_welcome,
+            open_url,
             show_overlay,
         ])
         .setup(|app| {
@@ -159,7 +160,7 @@ fn main() {
                         WebviewUrl::App("welcome.html".into()),
                     )
                         .title("Welcome to SafeShot")
-                        .inner_size(380.0, 260.0)
+                        .inner_size(400.0, 320.0)
                         .resizable(false)
                         .maximizable(false)
                         .minimizable(false)
@@ -197,6 +198,16 @@ fn close_welcome(app: AppHandle) {
     if let Some(win) = app.get_webview_window("welcome") {
         win.close().ok();
     }
+}
+
+#[tauri::command]
+fn open_url(url: String) {
+    #[cfg(target_os = "windows")]
+    { std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().ok(); }
+    #[cfg(target_os = "macos")]
+    { std::process::Command::new("open").arg(&url).spawn().ok(); }
+    #[cfg(target_os = "linux")]
+    { std::process::Command::new("xdg-open").arg(&url).spawn().ok(); }
 }
 
 #[tauri::command]
