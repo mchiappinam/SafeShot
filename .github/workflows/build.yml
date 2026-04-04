@@ -20,8 +20,11 @@ jobs:
           rustc --version
           node --version
           npm install
+          if errorlevel 1 exit /b 1
           node scripts/generate-icons.js
+          if errorlevel 1 exit /b 1
           npx tauri build
+          if errorlevel 1 exit /b 1
       - uses: actions/upload-artifact@v4
         with:
           name: SafeShot-windows
