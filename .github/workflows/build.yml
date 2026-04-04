@@ -13,24 +13,11 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install Rust (if needed)
-        shell: pwsh
-        run: |
-          if (!(Get-Command rustup -ErrorAction SilentlyContinue)) {
-            Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
-            .\rustup-init.exe -y --default-toolchain stable
-            Remove-Item rustup-init.exe
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
-          }
-          rustup default stable
-          rustc --version
       - name: Build
-        shell: pwsh
+        shell: cmd
         run: |
-          $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+          rustc --version
+          node --version
           npm install
           node scripts/generate-icons.js
           npx tauri build
