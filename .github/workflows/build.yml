@@ -16,6 +16,7 @@ jobs:
       - name: Build
         shell: cmd
         run: |
+          set PATH=%USERPROFILE%\.cargo\bin;%PATH%
           rustc --version
           node --version
           npm install
