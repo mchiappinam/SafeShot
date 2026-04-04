@@ -362,7 +362,7 @@ fn start_capture(app: &AppHandle) {
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                     // Padding: less on top (it's already flush), more on sides/bottom
                     let pad_top = 2;
-                    let pad = 11;
+                    let pad = 12;
                     SetWindowPos(
                         hwnd,
                         HWND_TOPMOST,
