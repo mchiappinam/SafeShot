@@ -11,10 +11,12 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 echo ""
-echo "  1) Tag only (build, no GitHub Release)"
-echo "  2) Full release (build + GitHub Release)"
-read -p "Choose [1]: " RELEASE_TYPE
-RELEASE_TYPE=${RELEASE_TYPE:-1}
+echo "  1) Windows only        (tag: v$VERSION-beta)"
+echo "  2) macOS only          (tag: v$VERSION-beta-mac)"
+echo "  3) Windows + macOS     (tag: v$VERSION-beta-all)"
+echo "  4) Full release (both) (tag: v$VERSION)"
+read -p "Choose [1]: " BUILD_TYPE
+BUILD_TYPE=${BUILD_TYPE:-1}
 
 # Update version in all files
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
@@ -25,7 +27,7 @@ sed -i "s/SafeShot v[0-9]*\.[0-9]*\.[0-9]*/SafeShot v$VERSION/g" src/renderer/we
 
 echo "Updated version to $VERSION"
 
-# Commit if there are changes, otherwise just tag
+# Commit if there are changes
 if git diff --quiet && git diff --cached --quiet; then
   echo "No file changes, tagging current commit"
 else
@@ -33,22 +35,24 @@ else
   git commit -m "release: v$VERSION"
 fi
 
-if [[ "$RELEASE_TYPE" == "2" ]]; then
-  TAG="v$VERSION"
-  echo "Creating release tag: $TAG"
-else
-  TAG="v$VERSION-beta"
-  echo "Creating beta tag: $TAG"
-fi
+case $BUILD_TYPE in
+  1) TAG="v$VERSION-beta" ;;
+  2) TAG="v$VERSION-beta-mac" ;;
+  3) TAG="v$VERSION-beta-all" ;;
+  4) TAG="v$VERSION" ;;
+  *) TAG="v$VERSION-beta" ;;
+esac
 
 git tag "$TAG"
 git push origin main
 git push origin "$TAG"
 
 echo ""
-if [[ "$RELEASE_TYPE" == "2" ]]; then
-  echo "Released $TAG. CI will build installers and create a GitHub Release."
-else
-  echo "Tagged $TAG. CI will build installers (no GitHub Release)."
-fi
+echo "Tagged: $TAG"
+case $BUILD_TYPE in
+  1) echo "Building: Windows only" ;;
+  2) echo "Building: macOS only" ;;
+  3) echo "Building: Windows + macOS" ;;
+  4) echo "Building: Windows + macOS + GitHub Release" ;;
+esac
 echo "Check: https://github.com/mchiappinam/SafeShot/actions"
