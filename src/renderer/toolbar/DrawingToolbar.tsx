@@ -36,7 +36,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
     width: 32,
     height: 32,
     border: active ? '2px solid #fff' : '2px solid transparent',
-    borderRadius: 2,
+    borderRadius: 0,
     background: active ? 'rgba(255,255,255,0.2)' : 'transparent',
     color: '#fff',
     fontSize: 16,
@@ -56,7 +56,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         gridTemplateColumns: '32px 32px',
         gap: 4,
         background: 'rgba(30,30,30,0.92)',
-        borderRadius: 2,
+        borderRadius: 0,
         padding: 6,
         zIndex: 1000,
         cursor: 'default',
@@ -80,13 +80,13 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
       </div>
       <div style={{ position: 'relative' }} className="tooltip-wrap">
         <button onClick={onColorPickerOpen}
-          style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 2, background: activeColor, cursor: 'pointer' }}
+          style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 0, background: activeColor, cursor: 'pointer' }}
         />
         <span className="tooltip-text">Color</span>
       </div>
       <div style={{ position: 'relative' }} className="tooltip-wrap">
         <button onClick={onThicknessOpen}
-          style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 2, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 0, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: Math.min(strokeWidth, 20), height: Math.min(strokeWidth, 20), borderRadius: '50%', background: '#fff' }} />
         </button>
         <span className="tooltip-text">Thickness</span>
