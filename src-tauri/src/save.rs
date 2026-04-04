@@ -41,7 +41,11 @@ pub fn set_last_color(color: String) {
         serde_json::json!({})
     };
     json["lastColor"] = serde_json::json!(color);
-    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+    fs::write(
+        &path,
+        serde_json::to_string_pretty(&json).unwrap_or_default(),
+    )
+    .ok();
 }
 
 #[tauri::command]
@@ -66,7 +70,11 @@ pub fn set_last_thickness(thickness: u32) {
         serde_json::json!({})
     };
     json["lastThickness"] = serde_json::json!(thickness);
-    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+    fs::write(
+        &path,
+        serde_json::to_string_pretty(&json).unwrap_or_default(),
+    )
+    .ok();
 }
 
 pub fn get_save_directory() -> String {
