@@ -19,6 +19,12 @@ fn log(msg: &str) {
         dir.push("SafeShot");
         std::fs::create_dir_all(&dir).ok();
         dir.push("safeshot.log");
+        // Rotate log if it exceeds 1MB
+        if let Ok(meta) = std::fs::metadata(&dir) {
+            if meta.len() > 1_000_000 {
+                std::fs::write(&dir, "").ok();
+            }
+        }
         if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(&dir) {
             let _ = writeln!(
                 f,
