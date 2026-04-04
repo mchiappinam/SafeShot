@@ -13,11 +13,14 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+      - name: Add Cargo to PATH
+        shell: cmd
+        run: echo %USERPROFILE%\.cargo\bin>> %GITHUB_PATH%
       - name: Build
         shell: cmd
         run: |
-          set PATH=%USERPROFILE%\.cargo\bin;%PATH%
           rustc --version
+          cargo --version
           node --version
           call npm install
           if errorlevel 1 exit /b 1
