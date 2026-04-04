@@ -285,7 +285,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   return (
     <>
       <canvas ref={canvasRef}
-        style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
+        style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: window.innerWidth, height: window.innerHeight }}
         onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
         onContextMenu={(e) => e.preventDefault()} />
       {textInput && (
