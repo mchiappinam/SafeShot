@@ -43,6 +43,7 @@ export class UndoRedoStack {
       if (ann.id !== id) return ann;
       return { ...ann, points: ann.points.map(p => ({ x: p.x + dx, y: p.y + dy })) };
     });
+    this.undone = [];
   }
 
   clear(): void { this.done = []; this.undone = []; }
