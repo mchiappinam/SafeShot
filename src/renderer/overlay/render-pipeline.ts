@@ -115,6 +115,18 @@ export class RenderPipeline {
 
   requestRender(): void { this.dirty = true; if (!this.running) this.renderFrame(); }
 
+  /** Get the color of a pixel at the given logical coordinates. */
+  getPixelColor(x: number, y: number): string | null {
+    const dpr = window.devicePixelRatio || 1;
+    const px = Math.round(x * dpr);
+    const py = Math.round(y * dpr);
+    try {
+      const data = this.ctx.getImageData(px, py, 1, 1).data;
+      const hex = '#' + [data[0], data[1], data[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+      return hex.toUpperCase();
+    } catch { return null; }
+  }
+
   /** Render only the screen bitmaps + annotations for the selection region (no dim, no border, no handles, no label). */
   renderCleanExport(sel: { x: number; y: number; width: number; height: number }, annotations: Annotation[], preview: Annotation | null): HTMLCanvasElement | null {
     const dpr = window.devicePixelRatio || 1;

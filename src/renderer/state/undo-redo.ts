@@ -37,5 +37,13 @@ export class UndoRedoStack {
 
   getAnnotations(): Annotation[] { return [...this.done]; }
 
+  /** Move an annotation by delta. */
+  moveAnnotation(id: string, dx: number, dy: number): void {
+    this.done = this.done.map(ann => {
+      if (ann.id !== id) return ann;
+      return { ...ann, points: ann.points.map(p => ({ x: p.x + dx, y: p.y + dy })) };
+    });
+  }
+
   clear(): void { this.done = []; this.undone = []; }
 }

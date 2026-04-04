@@ -14,6 +14,8 @@ interface DrawingToolbarProps {
 }
 
 const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }[] = [
+  { id: 'hand',      label: '✋', tooltip: 'Move' },
+  { id: 'eyedropper',label: '💧', tooltip: 'Pick Color' },
   { id: 'pencil',   label: '🖊', tooltip: 'Sharpie' },
   { id: 'sharpie',  label: '🖍️', tooltip: 'Highlighter' },
   { id: 'line',     label: '╱',  tooltip: 'Line' },
