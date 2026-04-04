@@ -242,6 +242,16 @@ fn start_capture(app: &AppHandle) {
                         min_x - pad, min_y - pad, total_w + pad * 2, total_h + pad * 2,
                         SWP_FRAMECHANGED | SWP_NOACTIVATE,
                     );
+
+                    // Disable Win11 rounded corners
+                    use windows_sys::Win32::Graphics::Dwm::*;
+                    let preference: u32 = DWMWCP_DONOTROUND as u32;
+                    DwmSetWindowAttribute(
+                        hwnd,
+                        DWMWA_WINDOW_CORNER_PREFERENCE,
+                        &preference as *const u32 as *const std::ffi::c_void,
+                        std::mem::size_of::<u32>() as u32,
+                    );
                 }
                 log(&format!("Win32: styles stripped, positioned at ({},{}) {}x{}", min_x, min_y, total_w, total_h));
             }

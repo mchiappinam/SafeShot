@@ -32,7 +32,7 @@ export const ActionToolbar: React.FC<ActionToolbarProps> = ({
     background: disabled ? 'rgba(80,80,80,0.5)' : 'rgba(60,60,60,0.9)',
     color: disabled ? '#666' : '#fff',
     border: '1px solid #555',
-    borderRadius: 4,
+    borderRadius: 0,
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontSize: 12,
     whiteSpace: 'nowrap',
@@ -42,7 +42,7 @@ export const ActionToolbar: React.FC<ActionToolbarProps> = ({
     <div style={{
       position: 'fixed', left: position.x, top: position.y,
       display: 'flex', flexDirection: 'row', gap: 4,
-      background: 'rgba(30,30,30,0.92)', borderRadius: 2, padding: 6,
+      background: 'rgba(30,30,30,0.92)', borderRadius: 0, padding: 6,
       zIndex: 1000, cursor: 'default',
     }}>
       <TooltipButton label="✕" tooltip="Cancel (ESC)" onClick={onCancel} style={btnStyle()} />
