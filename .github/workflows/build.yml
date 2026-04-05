@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-windows:
     name: Windows
-    runs-on: self-hosted
+    runs-on: [self-hosted, Windows]
     if: "!contains(github.ref, '-mac')"
     steps:
       - uses: actions/checkout@v4
@@ -32,53 +32,47 @@ jobs:
 
   build-macos-arm:
     name: macOS (Apple Silicon)
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     if: "!contains(github.ref, '-beta') || contains(github.ref, '-mac-arm') || (contains(github.ref, '-mac') && !contains(github.ref, '-mac-x64')) || contains(github.ref, '-all')"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - uses: dtolnay/rust-toolchain@stable
 
       - name: Build
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
         run: |
+          rustc --version
+          node --version
+          npm install
+          node scripts/generate-icons.js
+          npx tauri build --target aarch64-apple-darwin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SafeShot-macos-arm
+          path: src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+
+  build-macos-x64:
+    name: macOS (Intel)
+    runs-on: [self-hosted, macOS]
+    if: "!contains(github.ref, '-beta') || contains(github.ref, '-mac-x64') || (contains(github.ref, '-mac') && !contains(github.ref, '-mac-arm')) || contains(github.ref, '-all')"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "11.0"
+        run: |
+          rustc --version
+          node --version
           npm install
           node scripts/generate-icons.js
           npx tauri build
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SafeShot-macos-arm
-          path: src-tauri/target/release/bundle/dmg/*.dmg
-
-  build-macos-x64:
-    name: macOS (Intel)
-    runs-on: self-hosted
-    if: "!contains(github.ref, '-beta') || contains(github.ref, '-mac-x64') || (contains(github.ref, '-mac') && !contains(github.ref, '-mac-arm')) || contains(github.ref, '-all')"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-apple-darwin
-
-      - name: Build
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "11.0"
-        run: |
-          npm install
-          node scripts/generate-icons.js
-          npx tauri build --target x86_64-apple-darwin
-
-      - uses: actions/upload-artifact@v4
-        with:
           name: SafeShot-macos-x64
-          path: src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
 
   release:
     name: Release
