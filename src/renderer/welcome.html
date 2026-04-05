@@ -56,10 +56,10 @@
   <div class="divider"></div>
   <p class="desc">SafeShot lives in your system tray. Capture, annotate, and save screenshots instantly. Everything stays on your machine.</p>
   <p class="how">How to use</p>
-  <div class="shortcuts">
-    <div class="shortcut"><div class="shortcut-key">PrtScn</div><span class="shortcut-label">Capture</span></div>
-    <div class="shortcut"><div class="shortcut-key">Ctrl+C</div><span class="shortcut-label">Copy</span></div>
-    <div class="shortcut"><div class="shortcut-key">Ctrl+S</div><span class="shortcut-label">Save</span></div>
+  <div class="shortcuts" id="shortcuts">
+    <div class="shortcut"><div class="shortcut-key" id="capture-key">PrtScn</div><span class="shortcut-label">Capture</span></div>
+    <div class="shortcut"><div class="shortcut-key" id="copy-key">Ctrl+C</div><span class="shortcut-label">Copy</span></div>
+    <div class="shortcut"><div class="shortcut-key" id="save-key">Ctrl+S</div><span class="shortcut-label">Save</span></div>
     <div class="shortcut"><div class="shortcut-key">ESC</div><span class="shortcut-label">Cancel</span></div>
   </div>
   <button class="btn" id="close-btn">Got it (60)</button>
@@ -88,6 +88,12 @@
     document.getElementById('dev-link').addEventListener('click', function() {
       if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' });
     });
+    // Show macOS shortcuts if on Mac
+    if (navigator.platform.indexOf('Mac') !== -1) {
+      document.getElementById('capture-key').textContent = '\u2318\u21E7S';
+      document.getElementById('copy-key').textContent = '\u2318C';
+      document.getElementById('save-key').textContent = '\u2318S';
+    }
   </script>
 </body>
 </html>
