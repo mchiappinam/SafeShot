@@ -440,6 +440,24 @@ fn start_capture(app: &AppHandle) {
         "Window ready: ({},{}) {}x{}, waiting for frontend to call show_overlay",
         min_x, min_y, total_w, total_h
     ));
+
+    // Safety: if the frontend doesn't call show_overlay within 3 seconds,
+    // force-show the window so we can at least see what's happening
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(3));
+        if let Some(win) = app_clone.get_webview_window("overlay") {
+            // Check window title for JS errors
+            if let Ok(title) = win.title() {
+                if title.starts_with("ERROR:") {
+                    log(&format!("Frontend JS error: {}", title));
+                }
+            }
+            log("Safety timeout: force-showing overlay");
+            win.show().ok();
+            win.set_focus().ok();
+        }
+    });
 }
 
 fn open_save_folder(_app: &AppHandle) {
