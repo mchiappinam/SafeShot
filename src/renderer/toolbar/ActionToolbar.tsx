@@ -25,6 +25,9 @@ const TooltipButton: React.FC<{
   </div>
 );
 
+const isMac = typeof navigator !== 'undefined' && navigator.platform.indexOf('Mac') !== -1;
+const mod = isMac ? '⌘' : 'Ctrl+';
+
 export const ActionToolbar: React.FC<ActionToolbarProps> = ({
   canUndo, canRedo, onUndo, onRedo, onSave, onSaveAs, onCopy, onCancel, position,
 }) => {
@@ -47,11 +50,11 @@ export const ActionToolbar: React.FC<ActionToolbarProps> = ({
       zIndex: 1000, cursor: 'default',
     }}>
       <TooltipButton label="✕" tooltip="Cancel (ESC)" onClick={onCancel} style={btnStyle()} />
-      <TooltipButton label="↩" tooltip="Undo (Ctrl+Z)" disabled={!canUndo} onClick={onUndo} style={btnStyle(!canUndo)} />
-      <TooltipButton label="↪" tooltip="Redo (Ctrl+Y)" disabled={!canRedo} onClick={onRedo} style={btnStyle(!canRedo)} />
-      <TooltipButton label="📋" tooltip="Copy (Ctrl+C)" onClick={onCopy} style={btnStyle()} />
-      <TooltipButton label="💾" tooltip="Save (Ctrl+S)" onClick={onSave} style={btnStyle()} />
-      <TooltipButton label="📂" tooltip="Save As (Ctrl+Shift+S)" onClick={onSaveAs} style={btnStyle()} />
+      <TooltipButton label="↩" tooltip={`Undo (${mod}Z)`} disabled={!canUndo} onClick={onUndo} style={btnStyle(!canUndo)} />
+      <TooltipButton label="↪" tooltip={`Redo (${mod}Y)`} disabled={!canRedo} onClick={onRedo} style={btnStyle(!canRedo)} />
+      <TooltipButton label="📋" tooltip={`Copy (${mod}C)`} onClick={onCopy} style={btnStyle()} />
+      <TooltipButton label="💾" tooltip={`Save (${mod}S)`} onClick={onSave} style={btnStyle()} />
+      <TooltipButton label="📂" tooltip={`Save As (${mod}${isMac ? '⇧' : 'Shift+'}S)`} onClick={onSaveAs} style={btnStyle()} />
     </div>
   );
 };

@@ -176,16 +176,33 @@ fn main() {
                 log("Windows PrtScn Snipping Tool override disabled");
             }
 
-            // Register PrtScn global shortcut
-            let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
-            let app_handle = app.handle().clone();
-            match app
-                .global_shortcut()
-                .on_shortcut(shortcut, move |_app, _shortcut, _event| {
-                    start_capture(&app_handle);
-                }) {
-                Ok(_) => log("PrtScn shortcut registered"),
-                Err(e) => log(&format!("PrtScn shortcut failed: {}", e)),
+            // Register global shortcuts
+            // Windows: PrtScn, macOS: Cmd+Shift+S
+            #[cfg(target_os = "windows")]
+            {
+                let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
+                let app_handle = app.handle().clone();
+                match app
+                    .global_shortcut()
+                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                        start_capture(&app_handle);
+                    }) {
+                    Ok(_) => log("PrtScn shortcut registered"),
+                    Err(e) => log(&format!("PrtScn shortcut failed: {}", e)),
+                }
+            }
+            #[cfg(target_os = "macos")]
+            {
+                let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
+                let app_handle = app.handle().clone();
+                match app
+                    .global_shortcut()
+                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                        start_capture(&app_handle);
+                    }) {
+                    Ok(_) => log("Cmd+Shift+S shortcut registered"),
+                    Err(e) => log(&format!("Cmd+Shift+S shortcut failed: {}", e)),
+                }
             }
 
             log("Setup complete. SafeShot ready");
@@ -292,6 +309,10 @@ fn start_capture(app: &AppHandle) {
     let screens = match capture::do_capture() {
         Ok(data) => {
             log(&format!("Captured {} displays", data.len()));
+            if data.is_empty() {
+                log("Capture returned 0 displays, aborting");
+                return;
+            }
             let cache = app.state::<capture::CaptureCache>();
             *cache.0.lock().unwrap() = data.clone();
             data
@@ -411,10 +432,12 @@ fn start_capture(app: &AppHandle) {
         use tauri::LogicalPosition;
         win.set_position(LogicalPosition::new(min_x as f64, min_y as f64))
             .ok();
+        // On macOS, set the window level to make it truly fullscreen overlay
+        win.set_always_on_top(true).ok();
     }
 
     log(&format!(
-        "Window ready: ({},{}) {}x{}",
+        "Window ready: ({},{}) {}x{}, waiting for frontend to call show_overlay",
         min_x, min_y, total_w, total_h
     ));
 }

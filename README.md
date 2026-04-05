@@ -41,20 +41,22 @@ SafeShot starts automatically when your computer boots. You can toggle this from
 ## How to Use
 
 ### Capture a Screenshot
-- Press **Print Screen** on your keyboard, or
+- Press **Print Screen** (Windows) or **⌘⇧S** (macOS), or
 - Click the **SafeShot icon** in your system tray
 
 ### Select an Area
 - Click and drag to select the area you want to capture
 - Drag the edges or corners to resize
 - Drag inside the selection to move it
-- Press **Ctrl+A** to select the entire screen
+- Press **Ctrl+A** (Windows) or **⌘A** (macOS) to select the entire screen
 
 ### Annotation Tools
 Once you've selected an area, a toolbar appears with drawing tools:
 
 | Tool | Description |
 |------|-------------|
+| ✋ Move Objects | Move annotations around |
+| 💧 Pick Color | Sample a color from the screen |
 | 🖊 Sharpie | Freehand drawing |
 | 🖍️ Highlighter | Semi-transparent marker |
 | ╱ Line | Straight line |
@@ -69,9 +71,10 @@ Once you've selected an area, a toolbar appears with drawing tools:
 | ⚪ Thickness | Adjust stroke width |
 
 ### Save and Copy
-- **Ctrl+C** copies the screenshot to your clipboard
-- **Ctrl+S** opens a Save As dialog
-- **Ctrl+Z** / **Ctrl+Y** for undo and redo
+- **Ctrl+C** / **⌘C** copies the screenshot to your clipboard
+- **Ctrl+S** / **⌘S** quick saves to Pictures/SafeShot
+- **Ctrl+Shift+S** / **⌘⇧S** opens a Save As dialog
+- **Ctrl+Z** / **⌘Z** and **Ctrl+Y** / **⌘Y** for undo and redo
 - **ESC** to cancel and close
 
 ### Tray Menu
