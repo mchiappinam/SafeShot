@@ -1,6 +1,6 @@
 {
   "productName": "SafeShot",
-  "version": "0.1.50",
+  "version": "0.1.51",
   "identifier": "com.chiappina.safeshot",
   "build": {
     "frontendDist": "../dist",
