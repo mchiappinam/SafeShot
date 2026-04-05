@@ -12,6 +12,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Catch any JS errors and log them via Tauri
+      window.addEventListener('error', function(e) {
+        if (window.__TAURI__) {
+          document.title = 'ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+        }
+      });
+    </script>
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
