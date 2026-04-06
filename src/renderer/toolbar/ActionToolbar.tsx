@@ -54,7 +54,7 @@ export const ActionToolbar: React.FC<ActionToolbarProps> = ({
       <TooltipButton label="↪" tooltip={`Redo (${mod}Y)`} disabled={!canRedo} onClick={onRedo} style={btnStyle(!canRedo)} />
       <TooltipButton label="📋" tooltip={`Copy (${mod}C)`} onClick={onCopy} style={btnStyle()} />
       <TooltipButton label="💾" tooltip={`Save (${mod}S)`} onClick={onSave} style={btnStyle()} />
-      <TooltipButton label="📂" tooltip={`Save As (${mod}${isMac ? '⇧' : 'Shift+'}S)`} onClick={onSaveAs} style={btnStyle()} />
+      <TooltipButton label="📂" tooltip={`Save As (${mod}${isMac ? '⇧' : 'Shift+'}B)`} onClick={onSaveAs} style={btnStyle()} />
     </div>
   );
 };
