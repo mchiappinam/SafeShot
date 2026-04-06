@@ -140,7 +140,8 @@ fn main() {
             log("Tray menu built");
 
             let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png")).unwrap())
+                .icon_as_template(true)
                 .tooltip("SafeShot")
                 .menu(&menu)
                 .on_menu_event(move |app, event| match event.id.as_ref() {

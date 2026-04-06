@@ -31,6 +31,24 @@ async function main() {
   const outDir = path.resolve(__dirname, '..', 'src-tauri', 'icons');
   fs.mkdirSync(outDir, { recursive: true });
 
+  // Tray icon: white shield only, no background, fills the icon area
+  // Used for Windows system tray and macOS menu bar
+  const traySvg = `
+    <svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
+      <path d="M512 40 L920 210 L920 560 Q920 850 512 990 Q104 850 104 560 L104 210 Z"
+            fill="none" stroke="white" stroke-width="56" stroke-linejoin="round"/>
+      <circle cx="512" cy="460" r="190" fill="none" stroke="white" stroke-width="44"/>
+      <circle cx="512" cy="460" r="82" fill="white"/>
+      <circle cx="474" cy="422" r="28" fill="white" opacity="0.4"/>
+      <rect x="478" y="700" width="68" height="52" rx="8" fill="white"/>
+      <path d="M494 700 L494 676 Q494 654 512 654 Q530 654 530 676 L530 700"
+            fill="none" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    </svg>`;
+
+  // Generate tray icon PNGs
+  await sharp(Buffer.from(traySvg)).resize(32, 32).png().toFile(path.join(outDir, 'tray-icon.png'));
+  await sharp(Buffer.from(traySvg)).resize(64, 64).png().toFile(path.join(outDir, 'tray-icon@2x.png'));
+
   // Standard PNG icons
   await sharp(Buffer.from(svg)).resize(32, 32).png().toFile(path.join(outDir, '32x32.png'));
   await sharp(Buffer.from(svg)).resize(128, 128).png().toFile(path.join(outDir, '128x128.png'));
