@@ -49,7 +49,10 @@ fn main() {
             // Second instance tried to launch, trigger a capture on the running instance
             start_capture(app);
         }))
-        .plugin(tauri_plugin_autostart::Builder::new().build())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(capture::CaptureCache(std::sync::Mutex::new(Vec::new())))
         .invoke_handler(tauri::generate_handler![

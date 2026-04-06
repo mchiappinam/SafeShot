@@ -92,7 +92,10 @@ export class RenderPipeline {
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const blob = new Blob([bytes], { type: 'image/png' });
-      this.bitmaps.set(s.displayId, await createImageBitmap(blob));
+      this.bitmaps.set(s.displayId, await createImageBitmap(blob, {
+        premultiplyAlpha: 'none',
+        colorSpaceConversion: 'none',
+      }));
     }));
     this.dirty = true;
   }
@@ -129,10 +132,12 @@ export class RenderPipeline {
 
   /** Render only the screen bitmaps + annotations for the selection region (no dim, no border, no handles, no label). */
   renderCleanExport(sel: { x: number; y: number; width: number; height: number }, annotations: Annotation[], preview: Annotation | null): HTMLCanvasElement | null {
-    // Use the highest scale factor from the screens for export quality
-    const maxScale = this.screens.length > 0
+    // Use the highest scale factor for export: either from native capture
+    // resolution or from the device pixel ratio, whichever is larger
+    const captureScale = this.screens.length > 0
       ? Math.max(...this.screens.map(s => s.nativeWidth / s.bounds.width || 1))
-      : window.devicePixelRatio || 1;
+      : 1;
+    const maxScale = Math.max(captureScale, window.devicePixelRatio || 1);
     const w = Math.round(sel.width * maxScale);
     const h = Math.round(sel.height * maxScale);
     if (w <= 0 || h <= 0) return null;
@@ -142,9 +147,8 @@ export class RenderPipeline {
     const ctx = exportCanvas.getContext('2d');
     if (!ctx) return null;
     ctx.scale(maxScale, maxScale);
-    // Use high-quality image interpolation for the export
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    // Disable smoothing for pixel-perfect screenshot export
+    ctx.imageSmoothingEnabled = false;
 
     // Draw each screen bitmap at native resolution by sampling the exact
     // source pixels that correspond to the selection region, instead of
