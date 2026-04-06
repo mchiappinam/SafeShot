@@ -142,19 +142,47 @@ export class RenderPipeline {
     const ctx = exportCanvas.getContext('2d');
     if (!ctx) return null;
     ctx.scale(maxScale, maxScale);
+    // Use high-quality image interpolation for the export
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
-    // Use logical dimensions for coordinate math
+    // Draw each screen bitmap at native resolution by sampling the exact
+    // source pixels that correspond to the selection region, instead of
+    // going through CSS pixel coordinates which lose resolution.
     const cw = window.innerWidth;
     const ch = window.innerHeight;
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
-      if (bmp) {
-        const sx = (s.bounds.x - this.offsetX) / this.totalWidth * cw;
-        const sy = (s.bounds.y - this.offsetY) / this.totalHeight * ch;
-        const sw = s.bounds.width / this.totalWidth * cw;
-        const sh = s.bounds.height / this.totalHeight * ch;
-        ctx.drawImage(bmp, sx - sel.x, sy - sel.y, sw, sh);
-      }
+      if (!bmp) continue;
+
+      // Where this screen sits in logical (CSS) canvas coordinates
+      const screenLogicalX = (s.bounds.x - this.offsetX) / this.totalWidth * cw;
+      const screenLogicalY = (s.bounds.y - this.offsetY) / this.totalHeight * ch;
+      const screenLogicalW = s.bounds.width / this.totalWidth * cw;
+      const screenLogicalH = s.bounds.height / this.totalHeight * ch;
+
+      // Intersection of selection with this screen in logical coords
+      const ix0 = Math.max(sel.x, screenLogicalX);
+      const iy0 = Math.max(sel.y, screenLogicalY);
+      const ix1 = Math.min(sel.x + sel.width, screenLogicalX + screenLogicalW);
+      const iy1 = Math.min(sel.y + sel.height, screenLogicalY + screenLogicalH);
+      if (ix1 <= ix0 || iy1 <= iy0) continue;
+
+      // Map intersection back to source bitmap pixel coordinates
+      const bmpScaleX = bmp.width / screenLogicalW;
+      const bmpScaleY = bmp.height / screenLogicalH;
+      const srcX = (ix0 - screenLogicalX) * bmpScaleX;
+      const srcY = (iy0 - screenLogicalY) * bmpScaleY;
+      const srcW = (ix1 - ix0) * bmpScaleX;
+      const srcH = (iy1 - iy0) * bmpScaleY;
+
+      // Destination in the export canvas (logical coords, ctx is already scaled)
+      const dstX = ix0 - sel.x;
+      const dstY = iy0 - sel.y;
+      const dstW = ix1 - ix0;
+      const dstH = iy1 - iy0;
+
+      ctx.drawImage(bmp, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH);
     }
 
     // Draw annotations offset

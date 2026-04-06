@@ -249,6 +249,18 @@ fn close_overlay(app: AppHandle) {
     if let Some(win) = app.get_webview_window("overlay") {
         win.close().ok();
     }
+    // Re-register the global capture shortcut now that the overlay is gone
+    #[cfg(target_os = "macos")]
+    {
+        let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
+        let app_clone = app.clone();
+        app.global_shortcut()
+            .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                start_capture(&app_clone);
+            })
+            .ok();
+        log("Global shortcut re-registered after overlay close");
+    }
     log("Overlay closed");
 }
 
@@ -299,11 +311,20 @@ fn toggle_autostart(app: &AppHandle) {
     }
 }
 
-fn start_capture(app: &AppHandle) {
+pub(crate) fn start_capture(app: &AppHandle) {
     if app.get_webview_window("overlay").is_some() {
         return;
     }
     log("Starting capture...");
+
+    // Unregister the global shortcut while the overlay is open so the
+    // frontend can handle Ctrl/Cmd+Shift+S for "Save As"
+    #[cfg(target_os = "macos")]
+    {
+        let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
+        app.global_shortcut().unregister(shortcut).ok();
+        log("Global shortcut unregistered for overlay");
+    }
 
     // Capture screens BEFORE opening the overlay so we don't screenshot our own window
     let screens = match capture::do_capture() {
@@ -432,8 +453,35 @@ fn start_capture(app: &AppHandle) {
         use tauri::LogicalPosition;
         win.set_position(LogicalPosition::new(min_x as f64, min_y as f64))
             .ok();
-        // On macOS, set the window level to make it truly fullscreen overlay
-        win.set_always_on_top(true).ok();
+    }
+
+    // On macOS, set the window level high enough to cover the menu bar and dock
+    #[cfg(target_os = "macos")]
+    {
+        use raw_window_handle::HasWindowHandle;
+
+        if let Ok(handle) = win.window_handle() {
+            if let raw_window_handle::RawWindowHandle::AppKit(h) = handle.as_ref() {
+                let ns_window = h.ns_window.as_ptr() as *mut std::ffi::c_void;
+                unsafe {
+                    // Use ObjC runtime to call [nsWindow setLevel:] and [nsWindow setCollectionBehavior:]
+                    // kCGMainMenuWindowLevel = 24, sits above menu bar and dock
+                    extern "C" {
+                        fn objc_msgSend(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void, ...) -> *mut std::ffi::c_void;
+                        fn sel_registerName(name: *const std::ffi::c_char) -> *mut std::ffi::c_void;
+                    }
+                    let set_level = sel_registerName(b"setLevel:\0".as_ptr() as *const _);
+                    let set_behavior = sel_registerName(b"setCollectionBehavior:\0".as_ptr() as *const _);
+                    // Window level 24 = kCGMainMenuWindowLevel (above menu bar)
+                    objc_msgSend(ns_window, set_level, 24i64);
+                    // NSWindowCollectionBehaviorCanJoinAllSpaces (1 << 0) |
+                    // NSWindowCollectionBehaviorFullScreenAuxiliary (1 << 8)
+                    let behavior: u64 = (1 << 0) | (1 << 8);
+                    objc_msgSend(ns_window, set_behavior, behavior);
+                }
+                log("macOS: window level set above menu bar and dock");
+            }
+        }
     }
 
     log(&format!(
