@@ -457,8 +457,9 @@ fn start_capture(app: &AppHandle) {
                     if !ns_window.is_null() {
                         let set_level = sel_registerName(b"setLevel:\0".as_ptr() as *const _);
                         let set_behavior = sel_registerName(b"setCollectionBehavior:\0".as_ptr() as *const _);
-                        // Window level 24 = kCGMainMenuWindowLevel (above menu bar)
-                        objc_msgSend(ns_window, set_level, 24i64);
+                        // kCGScreenSaverWindowLevel (1000) sits above everything
+                        // including menu bar items and the dock
+                        objc_msgSend(ns_window, set_level, 1000i64);
                         // NSWindowCollectionBehaviorCanJoinAllSpaces (1 << 0) |
                         // NSWindowCollectionBehaviorFullScreenAuxiliary (1 << 8)
                         let behavior: u64 = (1 << 0) | (1 << 8);
