@@ -2,6 +2,8 @@
 set -e
 
 CURRENT=$(grep '"version"' package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+CONFIG=".github/runner-config.json"
+
 echo "Latest Version Published: $CURRENT"
 read -p "Enter new version: " VERSION
 
@@ -19,6 +21,73 @@ echo "  5) Windows + macOS both      (tag: v$VERSION-beta)"
 echo "  6) Full release (all)        (tag: v$VERSION)"
 read -p "Choose [5]: " BUILD_TYPE
 BUILD_TYPE=${BUILD_TYPE:-5}
+
+# Runner selection
+echo ""
+echo "Current runners:"
+cat "$CONFIG"
+echo ""
+echo "  g) GitHub-hosted (default)"
+echo "  s) Self-hosted (all platforms)"
+echo "  m) Mix (pick per platform)"
+read -p "Runner mode [g]: " RUNNER_MODE
+RUNNER_MODE=${RUNNER_MODE:-g}
+
+if [ "$RUNNER_MODE" = "s" ]; then
+  cat > "$CONFIG" << 'EOF'
+{
+  "windows": "self-hosted, Windows",
+  "macos-arm": "self-hosted, macOS",
+  "macos-x64": "self-hosted, macOS"
+}
+EOF
+  echo "Set all runners to self-hosted"
+elif [ "$RUNNER_MODE" = "m" ]; then
+  echo ""
+  echo "For each platform, enter 'g' for GitHub-hosted or 's' for self-hosted"
+
+  read -p "  Windows [g]: " WIN_RUNNER
+  WIN_RUNNER=${WIN_RUNNER:-g}
+  if [ "$WIN_RUNNER" = "s" ]; then
+    WIN_VAL="self-hosted, Windows"
+  else
+    WIN_VAL="windows-latest"
+  fi
+
+  read -p "  macOS ARM [g]: " MAC_ARM_RUNNER
+  MAC_ARM_RUNNER=${MAC_ARM_RUNNER:-g}
+  if [ "$MAC_ARM_RUNNER" = "s" ]; then
+    MAC_ARM_VAL="self-hosted, macOS"
+  else
+    MAC_ARM_VAL="macos-14"
+  fi
+
+  read -p "  macOS Intel [g]: " MAC_X64_RUNNER
+  MAC_X64_RUNNER=${MAC_X64_RUNNER:-g}
+  if [ "$MAC_X64_RUNNER" = "s" ]; then
+    MAC_X64_VAL="self-hosted, macOS"
+  else
+    MAC_X64_VAL="macos-13"
+  fi
+
+  cat > "$CONFIG" << EOF
+{
+  "windows": "$WIN_VAL",
+  "macos-arm": "$MAC_ARM_VAL",
+  "macos-x64": "$MAC_X64_VAL"
+}
+EOF
+  echo "Set runners: Windows=$WIN_VAL, macOS ARM=$MAC_ARM_VAL, macOS Intel=$MAC_X64_VAL"
+else
+  cat > "$CONFIG" << 'EOF'
+{
+  "windows": "windows-latest",
+  "macos-arm": "macos-14",
+  "macos-x64": "macos-13"
+}
+EOF
+  echo "Set all runners to GitHub-hosted"
+fi
 
 # Update version in all files
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
