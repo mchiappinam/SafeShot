@@ -18,11 +18,10 @@ echo "  2) macOS ARM only            (tag: v$VERSION-beta-mac-arm)"
 echo "  3) macOS Intel only          (tag: v$VERSION-beta-mac-x64)"
 echo "  4) macOS both                (tag: v$VERSION-beta-mac)"
 echo "  5) Linux only                (tag: v$VERSION-beta-linux)"
-echo "  6) Windows + macOS           (tag: v$VERSION-beta)"
-echo "  7) All platforms             (tag: v$VERSION-beta)"
-echo "  8) Full release (all)        (tag: v$VERSION)"
-read -p "Choose [7]: " BUILD_TYPE
-BUILD_TYPE=${BUILD_TYPE:-7}
+echo "  6) All platforms             (tag: v$VERSION-beta)"
+echo "  7) Full release (all)        (tag: v$VERSION)"
+read -p "Choose [6]: " BUILD_TYPE
+BUILD_TYPE=${BUILD_TYPE:-6}
 
 # Runner selection
 echo ""
@@ -116,7 +115,7 @@ if git diff --quiet && git diff --cached --quiet; then
   echo "No file changes, tagging current commit"
 else
   git add -A
-  if [ "$BUILD_TYPE" = "8" ]; then
+  if [ "$BUILD_TYPE" = "7" ]; then
     git commit -m "release v$VERSION"
   else
     git commit -m "v$VERSION"
@@ -130,8 +129,7 @@ case $BUILD_TYPE in
   4) TAG="v$VERSION-beta-mac" ;;
   5) TAG="v$VERSION-beta-linux" ;;
   6) TAG="v$VERSION-beta" ;;
-  7) TAG="v$VERSION-beta" ;;
-  8) TAG="v$VERSION" ;;
+  7) TAG="v$VERSION" ;;
   *) TAG="v$VERSION-beta" ;;
 esac
 
@@ -147,8 +145,7 @@ case $BUILD_TYPE in
   3) echo "Building: macOS Intel only" ;;
   4) echo "Building: macOS ARM + Intel" ;;
   5) echo "Building: Linux only" ;;
-  6) echo "Building: Windows + macOS" ;;
-  7) echo "Building: all platforms" ;;
-  8) echo "Building: all platforms + GitHub Release" ;;
+  6) echo "Building: all platforms" ;;
+  7) echo "Building: all platforms + GitHub Release" ;;
 esac
 echo "Check: https://github.com/mchiappinam/SafeShot/actions"
