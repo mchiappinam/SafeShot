@@ -5,6 +5,9 @@ use std::path::PathBuf;
 use tauri::Manager;
 use chrono;
 
+#[cfg(target_os = "macos")]
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
+
 #[derive(Serialize)]
 pub struct SaveResult {
     pub success: bool,
@@ -188,6 +191,17 @@ pub fn save_screenshot(
                 // Close overlay after dialog is done
                 if let Some(win) = app_handle.get_webview_window("overlay") {
                     win.close().ok();
+                }
+                // Re-register global capture shortcut on macOS
+                #[cfg(target_os = "macos")]
+                {
+                    let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
+                    let app_clone = app_handle.clone();
+                    app_handle.global_shortcut()
+                        .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                            crate::start_capture(&app_clone);
+                        })
+                        .ok();
                 }
                 return result;
             }
