@@ -465,22 +465,25 @@ pub(crate) fn start_capture(app: &AppHandle) {
 
         if let Ok(handle) = win.window_handle() {
             if let raw_window_handle::RawWindowHandle::AppKit(h) = handle.as_ref() {
-                let ns_window = h.ns_window.as_ptr() as *mut std::ffi::c_void;
+                let ns_view = h.ns_view.as_ptr() as *mut std::ffi::c_void;
                 unsafe {
-                    // Use ObjC runtime to call [nsWindow setLevel:] and [nsWindow setCollectionBehavior:]
-                    // kCGMainMenuWindowLevel = 24, sits above menu bar and dock
                     extern "C" {
                         fn objc_msgSend(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void, ...) -> *mut std::ffi::c_void;
                         fn sel_registerName(name: *const std::ffi::c_char) -> *mut std::ffi::c_void;
                     }
-                    let set_level = sel_registerName(b"setLevel:\0".as_ptr() as *const _);
-                    let set_behavior = sel_registerName(b"setCollectionBehavior:\0".as_ptr() as *const _);
-                    // Window level 24 = kCGMainMenuWindowLevel (above menu bar)
-                    objc_msgSend(ns_window, set_level, 24i64);
-                    // NSWindowCollectionBehaviorCanJoinAllSpaces (1 << 0) |
-                    // NSWindowCollectionBehaviorFullScreenAuxiliary (1 << 8)
-                    let behavior: u64 = (1 << 0) | (1 << 8);
-                    objc_msgSend(ns_window, set_behavior, behavior);
+                    // Get NSWindow from NSView via [nsView window]
+                    let window_sel = sel_registerName(b"window\0".as_ptr() as *const _);
+                    let ns_window = objc_msgSend(ns_view, window_sel);
+                    if !ns_window.is_null() {
+                        let set_level = sel_registerName(b"setLevel:\0".as_ptr() as *const _);
+                        let set_behavior = sel_registerName(b"setCollectionBehavior:\0".as_ptr() as *const _);
+                        // Window level 24 = kCGMainMenuWindowLevel (above menu bar)
+                        objc_msgSend(ns_window, set_level, 24i64);
+                        // NSWindowCollectionBehaviorCanJoinAllSpaces (1 << 0) |
+                        // NSWindowCollectionBehaviorFullScreenAuxiliary (1 << 8)
+                        let behavior: u64 = (1 << 0) | (1 << 8);
+                        objc_msgSend(ns_window, set_behavior, behavior);
+                    }
                 }
                 log("macOS: window level set above menu bar and dock");
             }
