@@ -5,7 +5,7 @@
 <h1 align="center">SafeShot</h1>
 
 <p align="center">
-  <strong>Privacy-first screenshot tool for Windows and macOS</strong><br>
+  <strong>Privacy-first screenshot tool</strong><br>
   Your screenshots stay yours. No cloud. No tracking. No compromises.
 </p>
 
@@ -29,10 +29,22 @@ SafeShot is different. Built in the USA ![US](src-tauri/icons/us.png) with secur
 
 Oh, and the installer is under 4 MB.
 
+## Platform Support
+
+| Platform | Status | Download |
+|----------|--------|----------|
+| Windows 10+ | ✅ Tested | `.exe` (NSIS) or `.msi` |
+| macOS 11+ (Intel) | ✅ Tested | `.dmg` (x64) |
+| macOS 11+ (Apple Silicon) | 🔶 Untested | `.dmg` (ARM) |
+| Ubuntu / Debian | 🔶 Untested | `.deb` |
+| Fedora / Arch / Other | 🔶 Untested | `.AppImage` |
+
+🔶 Untested platforms are built from the same codebase and should work, but haven't been verified yet. If you run into issues, please [open an issue](https://github.com/mchiappinam/SafeShot/issues).
+
 ## Download and Install
 
 1. Go to the [latest release](https://github.com/mchiappinam/SafeShot/releases/latest)
-2. Download the `.exe` installer (Windows) or `.dmg` (macOS)
+2. Download the installer for your platform
 3. Run the installer and follow the prompts
 4. SafeShot will appear in your system tray (near the clock)
 
@@ -73,7 +85,7 @@ Once you've selected an area, a toolbar appears with drawing tools:
 ### Save and Copy
 - **Ctrl+C** / **⌘C** copies the screenshot to your clipboard
 - **Ctrl+S** / **⌘S** quick saves to Pictures/SafeShot
-- **Ctrl+Shift+S** / **⌘⇧S** opens a Save As dialog
+- **Ctrl+Shift+B** / **⌘⇧B** opens a Save As dialog
 - **Ctrl+Z** / **⌘Z** and **Ctrl+Y** / **⌘Y** for undo and redo
 - **ESC** to cancel and close
 
@@ -106,6 +118,7 @@ SafeShot has **zero network capabilities**. It cannot connect to the internet. Y
 
 - Windows 10 or later
 - macOS 11 (Big Sur) or later
+- Linux with WebKitGTK 4.1
 - ~20 MB disk space
 
 ## License
