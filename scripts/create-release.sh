@@ -11,14 +11,14 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 echo ""
-echo "  1) Windows only              (tag: v$VERSION-beta)"
+echo "  1) Windows only              (tag: v$VERSION-beta-win)"
 echo "  2) macOS ARM only            (tag: v$VERSION-beta-mac-arm)"
 echo "  3) macOS Intel only          (tag: v$VERSION-beta-mac-x64)"
 echo "  4) macOS both                (tag: v$VERSION-beta-mac)"
-echo "  5) Windows + macOS both      (tag: v$VERSION-beta-all)"
+echo "  5) Windows + macOS both      (tag: v$VERSION-beta)"
 echo "  6) Full release (all)        (tag: v$VERSION)"
-read -p "Choose [1]: " BUILD_TYPE
-BUILD_TYPE=${BUILD_TYPE:-1}
+read -p "Choose [5]: " BUILD_TYPE
+BUILD_TYPE=${BUILD_TYPE:-5}
 
 # Update version in all files
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
@@ -41,11 +41,11 @@ else
 fi
 
 case $BUILD_TYPE in
-  1) TAG="v$VERSION-beta" ;;
+  1) TAG="v$VERSION-beta-win" ;;
   2) TAG="v$VERSION-beta-mac-arm" ;;
   3) TAG="v$VERSION-beta-mac-x64" ;;
   4) TAG="v$VERSION-beta-mac" ;;
-  5) TAG="v$VERSION-beta-all" ;;
+  5) TAG="v$VERSION-beta" ;;
   6) TAG="v$VERSION" ;;
   *) TAG="v$VERSION-beta" ;;
 esac
