@@ -1,8 +1,6 @@
-name: Build SafeShot
+name: Build SafeShot (Self-Hosted)
 
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
 
 permissions:
