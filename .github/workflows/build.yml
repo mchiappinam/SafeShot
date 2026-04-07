@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       windows: ${{ steps.cfg.outputs.windows }}
-      macos-arm: ${{ steps.cfg.outputs.macos-arm }}
-      macos-x64: ${{ steps.cfg.outputs.macos-x64 }}
+      macos_arm: ${{ steps.cfg.outputs.macos_arm }}
+      macos_x64: ${{ steps.cfg.outputs.macos_x64 }}
       linux: ${{ steps.cfg.outputs.linux }}
     steps:
       - uses: actions/checkout@v4
       - id: cfg
         run: |
           echo "windows=$(jq -c '.windows' .github/runner-config.json)" >> $GITHUB_OUTPUT
-          echo "macos-arm=$(jq -c '.["macos-arm"]' .github/runner-config.json)" >> $GITHUB_OUTPUT
-          echo "macos-x64=$(jq -c '.["macos-x64"]' .github/runner-config.json)" >> $GITHUB_OUTPUT
+          echo "macos_arm=$(jq -c '.["macos-arm"]' .github/runner-config.json)" >> $GITHUB_OUTPUT
+          echo "macos_x64=$(jq -c '.["macos-x64"]' .github/runner-config.json)" >> $GITHUB_OUTPUT
           echo "linux=$(jq -c '.linux' .github/runner-config.json)" >> $GITHUB_OUTPUT
 
   build-windows:
@@ -55,16 +55,16 @@ jobs:
   build-macos-arm:
     name: macOS (Apple Silicon)
     needs: read-config
-    runs-on: ${{ fromJSON(needs.read-config.outputs.macos-arm) }}
+    runs-on: ${{ fromJSON(needs.read-config.outputs.macos_arm) }}
     if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-x64') && !contains(github.ref, '-linux')"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        if: "!contains(needs.read-config.outputs.macos-arm, 'self-hosted')"
+        if: "!contains(needs.read-config.outputs.macos_arm, 'self-hosted')"
         with:
           node-version: 20
       - uses: dtolnay/rust-toolchain@stable
-        if: "!contains(needs.read-config.outputs.macos-arm, 'self-hosted')"
+        if: "!contains(needs.read-config.outputs.macos_arm, 'self-hosted')"
         with:
           targets: aarch64-apple-darwin
       - name: Build
@@ -82,16 +82,16 @@ jobs:
   build-macos-x64:
     name: macOS (Intel)
     needs: read-config
-    runs-on: ${{ fromJSON(needs.read-config.outputs.macos-x64) }}
+    runs-on: ${{ fromJSON(needs.read-config.outputs.macos_x64) }}
     if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-arm') && !contains(github.ref, '-linux')"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        if: "!contains(needs.read-config.outputs.macos-x64, 'self-hosted')"
+        if: "!contains(needs.read-config.outputs.macos_x64, 'self-hosted')"
         with:
           node-version: 20
       - uses: dtolnay/rust-toolchain@stable
-        if: "!contains(needs.read-config.outputs.macos-x64, 'self-hosted')"
+        if: "!contains(needs.read-config.outputs.macos_x64, 'self-hosted')"
       - name: Build
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
