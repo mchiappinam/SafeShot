@@ -30,7 +30,7 @@ export interface OverlayCanvasProps {
 export interface OverlayCanvasHandle {
   undo: () => void;
   redo: () => void;
-  getSelectionDataURL: () => string | null;
+  getSelectionDataURL: (forceScale?: number) => string | null;
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
@@ -97,7 +97,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   }, [notifySelection]);
 
   // Export only the selected region (frozen screen + annotations, no UI chrome)
-  const getSelectionDataURL = useCallback((): string | null => {
+  const getSelectionDataURL = useCallback((forceScale?: number): string | null => {
     const pipeline = pipelineRef.current;
     const sel = selMgrRef.current?.getSelection();
     if (!pipeline || !sel) return null;
@@ -105,7 +105,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     const annEng = annEngRef.current;
     const annotations = annEng?.getAnnotations() ?? [];
     const preview = annEng?.getPreview() ?? null;
-    const exportCanvas = pipeline.renderCleanExport(sel, annotations, preview);
+    const exportCanvas = pipeline.renderCleanExport(sel, annotations, preview, forceScale);
     if (!exportCanvas) return null;
 
     return exportCanvas.toDataURL('image/png');
@@ -266,7 +266,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); annEngRef.current?.redo(); notifyAnnotations(); syncPipeline(); }
     else if (e.key === 'b') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, true); }
     else if (e.key === 's') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, false); }
-    else if (e.key === 'c') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onCopy(d); }
+    else if (e.key === 'c') { e.preventDefault(); const d = getSelectionDataURL(1); if (d) onCopy(d); }
     else if (e.key === 'a') { e.preventDefault(); /* Ctrl+A: select entire screen */
       selMgrRef.current?.discardSelection();
       selMgrRef.current?.startSelection({ x: 0, y: 0 });

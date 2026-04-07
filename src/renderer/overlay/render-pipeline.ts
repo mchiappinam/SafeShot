@@ -131,13 +131,13 @@ export class RenderPipeline {
   }
 
   /** Render only the screen bitmaps + annotations for the selection region (no dim, no border, no handles, no label). */
-  renderCleanExport(sel: { x: number; y: number; width: number; height: number }, annotations: Annotation[], preview: Annotation | null): HTMLCanvasElement | null {
+  renderCleanExport(sel: { x: number; y: number; width: number; height: number }, annotations: Annotation[], preview: Annotation | null, forceScale?: number): HTMLCanvasElement | null {
     // Use the highest scale factor for export: either from native capture
     // resolution or from the device pixel ratio, whichever is larger
     const captureScale = this.screens.length > 0
       ? Math.max(...this.screens.map(s => s.nativeWidth / s.bounds.width || 1))
       : 1;
-    const maxScale = Math.max(captureScale, window.devicePixelRatio || 1);
+    const maxScale = forceScale ?? Math.max(captureScale, window.devicePixelRatio || 1);
     const w = Math.round(sel.width * maxScale);
     const h = Math.round(sel.height * maxScale);
     if (w <= 0 || h <= 0) return null;
