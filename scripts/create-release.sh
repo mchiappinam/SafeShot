@@ -36,9 +36,9 @@ RUNNER_MODE=${RUNNER_MODE:-g}
 if [ "$RUNNER_MODE" = "s" ]; then
   cat > "$CONFIG" << 'EOF'
 {
-  "windows": "self-hosted, Windows",
-  "macos-arm": "self-hosted, macOS",
-  "macos-x64": "self-hosted, macOS"
+  "windows": ["self-hosted", "Windows"],
+  "macos-arm": ["self-hosted", "macOS"],
+  "macos-x64": ["self-hosted", "macOS"]
 }
 EOF
   echo "Set all runners to self-hosted"
@@ -49,41 +49,39 @@ elif [ "$RUNNER_MODE" = "m" ]; then
   read -p "  Windows [g]: " WIN_RUNNER
   WIN_RUNNER=${WIN_RUNNER:-g}
   if [ "$WIN_RUNNER" = "s" ]; then
-    WIN_VAL="self-hosted, Windows"
+    WIN_VAL='["self-hosted", "Windows"]'
   else
-    WIN_VAL="windows-latest"
+    WIN_VAL='["windows-latest"]'
   fi
 
   read -p "  macOS ARM [g]: " MAC_ARM_RUNNER
   MAC_ARM_RUNNER=${MAC_ARM_RUNNER:-g}
   if [ "$MAC_ARM_RUNNER" = "s" ]; then
-    MAC_ARM_VAL="self-hosted, macOS"
+    MAC_ARM_VAL='["self-hosted", "macOS"]'
   else
-    MAC_ARM_VAL="macos-14"
+    MAC_ARM_VAL='["macos-14"]'
   fi
 
   read -p "  macOS Intel [g]: " MAC_X64_RUNNER
   MAC_X64_RUNNER=${MAC_X64_RUNNER:-g}
   if [ "$MAC_X64_RUNNER" = "s" ]; then
-    MAC_X64_VAL="self-hosted, macOS"
+    MAC_X64_VAL='["self-hosted", "macOS"]'
   else
-    MAC_X64_VAL="macos-13"
+    MAC_X64_VAL='["macos-13"]'
   fi
 
-  cat > "$CONFIG" << EOF
-{
-  "windows": "$WIN_VAL",
-  "macos-arm": "$MAC_ARM_VAL",
-  "macos-x64": "$MAC_X64_VAL"
-}
-EOF
+  jq -n \
+    --argjson win "$WIN_VAL" \
+    --argjson arm "$MAC_ARM_VAL" \
+    --argjson x64 "$MAC_X64_VAL" \
+    '{"windows": $win, "macos-arm": $arm, "macos-x64": $x64}' > "$CONFIG"
   echo "Set runners: Windows=$WIN_VAL, macOS ARM=$MAC_ARM_VAL, macOS Intel=$MAC_X64_VAL"
 else
   cat > "$CONFIG" << 'EOF'
 {
-  "windows": "windows-latest",
-  "macos-arm": "macos-14",
-  "macos-x64": "macos-13"
+  "windows": ["windows-latest"],
+  "macos-arm": ["macos-14"],
+  "macos-x64": ["macos-13"]
 }
 EOF
   echo "Set all runners to GitHub-hosted"
