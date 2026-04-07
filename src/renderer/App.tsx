@@ -156,7 +156,7 @@ export default function App(): React.ReactElement {
             onUndo={() => overlayRef.current?.undo()} onRedo={() => overlayRef.current?.redo()}
             onSave={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleSave(d, false); }}
             onSaveAs={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleSave(d, true); }}
-            onCopy={() => { const d = overlayRef.current?.getSelectionDataURL(); if (d) handleCopy(d); }}
+            onCopy={() => { const d = overlayRef.current?.getSelectionDataURL(1); if (d) handleCopy(d); }}
             onCancel={handleClose}
             position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y }} />
         </div>
