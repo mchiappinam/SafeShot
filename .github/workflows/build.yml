@@ -9,18 +9,36 @@ permissions:
   contents: write
 
 jobs:
+  read-config:
+    name: Read Runner Config
+    runs-on: ubuntu-latest
+    outputs:
+      windows: ${{ steps.cfg.outputs.windows }}
+      macos-arm: ${{ steps.cfg.outputs.macos-arm }}
+      macos-x64: ${{ steps.cfg.outputs.macos-x64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: cfg
+        run: |
+          echo "windows=$(jq -r '.windows' .github/runner-config.json)" >> $GITHUB_OUTPUT
+          echo "macos-arm=$(jq -r '.["macos-arm"]' .github/runner-config.json)" >> $GITHUB_OUTPUT
+          echo "macos-x64=$(jq -r '.["macos-x64"]' .github/runner-config.json)" >> $GITHUB_OUTPUT
+
   build-windows:
     name: Windows
-    runs-on: windows-latest
+    needs: read-config
+    runs-on: ${{ needs.read-config.outputs.windows }}
     if: "!contains(github.ref, '-mac')"
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        if: "!contains(needs.read-config.outputs.windows, 'self-hosted')"
         with:
           node-version: 20
 
       - uses: dtolnay/rust-toolchain@stable
+        if: "!contains(needs.read-config.outputs.windows, 'self-hosted')"
 
       - name: Build
         shell: cmd
@@ -36,16 +54,19 @@ jobs:
 
   build-macos-arm:
     name: macOS (Apple Silicon)
-    runs-on: macos-14
+    needs: read-config
+    runs-on: ${{ needs.read-config.outputs.macos-arm }}
     if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-x64')"
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        if: "!contains(needs.read-config.outputs.macos-arm, 'self-hosted')"
         with:
           node-version: 20
 
       - uses: dtolnay/rust-toolchain@stable
+        if: "!contains(needs.read-config.outputs.macos-arm, 'self-hosted')"
         with:
           targets: aarch64-apple-darwin
 
@@ -64,16 +85,19 @@ jobs:
 
   build-macos-x64:
     name: macOS (Intel)
-    runs-on: macos-13
+    needs: read-config
+    runs-on: ${{ needs.read-config.outputs.macos-x64 }}
     if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-arm')"
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        if: "!contains(needs.read-config.outputs.macos-x64, 'self-hosted')"
         with:
           node-version: 20
 
       - uses: dtolnay/rust-toolchain@stable
+        if: "!contains(needs.read-config.outputs.macos-x64, 'self-hosted')"
 
       - name: Build
         env:
