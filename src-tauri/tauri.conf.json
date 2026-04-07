@@ -18,6 +18,7 @@
   },
   "bundle": {
     "active": true,
+    "publisher": "Chiappina",
     "targets": ["nsis", "dmg", "deb", "appimage"],
     "icon": [
       "icons/32x32.png",
