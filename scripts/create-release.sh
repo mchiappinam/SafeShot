@@ -72,7 +72,7 @@ elif [ "$RUNNER_MODE" = "m" ]; then
   if [ "$MAC_X64_RUNNER" = "s" ]; then
     MAC_X64_VAL='["self-hosted", "macOS"]'
   else
-    MAC_X64_VAL='["macos-13"]'
+    MAC_X64_VAL='["macos-15-intel"]'
   fi
 
   read -p "  Linux [g]: " LINUX_RUNNER
@@ -95,7 +95,7 @@ else
 {
   "windows": ["windows-latest"],
   "macos-arm": ["macos-14"],
-  "macos-x64": ["macos-13"],
+  "macos-x64": ["macos-15-intel"],
   "linux": ["ubuntu-22.04"]
 }
 EOF

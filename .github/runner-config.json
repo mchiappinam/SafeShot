@@ -7,7 +7,7 @@
     "macos-14"
   ],
   "macos-x64": [
-    "macos-13"
+    "macos-15-intel"
   ],
   "linux": [
     "ubuntu-22.04"
