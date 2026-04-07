@@ -182,7 +182,6 @@ fn main() {
 
             // Register global shortcuts
             // Windows: PrtScn, macOS: Cmd+Shift+S
-            // Both platforms also get Ctrl+Shift+S
             #[cfg(target_os = "windows")]
             {
                 let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
@@ -207,20 +206,6 @@ fn main() {
                     }) {
                     Ok(_) => log("Cmd+Shift+S shortcut registered"),
                     Err(e) => log(&format!("Cmd+Shift+S shortcut failed: {}", e)),
-                }
-            }
-
-            // Ctrl+Shift+S on both platforms
-            {
-                let shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyS);
-                let app_handle = app.handle().clone();
-                match app
-                    .global_shortcut()
-                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
-                        start_capture(&app_handle);
-                    }) {
-                    Ok(_) => log("Ctrl+Shift+S shortcut registered"),
-                    Err(e) => log(&format!("Ctrl+Shift+S shortcut failed: {}", e)),
                 }
             }
 
