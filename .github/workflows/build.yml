@@ -33,7 +33,7 @@ jobs:
   build-macos-arm:
     name: macOS (Apple Silicon)
     runs-on: [self-hosted, macOS]
-    if: "!contains(github.ref, '-beta') || contains(github.ref, '-mac-arm') || (contains(github.ref, '-mac') && !contains(github.ref, '-mac-x64')) || contains(github.ref, '-all')"
+    if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-x64')"
     steps:
       - uses: actions/checkout@v4
 
@@ -55,7 +55,7 @@ jobs:
   build-macos-x64:
     name: macOS (Intel)
     runs-on: [self-hosted, macOS]
-    if: "!contains(github.ref, '-beta') || contains(github.ref, '-mac-x64') || (contains(github.ref, '-mac') && !contains(github.ref, '-mac-arm')) || contains(github.ref, '-all')"
+    if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-arm')"
     steps:
       - uses: actions/checkout@v4
 
