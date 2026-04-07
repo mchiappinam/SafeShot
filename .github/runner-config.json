@@ -1,5 +1,12 @@
 {
-  "windows": ["windows-latest"],
-  "macos-arm": ["macos-14"],
-  "macos-x64": ["macos-13"]
+  "windows": [
+    "self-hosted",
+    "Windows"
+  ],
+  "macos-arm": [
+    "macos-14"
+  ],
+  "macos-x64": [
+    "macos-13"
+  ]
 }
