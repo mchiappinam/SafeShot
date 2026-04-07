@@ -11,20 +11,16 @@ permissions:
 jobs:
   build-windows:
     name: Windows
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows]
     if: "!contains(github.ref, '-mac')"
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - uses: dtolnay/rust-toolchain@stable
-
       - name: Build
         shell: cmd
         run: |
+          rustc --version
+          node --version
           call npm install
           call node scripts/generate-icons.js
           call npx tauri build
@@ -36,23 +32,17 @@ jobs:
 
   build-macos-arm:
     name: macOS (Apple Silicon)
-    runs-on: macos-14
+    runs-on: [self-hosted, macOS]
     if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-x64')"
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin
 
       - name: Build
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
         run: |
+          rustc --version
+          node --version
           npm install
           node scripts/generate-icons.js
           npx tauri build --target aarch64-apple-darwin
@@ -64,21 +54,17 @@ jobs:
 
   build-macos-x64:
     name: macOS (Intel)
-    runs-on: macos-13
+    runs-on: [self-hosted, macOS]
     if: "!contains(github.ref, '-beta-win') && !contains(github.ref, '-beta-mac-arm')"
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - uses: dtolnay/rust-toolchain@stable
 
       - name: Build
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
         run: |
+          rustc --version
+          node --version
           npm install
           node scripts/generate-icons.js
           npx tauri build
