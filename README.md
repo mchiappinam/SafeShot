@@ -31,13 +31,15 @@ Oh, and the installer is under 4 MB.
 
 ## Platform Support
 
-| Platform | Status | Download |
-|----------|--------|----------|
-| Windows 10+ | ✅ Tested | `.exe` (NSIS) or `.msi` |
-| macOS 11+ (Intel) | ✅ Tested | `.dmg` (x64) |
-| macOS 11+ (Apple Silicon) | 🔶 Untested | `.dmg` (ARM) |
-| Ubuntu / Debian | 🔶 Untested | `.deb` |
-| Fedora / Arch / Other | 🔶 Untested | `.AppImage` |
+| Platform | Status | File to download |
+|----------|--------|------------------|
+| Windows 10+ | ✅ Tested | `SafeShot_x64-setup.exe` or `SafeShot_x64_en-US.msi` |
+| macOS 11+ (Intel) | ✅ Tested | `SafeShot_x64.dmg` |
+| macOS 11+ (Apple Silicon) | 🔶 Untested | `SafeShot_aarch64.dmg` |
+| Ubuntu / Debian | 🔶 Untested | `SafeShot_amd64.deb` |
+| Fedora / Arch / Other | 🔶 Untested | `SafeShot_amd64.AppImage` |
+
+All downloads available on the [releases page](https://github.com/mchiappinam/SafeShot/releases/latest).
 
 🔶 Untested platforms are built from the same codebase and should work, but haven't been verified yet. If you run into issues, please [open an issue](https://github.com/mchiappinam/SafeShot/issues).
 
