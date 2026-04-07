@@ -6,7 +6,7 @@ echo "Latest Version Published: $CURRENT"
 read -p "Enter new version: " VERSION
 
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "Invalid version format. Use semver like 1.1.0"
+  echo "Invalid version format. Use semver like 0.1.0"
   exit 1
 fi
 
