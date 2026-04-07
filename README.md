@@ -33,8 +33,8 @@ Oh, and the installer is under 4 MB.
 
 | Platform | Status | File to download |
 |----------|--------|------------------|
-| Windows 10+ | ✅ Tested | `SafeShot_x64-setup.exe` |
-| macOS 11+ (Intel) | ✅ Tested | `SafeShot_x64.dmg` |
+| Windows 10+ | ✅ Passed QA | `SafeShot_x64-setup.exe` |
+| macOS 11+ (Intel) | ✅ Passed QA | `SafeShot_x64.dmg` |
 | macOS 11+ (Apple Silicon) | 🔶 Untested | `SafeShot_aarch64.dmg` |
 | Ubuntu / Debian | 🔶 Untested | `SafeShot_amd64.deb` |
 | Fedora / Arch / Other | 🔶 Untested | `SafeShot_amd64.AppImage` |

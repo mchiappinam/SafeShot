@@ -80,14 +80,15 @@ export function drawOctagon(
 ): void {
   ctx.save();
 
-  // Use bounding box like other shapes, with radius from the smaller dimension
+  // Use bounding box like other shapes
   const x = Math.min(start.x, end.x);
   const y = Math.min(start.y, end.y);
   const w = Math.abs(end.x - start.x);
   const h = Math.abs(end.y - start.y);
   const cx = x + w / 2;
   const cy = y + h / 2;
-  const r = Math.max(w, h) / 2;
+  const rx = w / 2;
+  const ry = h / 2;
 
   ctx.lineWidth = strokeWidth;
   ctx.lineCap = 'round';
@@ -96,8 +97,8 @@ export function drawOctagon(
   ctx.beginPath();
   for (let i = 0; i < 8; i++) {
     const angle = (Math.PI * 2 * i) / 8 - Math.PI / 8;
-    const px = cx + r * Math.cos(angle);
-    const py = cy + r * Math.sin(angle);
+    const px = cx + rx * Math.cos(angle);
+    const py = cy + ry * Math.sin(angle);
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   }
