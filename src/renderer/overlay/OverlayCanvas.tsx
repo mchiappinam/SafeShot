@@ -264,7 +264,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (!mod || !canvas) return;
     if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); annEngRef.current?.undo(); notifyAnnotations(); syncPipeline(); }
     else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); annEngRef.current?.redo(); notifyAnnotations(); syncPipeline(); }
-    else if (e.key === 's' && e.shiftKey) { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, true); }
+    else if (e.key === 'b' && e.shiftKey) { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, true); }
     else if (e.key === 's') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, false); }
     else if (e.key === 'c') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onCopy(d); }
     else if (e.key === 'a') { e.preventDefault(); /* Ctrl+A: select entire screen */

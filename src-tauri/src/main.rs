@@ -182,6 +182,7 @@ fn main() {
 
             // Register global shortcuts
             // Windows: PrtScn, macOS: Cmd+Shift+S
+            // Both platforms also get Ctrl+Shift+S
             #[cfg(target_os = "windows")]
             {
                 let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
@@ -206,6 +207,20 @@ fn main() {
                     }) {
                     Ok(_) => log("Cmd+Shift+S shortcut registered"),
                     Err(e) => log(&format!("Cmd+Shift+S shortcut failed: {}", e)),
+                }
+            }
+
+            // Ctrl+Shift+S on both platforms
+            {
+                let shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyS);
+                let app_handle = app.handle().clone();
+                match app
+                    .global_shortcut()
+                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                        start_capture(&app_handle);
+                    }) {
+                    Ok(_) => log("Ctrl+Shift+S shortcut registered"),
+                    Err(e) => log(&format!("Ctrl+Shift+S shortcut failed: {}", e)),
                 }
             }
 
@@ -252,18 +267,6 @@ fn main() {
 fn close_overlay(app: AppHandle) {
     if let Some(win) = app.get_webview_window("overlay") {
         win.close().ok();
-    }
-    // Re-register the global capture shortcut now that the overlay is gone
-    #[cfg(target_os = "macos")]
-    {
-        let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
-        let app_clone = app.clone();
-        app.global_shortcut()
-            .on_shortcut(shortcut, move |_app, _shortcut, _event| {
-                start_capture(&app_clone);
-            })
-            .ok();
-        log("Global shortcut re-registered after overlay close");
     }
     log("Overlay closed");
 }
@@ -315,20 +318,11 @@ fn toggle_autostart(app: &AppHandle) {
     }
 }
 
-pub(crate) fn start_capture(app: &AppHandle) {
+fn start_capture(app: &AppHandle) {
     if app.get_webview_window("overlay").is_some() {
         return;
     }
     log("Starting capture...");
-
-    // Unregister the global shortcut while the overlay is open so the
-    // frontend can handle Ctrl/Cmd+Shift+S for "Save As"
-    #[cfg(target_os = "macos")]
-    {
-        let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
-        app.global_shortcut().unregister(shortcut).ok();
-        log("Global shortcut unregistered for overlay");
-    }
 
     // Capture screens BEFORE opening the overlay so we don't screenshot our own window
     let screens = match capture::do_capture() {
