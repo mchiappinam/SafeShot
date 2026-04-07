@@ -87,7 +87,7 @@ Once you've selected an area, a toolbar appears with drawing tools:
 ### Save and Copy
 - **Ctrl+C** / **⌘C** copies the screenshot to your clipboard
 - **Ctrl+S** / **⌘S** quick saves to Pictures/SafeShot
-- **Ctrl+Shift+B** / **⌘⇧B** opens a Save As dialog
+- **Ctrl+B** / **⌘B** opens a Save As dialog
 - **Ctrl+Z** / **⌘Z** and **Ctrl+Y** / **⌘Y** for undo and redo
 - **ESC** to cancel and close
 
