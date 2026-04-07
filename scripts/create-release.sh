@@ -27,13 +27,16 @@ echo ""
 echo "Current runners:"
 cat "$CONFIG"
 echo ""
-echo "  g) GitHub-hosted (default)"
+echo "  k) Keep current (default)"
+echo "  g) GitHub-hosted (all platforms)"
 echo "  s) Self-hosted (all platforms)"
 echo "  m) Mix (pick per platform)"
-read -p "Runner mode [g]: " RUNNER_MODE
-RUNNER_MODE=${RUNNER_MODE:-g}
+read -p "Runner mode [k]: " RUNNER_MODE
+RUNNER_MODE=${RUNNER_MODE:-k}
 
-if [ "$RUNNER_MODE" = "s" ]; then
+if [ "$RUNNER_MODE" = "k" ]; then
+  echo "Keeping current runners"
+elif [ "$RUNNER_MODE" = "s" ]; then
   cat > "$CONFIG" << 'EOF'
 {
   "windows": ["self-hosted", "Windows"],
