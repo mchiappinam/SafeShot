@@ -143,11 +143,12 @@ jobs:
       - name: Rename artifacts
         run: |
           mkdir -p release
-          for f in artifacts/**/*x64-setup.exe; do cp "$f" release/SafeShot-Windows-x64.exe; done
-          for f in artifacts/**/*aarch64.dmg; do cp "$f" release/SafeShot-macOS-AppleSilicon-aarch64.dmg; done
-          for f in artifacts/**/*x64.dmg; do cp "$f" release/SafeShot-macOS-Intel-x64.dmg; done
-          for f in artifacts/**/*amd64.deb; do cp "$f" release/SafeShot-Linux-amd64.deb; done
-          for f in artifacts/**/*amd64.AppImage; do cp "$f" release/SafeShot-Linux-amd64.AppImage; done
+          find artifacts -name '*x64-setup.exe' -exec cp {} release/SafeShot-Windows-x64.exe \;
+          find artifacts -name '*aarch64.dmg' -exec cp {} release/SafeShot-macOS-AppleSilicon-aarch64.dmg \;
+          find artifacts -name '*x64.dmg' -exec cp {} release/SafeShot-macOS-Intel-x64.dmg \;
+          find artifacts -name '*amd64.deb' -exec cp {} release/SafeShot-Linux-amd64.deb \;
+          find artifacts -name '*amd64.AppImage' -exec cp {} release/SafeShot-Linux-amd64.AppImage \;
+          ls -la release/
       - uses: softprops/action-gh-release@v2
         with:
           files: release/*
