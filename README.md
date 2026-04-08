@@ -55,7 +55,7 @@ SafeShot starts automatically when your computer boots. You can toggle this from
 ## How to Use
 
 ### Capture a Screenshot
-- Press **Print Screen** (Windows) or **⌘⇧S** (macOS), or
+- Press **Print Screen** (Windows/Linux) or **⌘⇧S** (macOS), or
 - Click the **SafeShot icon** in your system tray
 
 ### Select an Area
