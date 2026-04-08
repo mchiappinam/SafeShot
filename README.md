@@ -50,6 +50,13 @@ All downloads available on the [releases page](https://github.com/mchiappinam/Sa
 3. Run the installer and follow the prompts
 4. SafeShot will appear in your system tray (near the clock)
 
+### macOS (Homebrew)
+
+```
+brew tap mchiappinam/safeshot
+brew install --cask safeshot
+```
+
 SafeShot starts automatically when your computer boots. You can toggle this from the tray menu.
 
 ## How to Use
