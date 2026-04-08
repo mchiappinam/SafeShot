@@ -140,11 +140,15 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+      - name: Rename artifacts
+        run: |
+          mkdir -p release
+          for f in artifacts/**/*x64-setup.exe; do cp "$f" release/SafeShot-Windows-x64.exe; done
+          for f in artifacts/**/*aarch64.dmg; do cp "$f" release/SafeShot-macOS-AppleSilicon-aarch64.dmg; done
+          for f in artifacts/**/*x64.dmg; do cp "$f" release/SafeShot-macOS-Intel-x64.dmg; done
+          for f in artifacts/**/*amd64.deb; do cp "$f" release/SafeShot-Linux-amd64.deb; done
+          for f in artifacts/**/*amd64.AppImage; do cp "$f" release/SafeShot-Linux-amd64.AppImage; done
       - uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/**/*.exe
-            artifacts/**/*.dmg
-            artifacts/**/*.deb
-            artifacts/**/*.AppImage
+          files: release/*
           generate_release_notes: true
