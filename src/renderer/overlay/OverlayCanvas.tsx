@@ -138,7 +138,10 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       const ctx = canvas.getContext('2d');
-      if (ctx) ctx.scale(dpr, dpr);
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+        ctx.imageSmoothingEnabled = false;
+      }
     }
     selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
     pipelineRef.current.setScreens(screens).then(() => {

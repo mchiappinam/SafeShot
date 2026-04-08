@@ -71,6 +71,7 @@ export class RenderPipeline {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Failed to get 2D context');
     this.ctx = ctx;
+    ctx.imageSmoothingEnabled = false;
   }
 
   async setScreens(screens: ScreenData[]): Promise<void> {
@@ -214,6 +215,7 @@ export class RenderPipeline {
 
   private renderFrame(): void {
     const { ctx } = this;
+    ctx.imageSmoothingEnabled = false;
     // Use logical (CSS) dimensions since context is scaled by devicePixelRatio
     const w = window.innerWidth;
     const h = window.innerHeight;
