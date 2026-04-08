@@ -29,7 +29,7 @@
     ],
     "windows": {
       "nsis": {
-        "installMode": "both",
+        "installMode": "currentUser",
         "installerIcon": "icons/icon.ico",
         "installerHooks": "nsis/hooks.nsi"
       }
