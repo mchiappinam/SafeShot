@@ -62,7 +62,7 @@ SafeShot starts automatically when your computer boots. You can toggle this from
 - Click and drag to select the area you want to capture
 - Drag the edges or corners to resize
 - Drag inside the selection to move it
-- Press **Ctrl+A** (Windows) or **⌘A** (macOS) to select the entire screen
+- Press **Ctrl+A** (Windows/Linux) or **⌘A** (macOS) to select the entire screen
 
 ### Annotation Tools
 Once you've selected an area, a toolbar appears with drawing tools:
@@ -122,6 +122,13 @@ SafeShot has **zero network capabilities**. It cannot connect to the internet. Y
 - macOS 11 (Big Sur) or later
 - Linux with WebKitGTK 4.1
 - ~20 MB disk space
+
+## Linux Notes
+
+- Works best on X11. Wayland support depends on your desktop environment and may have limitations with screen capture and clipboard.
+- The Print Screen shortcut may be intercepted by your desktop environment's built-in screenshot tool (GNOME, KDE). You may need to disable it in your DE settings or use SafeShot from the tray icon instead.
+- The `.deb` package requires `libwebkit2gtk-4.1` and `libappindicator3-1` as dependencies.
+- The `.AppImage` is self-contained and should run on most distributions.
 
 ## License
 
