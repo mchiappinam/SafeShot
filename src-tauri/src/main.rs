@@ -236,7 +236,7 @@ fn main() {
                         WebviewUrl::App("welcome.html".into()),
                     )
                     .title("Welcome to SafeShot")
-                    .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png")).unwrap())
+                    .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png")).unwrap()).unwrap()
                     .inner_size(420.0, 440.0)
                     .resizable(false)
                     .maximizable(false)
@@ -538,7 +538,7 @@ fn show_about(app: &AppHandle) {
     }
     let _ = WebviewWindowBuilder::new(app, "about", WebviewUrl::App("about.html".into()))
         .title("About SafeShot")
-        .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png")).unwrap())
+        .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png")).unwrap()).unwrap()
         .inner_size(420.0, 380.0)
         .resizable(false)
         .maximizable(false)
