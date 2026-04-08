@@ -181,8 +181,21 @@ fn main() {
             }
 
             // Register global shortcuts
-            // Windows: PrtScn, macOS: Cmd+Shift+S
+            // Windows/Linux: PrtScn, macOS: Cmd+Shift+S
             #[cfg(target_os = "windows")]
+            {
+                let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
+                let app_handle = app.handle().clone();
+                match app
+                    .global_shortcut()
+                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                        start_capture(&app_handle);
+                    }) {
+                    Ok(_) => log("PrtScn shortcut registered"),
+                    Err(e) => log(&format!("PrtScn shortcut failed: {}", e)),
+                }
+            }
+            #[cfg(target_os = "linux")]
             {
                 let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
                 let app_handle = app.handle().clone();
