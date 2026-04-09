@@ -44,7 +44,7 @@ fn main() {
 
     log("SafeShot starting...");
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             // Second instance tried to launch, trigger a capture on the running instance
             start_capture(app);
@@ -251,8 +251,13 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error building tauri app")
-        .run(|_app, event| {
+        .expect("error building tauri app");
+
+    // Hide from Dock on macOS, show only in menu bar
+    #[cfg(target_os = "macos")]
+    app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+    app.run(|_app, event| {
             // Keep the app alive when all windows are closed (tray-only mode)
             if let tauri::RunEvent::ExitRequested { api, .. } = event {
                 api.prevent_exit();

@@ -33,6 +33,9 @@
         "installerIcon": "icons/icon.ico",
         "installerHooks": "nsis/hooks.nsi"
       }
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0"
     }
   },
   "plugins": {}
