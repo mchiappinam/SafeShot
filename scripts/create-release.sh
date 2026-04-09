@@ -146,6 +146,9 @@ case $BUILD_TYPE in
   4) echo "Building: macOS ARM + Intel" ;;
   5) echo "Building: Linux only" ;;
   6) echo "Building: all platforms" ;;
-  7) echo "Building: all platforms + GitHub Release" ;;
+  7) echo "Building: all platforms + GitHub Release"
+     echo ""
+     echo "Once the pipeline finishes, run this to update the brew cask:"
+     echo "  bash scripts/update-brew.sh" ;;
 esac
 echo "Check: https://github.com/mchiappinam/SafeShot/actions"
