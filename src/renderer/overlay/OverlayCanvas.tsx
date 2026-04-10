@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
-import type { CaptureState, HandlePosition, ScreenData, ToolType } from '../../shared/types';
+import type { CaptureState, FillMode, HandlePosition, ScreenData, ToolType } from '../../shared/types';
 import { RenderPipeline } from './render-pipeline';
 import { CursorManager } from './cursor-manager';
 import { SelectionManager } from '../selection/SelectionManager';
@@ -12,7 +12,7 @@ export interface OverlayCanvasProps {
   activeTool: ToolType | null;
   activeColor: string;
   strokeWidth: number;
-  solid: boolean;
+  fillMode: FillMode;
   textBold: boolean;
   textItalic: boolean;
   textUnderline: boolean;
@@ -34,7 +34,7 @@ export interface OverlayCanvasHandle {
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
-  screens, activeTool, activeColor, strokeWidth, solid, textBold, textItalic, textUnderline, textHighlight, textSize, onStateChange, onAnnotationsChange, onSelectionChange,
+  screens, activeTool, activeColor, strokeWidth, fillMode, textBold, textItalic, textUnderline, textHighlight, textSize, onStateChange, onAnnotationsChange, onSelectionChange,
   onClose, onSave, onCopy, onColorPick,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,7 +53,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   useEffect(() => { annEngRef.current?.setTool(activeTool); }, [activeTool]);
   useEffect(() => { annEngRef.current?.setColor(activeColor); }, [activeColor]);
   useEffect(() => { annEngRef.current?.setCustomStrokeWidth(strokeWidth); }, [strokeWidth]);
-  useEffect(() => { annEngRef.current?.setSolid(solid); }, [solid]);
+  useEffect(() => { annEngRef.current?.setFillMode(fillMode); }, [fillMode]);
   useEffect(() => { annEngRef.current?.setTextBold(textBold); }, [textBold]);
   useEffect(() => { annEngRef.current?.setTextItalic(textItalic); }, [textItalic]);
   useEffect(() => { annEngRef.current?.setTextUnderline(textUnderline); }, [textUnderline]);

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ToolType } from '../../shared/types';
+import type { FillMode, ToolType } from '../../shared/types';
 
 interface DrawingToolbarProps {
   activeTool: ToolType | null;
@@ -8,8 +8,8 @@ interface DrawingToolbarProps {
   onThicknessOpen: () => void;
   activeColor: string;
   strokeWidth: number;
-  solid: boolean;
-  onSolidToggle: () => void;
+  fillMode: FillMode;
+  onFillModeChange: (mode: FillMode) => void;
   position: { x: number; y: number };
 }
 
@@ -27,12 +27,26 @@ const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }
   { id: 'text',     label: 'T',  tooltip: 'Text' },
 ];
 
+const FILL_MODES: { mode: FillMode; icon: string; tooltip: string }[] = [
+  { mode: 'hollow', icon: '◻', tooltip: 'Hollow' },
+  { mode: 'solid',  icon: '◼', tooltip: 'Solid' },
+  { mode: 'blur',   icon: '▦', tooltip: 'Blur (shapes only)' },
+];
+
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
-  activeTool, onToolSelect, onColorPickerOpen, onThicknessOpen, activeColor, strokeWidth, solid, onSolidToggle, position,
+  activeTool, onToolSelect, onColorPickerOpen, onThicknessOpen, activeColor, strokeWidth, fillMode, onFillModeChange, position,
 }) => {
   const handleToolClick = (tool: ToolType) => {
     onToolSelect(activeTool === tool ? null : tool);
   };
+
+  const cycleFillMode = () => {
+    const order: FillMode[] = ['hollow', 'solid', 'blur'];
+    const next = order[(order.indexOf(fillMode) + 1) % order.length];
+    onFillModeChange(next);
+  };
+
+  const currentFill = FILL_MODES.find(f => f.mode === fillMode) ?? FILL_MODES[0];
 
   const btnStyle = (active: boolean): React.CSSProperties => ({
     width: 32,
@@ -74,11 +88,11 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         </div>
       ))}
       <div style={{ position: 'relative' }} className="tooltip-wrap">
-        <button onClick={onSolidToggle}
+        <button onClick={cycleFillMode}
           style={{ ...btnStyle(false), border: '2px solid #fff' }}>
-          {solid ? '◼' : '◻'}
+          {currentFill.icon}
         </button>
-        <span className="tooltip-text">{solid ? 'Solid (click for hollow)' : 'Hollow (click for solid)'}</span>
+        <span className="tooltip-text">{currentFill.tooltip}</span>
       </div>
       <div style={{ position: 'relative' }} className="tooltip-wrap">
         <button onClick={onColorPickerOpen}

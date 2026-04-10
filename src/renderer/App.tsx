@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { CaptureState, Rectangle, ScreenData, ToolType } from '../shared/types';
+import type { CaptureState, FillMode, Rectangle, ScreenData, ToolType } from '../shared/types';
 import { DEFAULT_COLOR } from '../shared/constants';
 import { computeToolbarPositions } from './toolbar/toolbar-position';
 import OverlayCanvas from './overlay/OverlayCanvas';
@@ -54,7 +54,7 @@ export default function App(): React.ReactElement {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [thicknessOpen, setThicknessOpen] = useState(false);
   const [strokeWidth, setStrokeWidth] = useState(4);
-  const [solid, setSolid] = useState(false);
+  const [fillMode, setFillMode] = useState<FillMode>('hollow');
   const [textBold, setTextBold] = useState(false);
   const [textItalic, setTextItalic] = useState(false);
   const [textUnderline, setTextUnderline] = useState(false);
@@ -127,7 +127,7 @@ export default function App(): React.ReactElement {
         activeTool={activeTool}
         activeColor={activeColor}
         strokeWidth={strokeWidth}
-        solid={solid}
+        fillMode={fillMode}
         textBold={textBold} textItalic={textItalic} textUnderline={textUnderline}
         textHighlight={textHighlight} textSize={textSize}
         onStateChange={handleStateChange}
@@ -145,7 +145,7 @@ export default function App(): React.ReactElement {
             onColorPickerOpen={() => { setColorPickerOpen(true); setThicknessOpen(false); }}
             onThicknessOpen={() => { setThicknessOpen(true); setColorPickerOpen(false); }}
             activeColor={activeColor} strokeWidth={strokeWidth}
-            solid={solid} onSolidToggle={() => setSolid(s => !s)}
+            fillMode={fillMode} onFillModeChange={setFillMode}
             position={{ x: toolbarPositions.drawing.x, y: toolbarPositions.drawing.y }} />
         </div>
       )}

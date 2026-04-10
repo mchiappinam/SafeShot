@@ -45,6 +45,8 @@ export interface ResizeHandle {
 
 export type ToolType = 'pencil' | 'line' | 'arrow' | 'sharpie' | 'circle' | 'triangle' | 'octagon' | 'square' | 'text' | 'hand' | 'eyedropper';
 
+export type FillMode = 'hollow' | 'solid' | 'blur';
+
 export interface Annotation {
   id: string;
   tool: ToolType;
@@ -52,7 +54,7 @@ export interface Annotation {
   strokeWidth: number;
   points: Point[];
   text?: string;
-  solid?: boolean;
+  fillMode?: FillMode;
   textBold?: boolean;
   textItalic?: boolean;
   textUnderline?: boolean;

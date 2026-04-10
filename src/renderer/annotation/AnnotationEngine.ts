@@ -1,4 +1,4 @@
-import type { Annotation, Point, ToolType } from '../../shared/types';
+import type { Annotation, FillMode, Point, ToolType } from '../../shared/types';
 import { DEFAULT_COLOR, STROKE_WIDTH } from '../../shared/constants';
 import { UndoRedoStack } from '../state/undo-redo';
 
@@ -16,7 +16,7 @@ export class AnnotationEngine {
   private tool: ToolType | null = null;
   private color: string = DEFAULT_COLOR;
   private customStrokeWidth: number = STROKE_WIDTH.pencil;
-  private solidFill: boolean = false;
+  private fillMode: FillMode = 'hollow';
   private stack = new UndoRedoStack();
   private preview: Annotation | null = null;
   private currentPoints: Point[] = [];
@@ -32,7 +32,7 @@ export class AnnotationEngine {
   setTool(tool: ToolType | null): void { this.tool = tool; }
   setColor(color: string): void { this.color = color; }
   setCustomStrokeWidth(w: number): void { this.customStrokeWidth = w; }
-  setSolid(solid: boolean): void { this.solidFill = solid; }
+  setFillMode(mode: FillMode): void { this.fillMode = mode; }
   setTextBold(v: boolean): void { this.textBold = v; }
   setTextItalic(v: boolean): void { this.textItalic = v; }
   setTextUnderline(v: boolean): void { this.textUnderline = v; }
@@ -63,7 +63,7 @@ export class AnnotationEngine {
       color: this.color,
       strokeWidth: strokeWidthForTool(this.tool, this.customStrokeWidth),
       points: [point],
-      solid: this.solidFill,
+      fillMode: this.fillMode,
     };
   }
 

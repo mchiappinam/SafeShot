@@ -15,10 +15,91 @@ function getHandlePoints(sel: Selection): HandlePoint[] {
   ];
 }
 
-/** Renders a single annotation using the shared shape/freehand functions. */
-function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation): void {
+/** Pixelate a rectangular region of the canvas to create an obfuscation effect.
+ *  Works in device-pixel space using getImageData/putImageData.
+ *  @param dprOverride - override devicePixelRatio for export canvases */
+function pixelateRegion(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, blockSize: number = 10, dprOverride?: number): void {
+  if (w <= 0 || h <= 0) return;
+  const dpr = dprOverride ?? (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+  const px = Math.round(x * dpr);
+  const py = Math.round(y * dpr);
+  const pw = Math.round(w * dpr);
+  const ph = Math.round(h * dpr);
+  try {
+    const imageData = ctx.getImageData(px, py, pw, ph);
+    const bs = Math.max(1, Math.round(blockSize * dpr));
+    const data = imageData.data;
+    for (let by = 0; by < ph; by += bs) {
+      for (let bx = 0; bx < pw; bx += bs) {
+        const sx = Math.min(bx + Math.floor(bs / 2), pw - 1);
+        const sy = Math.min(by + Math.floor(bs / 2), ph - 1);
+        const idx = (sy * pw + sx) * 4;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+        for (let dy = by; dy < Math.min(by + bs, ph); dy++) {
+          for (let dx = bx; dx < Math.min(bx + bs, pw); dx++) {
+            const i = (dy * pw + dx) * 4;
+            data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = a;
+          }
+        }
+      }
+    }
+    ctx.putImageData(imageData, px, py);
+  } catch { /* getImageData can fail on tainted canvas */ }
+}
+
+// Reusable temp canvas for pixelateClipped to avoid creating one per frame
+let _tmpCanvas: HTMLCanvasElement | null = null;
+let _tmpCtx: CanvasRenderingContext2D | null = null;
+
+/** Pixelate a region and draw it clipped to a shape path.
+ *  Since putImageData ignores clip/transform, we pixelate onto a temp canvas
+ *  then drawImage it back through the clip path.
+ *  @param dprOverride - override devicePixelRatio for export canvases */
+function pixelateClipped(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, blockSize: number = 10, dprOverride?: number): void {
+  if (w <= 0 || h <= 0) return;
+  const dpr = dprOverride ?? (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+  const px = Math.round(x * dpr);
+  const py = Math.round(y * dpr);
+  const pw = Math.round(w * dpr);
+  const ph = Math.round(h * dpr);
+  try {
+    const imageData = ctx.getImageData(px, py, pw, ph);
+    const bs = Math.max(1, Math.round(blockSize * dpr));
+    const data = imageData.data;
+    for (let by = 0; by < ph; by += bs) {
+      for (let bx = 0; bx < pw; bx += bs) {
+        const sx = Math.min(bx + Math.floor(bs / 2), pw - 1);
+        const sy = Math.min(by + Math.floor(bs / 2), ph - 1);
+        const idx = (sy * pw + sx) * 4;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+        for (let dy = by; dy < Math.min(by + bs, ph); dy++) {
+          for (let dx = bx; dx < Math.min(bx + bs, pw); dx++) {
+            const i = (dy * pw + dx) * 4;
+            data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = a;
+          }
+        }
+      }
+    }
+    // Reuse temp canvas, resize only if needed
+    if (!_tmpCanvas) { _tmpCanvas = document.createElement('canvas'); _tmpCtx = _tmpCanvas.getContext('2d'); }
+    if (!_tmpCtx) return;
+    if (_tmpCanvas.width < pw || _tmpCanvas.height < ph) {
+      _tmpCanvas.width = pw; _tmpCanvas.height = ph;
+    }
+    _tmpCtx.putImageData(imageData, 0, 0);
+    // drawImage respects the current clip path and transform on ctx.
+    // Source: full temp canvas region. Dest: logical coords (ctx is scaled by dpr).
+    ctx.drawImage(_tmpCanvas, 0, 0, pw, ph, x, y, w, h);
+  } catch { /* getImageData can fail on tainted canvas */ }
+}
+
+/** Renders a single annotation using the shared shape/freehand functions.
+ *  @param dprOverride - override devicePixelRatio for export canvases */
+function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOverride?: number): void {
   if (ann.points.length === 0) return;
   const [start, end] = ann.points;
+  const isBlur = ann.fillMode === 'blur';
+
   switch (ann.tool) {
     case 'pencil':
       drawFreehand(ctx, ann.points, ann.color, ann.strokeWidth);
@@ -33,16 +114,73 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation): void 
       if (start && end) drawArrow(ctx, start, end, ann.color, ann.strokeWidth);
       break;
     case 'circle':
-      if (start && end) drawCircle(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
+      if (start && end) {
+        if (isBlur) {
+          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+          ctx.save();
+          ctx.beginPath();
+          ctx.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2);
+          ctx.clip();
+          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
+        } else {
+          drawCircle(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
       break;
     case 'triangle':
-      if (start && end) drawTriangle(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
+      if (start && end) {
+        if (isBlur) {
+          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(bx + bw / 2, by);
+          ctx.lineTo(bx + bw, by + bh);
+          ctx.lineTo(bx, by + bh);
+          ctx.closePath();
+          ctx.clip();
+          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
+        } else {
+          drawTriangle(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
       break;
     case 'octagon':
-      if (start && end) drawOctagon(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
+      if (start && end) {
+        if (isBlur) {
+          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+          const cx = bx + bw / 2, cy = by + bh / 2;
+          const rx = bw / 2, ry = bh / 2;
+          ctx.save();
+          ctx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 * i) / 8 - Math.PI / 8;
+            const px = cx + rx * Math.cos(angle), py = cy + ry * Math.sin(angle);
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.clip();
+          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
+        } else {
+          drawOctagon(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
       break;
     case 'square':
-      if (start && end) drawSquare(ctx, start, end, ann.color, ann.strokeWidth, ann.solid ?? false);
+      if (start && end) {
+        if (isBlur) {
+          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+          pixelateRegion(ctx, bx, by, bw, bh, 10, dprOverride);
+        } else {
+          drawSquare(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
       break;
     case 'text':
       if (start && ann.text) drawText(ctx, start, ann.text, ann.color, ann.textSize ?? 16, ann.textBold, ann.textItalic, ann.textUnderline, ann.textHighlight);
@@ -197,8 +335,8 @@ export class RenderPipeline {
       ctx.beginPath();
       ctx.rect(sel.x, sel.y, sel.width, sel.height);
       ctx.clip();
-      for (const ann of annotations) renderAnnotation(ctx, ann);
-      if (preview) renderAnnotation(ctx, preview);
+      for (const ann of annotations) renderAnnotation(ctx, ann, maxScale);
+      if (preview) renderAnnotation(ctx, preview, maxScale);
       ctx.restore();
     }
 
