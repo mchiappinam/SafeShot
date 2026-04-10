@@ -20,8 +20,8 @@ let _tmpCanvas: HTMLCanvasElement | null = null;
 let _tmpCtx: CanvasRenderingContext2D | null = null;
 
 /** Detect text lines in a region and draw black bars over them.
- *  Scans rows for dark/high-contrast pixels, groups them into line bands,
- *  then draws solid black rectangles over each band. */
+ *  Uses horizontal edge density to find rows with text-like patterns.
+ *  Text has many sharp transitions (letter edges), while images/solid areas are smooth. */
 function redactTextLines(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
   if (w <= 0 || h <= 0) return;
   const t = ctx.getTransform();
@@ -42,65 +42,79 @@ function redactTextLines(ctx: CanvasRenderingContext2D, x: number, y: number, w:
     const imageData = ctx.getImageData(px, py, pw, ph);
     const data = imageData.data;
 
-    // For each row, find content pixels (text/icons) vs background
-    // First, determine if the background is light or dark by sampling the median brightness
-    let totalBrightness = 0;
-    const pixelCount = pw * ph;
-    for (let i = 0; i < pixelCount * 4; i += 4) {
-      totalBrightness += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    // Convert to grayscale row data for edge detection
+    const gray = new Uint8Array(pw * ph);
+    for (let i = 0; i < pw * ph; i++) {
+      const j = i * 4;
+      gray[i] = Math.round(data[j] * 0.299 + data[j + 1] * 0.587 + data[j + 2] * 0.114);
     }
-    const avgBrightness = totalBrightness / pixelCount;
-    // If background is dark, look for bright pixels (text). If light, look for dark pixels.
-    const isDarkBg = avgBrightness < 128;
-    const rowMinContentRatio = 0.02;
-    const rowInfo: { hasContent: boolean; left: number; right: number }[] = [];
+
+    // For each row, count horizontal edges (adjacent pixels with large brightness difference).
+    // Text rows have many edges (letter strokes), images/solid colors have few.
+    const edgeThreshold = 30; // minimum brightness jump to count as an edge
+    const rowInfo: { edgeDensity: number; left: number; right: number }[] = [];
 
     for (let row = 0; row < ph; row++) {
-      let contentCount = 0;
+      let edgeCount = 0;
       let left = pw;
       let right = 0;
-      for (let col = 0; col < pw; col++) {
-        const i = (row * pw + col) * 4;
-        const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-        const isContent = isDarkBg ? gray > avgBrightness + 40 : gray < avgBrightness - 40;
-        if (isContent) {
-          contentCount++;
+      const rowOffset = row * pw;
+      for (let col = 1; col < pw; col++) {
+        const diff = Math.abs(gray[rowOffset + col] - gray[rowOffset + col - 1]);
+        if (diff >= edgeThreshold) {
+          edgeCount++;
           if (col < left) left = col;
           if (col > right) right = col;
         }
       }
-      const ratio = contentCount / pw;
-      rowInfo.push({ hasContent: ratio >= rowMinContentRatio, left, right });
+      rowInfo.push({ edgeDensity: edgeCount / pw, left, right });
     }
 
-    // Group consecutive dark rows into bands
+    // Determine the edge density threshold adaptively.
+    // Sort densities and pick a threshold that separates text from non-text.
+    const densities = rowInfo.map(r => r.edgeDensity).filter(d => d > 0).sort((a, b) => a - b);
+    if (densities.length === 0) return;
+    // Text rows typically have edge density > 0.03 (3% of pixels are edges).
+    // Use a minimum floor plus adaptive: at least the 30th percentile of non-zero densities.
+    const adaptiveThreshold = Math.max(0.03, densities[Math.floor(densities.length * 0.3)] || 0.03);
+
+    // Mark rows as text-like based on edge density
+    const textRows = rowInfo.map(r => r.edgeDensity >= adaptiveThreshold);
+
+    // Group consecutive text rows into bands
     const bands: { top: number; bottom: number; left: number; right: number }[] = [];
     let bandStart = -1;
     let bandLeft = pw;
     let bandRight = 0;
-    const gapTolerance = Math.max(2, Math.round(ph * 0.005)); // allow small gaps between rows
+    const gapTolerance = Math.max(3, Math.round(ph * 0.008));
 
     for (let row = 0; row < ph; row++) {
-      if (rowInfo[row].hasContent) {
+      if (textRows[row]) {
         if (bandStart < 0) bandStart = row;
         if (rowInfo[row].left < bandLeft) bandLeft = rowInfo[row].left;
         if (rowInfo[row].right > bandRight) bandRight = rowInfo[row].right;
       } else if (bandStart >= 0) {
-        // Check if this is just a small gap within a line
         let gapEnd = row;
-        while (gapEnd < Math.min(row + gapTolerance, ph) && !rowInfo[gapEnd].hasContent) gapEnd++;
-        if (gapEnd < ph && rowInfo[gapEnd].hasContent && gapEnd - row <= gapTolerance) {
-          row = gapEnd - 1; // jump past the gap, loop will increment to gapEnd
+        while (gapEnd < Math.min(row + gapTolerance, ph) && !textRows[gapEnd]) gapEnd++;
+        if (gapEnd < ph && textRows[gapEnd] && gapEnd - row <= gapTolerance) {
+          row = gapEnd - 1;
           continue;
         }
-        bands.push({ top: bandStart, bottom: row - 1, left: bandLeft, right: bandRight });
+        // Only keep bands that are a reasonable height for text (not huge image blocks)
+        const bandHeight = row - bandStart;
+        if (bandHeight < ph * 0.4) {
+          bands.push({ top: bandStart, bottom: row - 1, left: bandLeft, right: bandRight });
+        }
         bandStart = -1;
         bandLeft = pw;
         bandRight = 0;
       }
     }
     if (bandStart >= 0) {
-      bands.push({ top: bandStart, bottom: ph - 1, left: bandLeft, right: bandRight });
+      const bandHeight = ph - bandStart;
+      if (bandHeight < ph * 0.4) {
+        bands.push({ top: bandStart, bottom: ph - 1, left: bandLeft, right: bandRight });
+      }
     }
 
     // Draw black bars in logical coordinates
