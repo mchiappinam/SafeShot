@@ -147,8 +147,6 @@ case $BUILD_TYPE in
   5) echo "Building: Linux only" ;;
   6) echo "Building: all platforms" ;;
   7) echo "Building: all platforms + GitHub Release"
-     echo ""
-     echo "Once the pipeline finishes, update the brew cask:"
-     echo "  Run update.sh from the homebrew-safeshot repo" ;;
+     echo "Winget and Homebrew will update automatically after release" ;;
 esac
 echo "Check: https://github.com/mchiappinam/SafeShot/actions"

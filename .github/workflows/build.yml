@@ -154,3 +154,66 @@ jobs:
         with:
           files: release/*
           generate_release_notes: true
+
+  update-winget:
+    name: Update winget
+    needs: release
+    if: "needs.release.result == 'success'"
+    runs-on: windows-latest
+    steps:
+      - name: Submit to winget
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $url = "https://github.com/mchiappinam/SafeShot/releases/download/${{ github.ref_name }}/SafeShot-${version}-Windows-x64.exe"
+          iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe update Chiappina.SafeShot -s -v $version -u $url --token ${{ secrets.RELEASE_TOKEN }}
+
+  update-brew:
+    name: Update Homebrew cask
+    needs: release
+    if: "needs.release.result == 'success'"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update cask
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          REPO="mchiappinam/SafeShot"
+          INTEL_URL="https://github.com/$REPO/releases/download/v${VERSION}/SafeShot-${VERSION}-macOS-Intel-x64.dmg"
+          ARM_URL="https://github.com/$REPO/releases/download/v${VERSION}/SafeShot-${VERSION}-macOS-AppleSilicon-aarch64.dmg"
+          INTEL_SHA=$(curl -sL "$INTEL_URL" | sha256sum | awk '{print $1}')
+          ARM_SHA=$(curl -sL "$ARM_URL" | sha256sum | awk '{print $1}')
+          git clone https://x-access-token:${GH_TOKEN}@github.com/mchiappinam/homebrew-safeshot.git
+          cd homebrew-safeshot
+          cat > Casks/safeshot.rb << EOF
+          cask "safeshot" do
+            version "$VERSION"
+
+            on_intel do
+              url "https://github.com/$REPO/releases/download/v#{version}/SafeShot-#{version}-macOS-Intel-x64.dmg"
+              sha256 "$INTEL_SHA"
+            end
+
+            on_arm do
+              url "https://github.com/$REPO/releases/download/v#{version}/SafeShot-#{version}-macOS-AppleSilicon-aarch64.dmg"
+              sha256 "$ARM_SHA"
+            end
+
+            name "SafeShot"
+            desc "Privacy-first screenshot tool. No cloud, no tracking."
+            homepage "https://github.com/$REPO"
+
+            app "SafeShot.app"
+
+            zap trash: [
+              "~/Library/Application Support/SafeShot",
+              "~/Library/LaunchAgents/com.chiappina.safeshot.plist",
+            ]
+          end
+          EOF
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "v${VERSION}"
+          git push
