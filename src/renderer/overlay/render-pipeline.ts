@@ -28,10 +28,18 @@ function pixelateClipped(ctx: CanvasRenderingContext2D, x: number, y: number, w:
   if (w <= 0 || h <= 0) return;
   // Use the current transform to map logical coords to actual pixel buffer coords
   const t = ctx.getTransform();
-  const px = Math.round(t.a * x + t.e);
-  const py = Math.round(t.d * y + t.f);
-  const pw = Math.round(w * t.a);
-  const ph = Math.round(h * t.d);
+  let px = Math.round(t.a * x + t.e);
+  let py = Math.round(t.d * y + t.f);
+  let pw = Math.round(w * t.a);
+  let ph = Math.round(h * t.d);
+  if (pw <= 0 || ph <= 0) return;
+  // Clamp to canvas bounds to avoid transparent-black fill on edges
+  const cw = ctx.canvas.width;
+  const ch = ctx.canvas.height;
+  if (px < 0) { pw += px; px = 0; }
+  if (py < 0) { ph += py; py = 0; }
+  if (px + pw > cw) pw = cw - px;
+  if (py + ph > ch) ph = ch - py;
   if (pw <= 0 || ph <= 0) return;
   const dpr = dprOverride ?? (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
   try {
