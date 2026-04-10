@@ -45,7 +45,7 @@ export interface ResizeHandle {
 
 export type ToolType = 'pencil' | 'line' | 'arrow' | 'sharpie' | 'circle' | 'triangle' | 'octagon' | 'square' | 'text' | 'hand' | 'eyedropper';
 
-export type FillMode = 'hollow' | 'solid' | 'blur';
+export type FillMode = 'hollow' | 'solid' | 'blur' | 'redact';
 
 export interface Annotation {
   id: string;

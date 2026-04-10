@@ -19,6 +19,107 @@ function getHandlePoints(sel: Selection): HandlePoint[] {
 let _tmpCanvas: HTMLCanvasElement | null = null;
 let _tmpCtx: CanvasRenderingContext2D | null = null;
 
+/** Detect text lines in a region and draw black bars over them.
+ *  Scans rows for dark/high-contrast pixels, groups them into line bands,
+ *  then draws solid black rectangles over each band. */
+function redactTextLines(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  if (w <= 0 || h <= 0) return;
+  const t = ctx.getTransform();
+  let px = Math.round(t.a * x + t.e);
+  let py = Math.round(t.d * y + t.f);
+  let pw = Math.round(w * t.a);
+  let ph = Math.round(h * t.d);
+  if (pw <= 0 || ph <= 0) return;
+  const cw = ctx.canvas.width;
+  const ch = ctx.canvas.height;
+  if (px < 0) { pw += px; px = 0; }
+  if (py < 0) { ph += py; py = 0; }
+  if (px + pw > cw) pw = cw - px;
+  if (py + ph > ch) ph = ch - py;
+  if (pw <= 0 || ph <= 0) return;
+
+  try {
+    const imageData = ctx.getImageData(px, py, pw, ph);
+    const data = imageData.data;
+
+    // For each row, find content pixels (text/icons) vs background
+    // First, determine if the background is light or dark by sampling the median brightness
+    let totalBrightness = 0;
+    const pixelCount = pw * ph;
+    for (let i = 0; i < pixelCount * 4; i += 4) {
+      totalBrightness += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    }
+    const avgBrightness = totalBrightness / pixelCount;
+    // If background is dark, look for bright pixels (text). If light, look for dark pixels.
+    const isDarkBg = avgBrightness < 128;
+    const rowMinContentRatio = 0.02;
+    const rowInfo: { hasContent: boolean; left: number; right: number }[] = [];
+
+    for (let row = 0; row < ph; row++) {
+      let contentCount = 0;
+      let left = pw;
+      let right = 0;
+      for (let col = 0; col < pw; col++) {
+        const i = (row * pw + col) * 4;
+        const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        const isContent = isDarkBg ? gray > avgBrightness + 40 : gray < avgBrightness - 40;
+        if (isContent) {
+          contentCount++;
+          if (col < left) left = col;
+          if (col > right) right = col;
+        }
+      }
+      const ratio = contentCount / pw;
+      rowInfo.push({ hasContent: ratio >= rowMinContentRatio, left, right });
+    }
+
+    // Group consecutive dark rows into bands
+    const bands: { top: number; bottom: number; left: number; right: number }[] = [];
+    let bandStart = -1;
+    let bandLeft = pw;
+    let bandRight = 0;
+    const gapTolerance = Math.max(2, Math.round(ph * 0.005)); // allow small gaps between rows
+
+    for (let row = 0; row < ph; row++) {
+      if (rowInfo[row].hasContent) {
+        if (bandStart < 0) bandStart = row;
+        if (rowInfo[row].left < bandLeft) bandLeft = rowInfo[row].left;
+        if (rowInfo[row].right > bandRight) bandRight = rowInfo[row].right;
+      } else if (bandStart >= 0) {
+        // Check if this is just a small gap within a line
+        let gapEnd = row;
+        while (gapEnd < Math.min(row + gapTolerance, ph) && !rowInfo[gapEnd].hasContent) gapEnd++;
+        if (gapEnd < ph && rowInfo[gapEnd].hasContent && gapEnd - row <= gapTolerance) {
+          row = gapEnd - 1; // jump past the gap, loop will increment to gapEnd
+          continue;
+        }
+        bands.push({ top: bandStart, bottom: row - 1, left: bandLeft, right: bandRight });
+        bandStart = -1;
+        bandLeft = pw;
+        bandRight = 0;
+      }
+    }
+    if (bandStart >= 0) {
+      bands.push({ top: bandStart, bottom: ph - 1, left: bandLeft, right: bandRight });
+    }
+
+    // Draw black bars in logical coordinates
+    const scaleX = t.a;
+    const scaleY = t.d;
+    const padding = 2 / scaleX; // small padding around each bar
+    ctx.save();
+    ctx.fillStyle = '#000000';
+    for (const band of bands) {
+      const barX = x + (band.left / scaleX) - padding;
+      const barY = y + (band.top / scaleY) - padding;
+      const barW = (band.right - band.left + 1) / scaleX + padding * 2;
+      const barH = (band.bottom - band.top + 1) / scaleY + padding * 2;
+      ctx.fillRect(barX, barY, barW, barH);
+    }
+    ctx.restore();
+  } catch { /* getImageData can fail on tainted canvas */ }
+}
+
 /** Pixelate a region and draw it clipped to a shape path.
  *  Since putImageData ignores clip/transform, we pixelate onto a temp canvas
  *  then drawImage it back through the clip path.
@@ -78,6 +179,7 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
   if (ann.points.length === 0) return;
   const [start, end] = ann.points;
   const isBlur = ann.fillMode === 'blur';
+  const isRedact = ann.fillMode === 'redact';
 
   switch (ann.tool) {
     case 'pencil':
@@ -94,14 +196,15 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
       break;
     case 'circle':
       if (start && end) {
-        if (isBlur) {
-          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
-          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
           ctx.save();
           ctx.beginPath();
           ctx.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2);
           ctx.clip();
-          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
           drawCircle(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
@@ -110,9 +213,9 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
       break;
     case 'triangle':
       if (start && end) {
-        if (isBlur) {
-          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
-          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
           ctx.save();
           ctx.beginPath();
           ctx.moveTo(bx + bw / 2, by);
@@ -120,7 +223,8 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
           ctx.lineTo(bx, by + bh);
           ctx.closePath();
           ctx.clip();
-          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
           drawTriangle(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
@@ -129,9 +233,9 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
       break;
     case 'octagon':
       if (start && end) {
-        if (isBlur) {
-          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
-          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
           const cx = bx + bw / 2, cy = by + bh / 2;
           const rx = bw / 2, ry = bh / 2;
           ctx.save();
@@ -143,7 +247,8 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
           }
           ctx.closePath();
           ctx.clip();
-          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
           drawOctagon(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
@@ -152,14 +257,15 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
       break;
     case 'square':
       if (start && end) {
-        if (isBlur) {
-          const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
-          const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
           ctx.save();
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
-          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
           drawSquare(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');

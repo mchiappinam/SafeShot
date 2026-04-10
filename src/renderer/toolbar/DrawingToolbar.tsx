@@ -31,6 +31,7 @@ const FILL_MODES: { mode: FillMode; icon: string; tooltip: string }[] = [
   { mode: 'hollow', icon: '◻', tooltip: 'Hollow' },
   { mode: 'solid',  icon: '◼', tooltip: 'Solid' },
   { mode: 'blur',   icon: '▦', tooltip: 'Blur (shapes only)' },
+  { mode: 'redact', icon: '█', tooltip: 'Redact text (shapes only)' },
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({

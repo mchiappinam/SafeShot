@@ -74,7 +74,7 @@ export default function App(): React.ReactElement {
       if (t > 0) setStrokeWidth(t);
     }).catch(() => {});
     invoke<string>('get_fill_mode').then(mode => {
-      if (mode === 'hollow' || mode === 'solid' || mode === 'blur') setFillMode(mode);
+      if (mode === 'hollow' || mode === 'solid' || mode === 'blur' || mode === 'redact') setFillMode(mode);
     }).catch(() => {});
     invoke<string>('get_last_tool').then(tool => {
       if (tool) setActiveTool(tool as ToolType);
