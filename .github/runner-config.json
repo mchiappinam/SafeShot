@@ -1,6 +1,15 @@
 {
-  "windows": ["windows-latest"],
-  "macos-arm": ["macos-14"],
-  "macos-x64": ["macos-15-intel"],
-  "linux": ["ubuntu-22.04"]
+  "windows": [
+    "self-hosted",
+    "Windows"
+  ],
+  "macos-arm": [
+    "macos-14"
+  ],
+  "macos-x64": [
+    "macos-15-intel"
+  ],
+  "linux": [
+    "ubuntu-22.04"
+  ]
 }
