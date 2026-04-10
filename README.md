@@ -87,7 +87,7 @@ Once you've selected an area, a toolbar appears with drawing tools:
 | △ Triangle | Triangle shape |
 | ⬡ Octagon | Regular octagon |
 | T Text | Click to type text |
-| ◻/◼ Solid | Toggle filled or hollow shapes |
+| ◻/◼/▦/▬ Fill Mode | Cycle: hollow, solid, blur, redact |
 | 🎨 Color | Pick a color |
 | ⚪ Thickness | Adjust stroke width |
 
@@ -110,7 +110,9 @@ Right-click the SafeShot icon in your system tray for:
 
 - Instant screen capture with area selection
 - 10 annotation tools with color picker and thickness control
-- Solid or hollow shapes
+- Solid, hollow, blur, or redact shapes
+- Blur pixelates content underneath a shape
+- Redact auto-detects text lines and covers them with bars
 - Multi-monitor support
 - Keyboard shortcuts for everything
 - Auto-start on boot
@@ -139,7 +141,7 @@ SafeShot has **zero network capabilities**. It cannot connect to the internet. Y
 
 ## License
 
-Proprietary. Free to use, no distribution or modification permitted. See [LICENSE](LICENSE).
+Free for personal use. Commercial use requires a license. See [LICENSE](LICENSE).
 
 ## Author
 
