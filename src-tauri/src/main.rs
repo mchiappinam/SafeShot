@@ -44,7 +44,7 @@ fn main() {
 
     log("SafeShot starting...");
 
-    let app = tauri::Builder::default()
+    let mut app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             // Second instance tried to launch, trigger a capture on the running instance
             start_capture(app);
@@ -66,6 +66,8 @@ fn main() {
             save::set_last_thickness,
             save::get_fill_mode,
             save::set_fill_mode,
+            save::get_last_tool,
+            save::set_last_tool,
             save::get_text_settings,
             save::set_text_settings,
             close_overlay,

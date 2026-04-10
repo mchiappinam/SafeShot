@@ -142,12 +142,13 @@ jobs:
           path: artifacts
       - name: Rename artifacts
         run: |
+          VERSION=${GITHUB_REF_NAME#v}
           mkdir -p release
-          find artifacts -name '*x64-setup.exe' -exec cp {} release/SafeShot-Windows-x64.exe \;
-          find artifacts -name '*aarch64.dmg' -exec cp {} release/SafeShot-macOS-AppleSilicon-aarch64.dmg \;
-          find artifacts -name '*x64.dmg' -exec cp {} release/SafeShot-macOS-Intel-x64.dmg \;
-          find artifacts -name '*amd64.deb' -exec cp {} release/SafeShot-Linux-amd64.deb \;
-          find artifacts -name '*amd64.AppImage' -exec cp {} release/SafeShot-Linux-amd64.AppImage \;
+          find artifacts -name '*x64-setup.exe' -exec cp {} "release/SafeShot-${VERSION}-Windows-x64.exe" \;
+          find artifacts -name '*aarch64.dmg' -exec cp {} "release/SafeShot-${VERSION}-macOS-AppleSilicon-aarch64.dmg" \;
+          find artifacts -name '*x64.dmg' -exec cp {} "release/SafeShot-${VERSION}-macOS-Intel-x64.dmg" \;
+          find artifacts -name '*amd64.deb' -exec cp {} "release/SafeShot-${VERSION}-Linux-amd64.deb" \;
+          find artifacts -name '*amd64.AppImage' -exec cp {} "release/SafeShot-${VERSION}-Linux-amd64.AppImage" \;
           ls -la release/
       - uses: softprops/action-gh-release@v2
         with:

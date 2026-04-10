@@ -76,6 +76,9 @@ export default function App(): React.ReactElement {
     invoke<string>('get_fill_mode').then(mode => {
       if (mode === 'hollow' || mode === 'solid' || mode === 'blur') setFillMode(mode);
     }).catch(() => {});
+    invoke<string>('get_last_tool').then(tool => {
+      if (tool) setActiveTool(tool as ToolType);
+    }).catch(() => {});
     invoke<Record<string, unknown>>('get_text_settings').then(ts => {
       if (ts.bold !== undefined) setTextBold(ts.bold as boolean);
       if (ts.italic !== undefined) setTextItalic(ts.italic as boolean);
@@ -144,7 +147,7 @@ export default function App(): React.ReactElement {
 
       {showToolbars && toolbarPositions && (
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
-          <DrawingToolbar activeTool={activeTool} onToolSelect={setActiveTool}
+          <DrawingToolbar activeTool={activeTool} onToolSelect={(t) => { setActiveTool(t); if (t) invoke('set_last_tool', { tool: t }).catch(() => {}); }}
             onColorPickerOpen={() => { setColorPickerOpen(true); setThicknessOpen(false); }}
             onThicknessOpen={() => { setThicknessOpen(true); setColorPickerOpen(false); }}
             activeColor={activeColor} strokeWidth={strokeWidth}

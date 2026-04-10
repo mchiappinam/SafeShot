@@ -104,6 +104,31 @@ pub fn set_fill_mode(mode: String) {
 }
 
 #[tauri::command]
+pub fn get_last_tool() -> String {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(tool) = json.get("lastTool").and_then(|v| v.as_str()) {
+                return tool.to_string();
+            }
+        }
+    }
+    String::new()
+}
+
+#[tauri::command]
+pub fn set_last_tool(tool: String) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["lastTool"] = serde_json::json!(tool);
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
+#[tauri::command]
 pub fn get_text_settings() -> serde_json::Value {
     let path = config_path();
     if let Ok(data) = fs::read_to_string(&path) {
