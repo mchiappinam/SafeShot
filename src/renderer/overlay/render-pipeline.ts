@@ -22,7 +22,7 @@ let _tmpCtx: CanvasRenderingContext2D | null = null;
 /** Detect text lines in a region and draw black bars over them.
  *  Uses horizontal edge density to find rows with text-like patterns.
  *  Text has many sharp transitions (letter edges), while images/solid areas are smooth. */
-function redactTextLines(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+function redactTextLines(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string = '#000000'): void {
   if (w <= 0 || h <= 0) return;
   const t = ctx.getTransform();
   let px = Math.round(t.a * x + t.e);
@@ -122,7 +122,7 @@ function redactTextLines(ctx: CanvasRenderingContext2D, x: number, y: number, w:
     const scaleY = t.d;
     const padding = 2 / scaleX; // small padding around each bar
     ctx.save();
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = color;
     for (const band of bands) {
       const barX = x + (band.left / scaleX) - padding;
       const barY = y + (band.top / scaleY) - padding;
@@ -217,7 +217,7 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
           ctx.beginPath();
           ctx.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2);
           ctx.clip();
-          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
           else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
@@ -237,7 +237,7 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
           ctx.lineTo(bx, by + bh);
           ctx.closePath();
           ctx.clip();
-          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
           else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
@@ -261,7 +261,7 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
           }
           ctx.closePath();
           ctx.clip();
-          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
           else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
@@ -278,7 +278,7 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
-          if (isRedact) redactTextLines(ctx, bx, by, bw, bh);
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
           else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
           ctx.restore();
         } else {
