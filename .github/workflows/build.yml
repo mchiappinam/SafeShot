@@ -164,7 +164,7 @@ jobs:
       - name: Submit to winget
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
-          $url = "https://github.com/mchiappinam/SafeShot/releases/download/${{ github.ref_name }}/SafeShot-${version}-Windows-x64.exe"
+          $url = "https://github.com/mchiappinam/SafeShot/releases/download/${{ github.ref_name }}/SafeShot-$($version)-Windows-x64.exe"
           iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
           .\wingetcreate.exe update Chiappina.SafeShot -s -v $version -u $url --token ${{ secrets.RELEASE_TOKEN }}
 
@@ -182,36 +182,44 @@ jobs:
           REPO="mchiappinam/SafeShot"
           INTEL_URL="https://github.com/$REPO/releases/download/v${VERSION}/SafeShot-${VERSION}-macOS-Intel-x64.dmg"
           ARM_URL="https://github.com/$REPO/releases/download/v${VERSION}/SafeShot-${VERSION}-macOS-AppleSilicon-aarch64.dmg"
-          INTEL_SHA=$(curl -sL "$INTEL_URL" | sha256sum | awk '{print $1}')
-          ARM_SHA=$(curl -sL "$ARM_URL" | sha256sum | awk '{print $1}')
+          HTTP_INTEL=$(curl -sL -o /tmp/intel.dmg -w "%{http_code}" "$INTEL_URL")
+          HTTP_ARM=$(curl -sL -o /tmp/arm.dmg -w "%{http_code}" "$ARM_URL")
+          if [ "$HTTP_INTEL" != "200" ] || [ "$HTTP_ARM" != "200" ]; then
+            echo "Failed to download DMGs (Intel: $HTTP_INTEL, ARM: $HTTP_ARM)"
+            exit 1
+          fi
+          INTEL_SHA=$(sha256sum /tmp/intel.dmg | awk '{print $1}')
+          ARM_SHA=$(sha256sum /tmp/arm.dmg | awk '{print $1}')
           git clone https://x-access-token:${GH_TOKEN}@github.com/mchiappinam/homebrew-safeshot.git
           cd homebrew-safeshot
-          cat > Casks/safeshot.rb << EOF
-          cask "safeshot" do
-            version "$VERSION"
+          python3 -c "
+          import sys
+          v, r, isha, asha = sys.argv[1:5]
+          print(f'''cask \"safeshot\" do
+            version \"{v}\"
 
             on_intel do
-              url "https://github.com/$REPO/releases/download/v#{version}/SafeShot-#{version}-macOS-Intel-x64.dmg"
-              sha256 "$INTEL_SHA"
+              url \"https://github.com/{r}/releases/download/v#{{version}}/SafeShot-#{{version}}-macOS-Intel-x64.dmg\"
+              sha256 \"{isha}\"
             end
 
             on_arm do
-              url "https://github.com/$REPO/releases/download/v#{version}/SafeShot-#{version}-macOS-AppleSilicon-aarch64.dmg"
-              sha256 "$ARM_SHA"
+              url \"https://github.com/{r}/releases/download/v#{{version}}/SafeShot-#{{version}}-macOS-AppleSilicon-aarch64.dmg\"
+              sha256 \"{asha}\"
             end
 
-            name "SafeShot"
-            desc "Privacy-first screenshot tool. No cloud, no tracking."
-            homepage "https://github.com/$REPO"
+            name \"SafeShot\"
+            desc \"Privacy-first screenshot tool. No cloud, no tracking.\"
+            homepage \"https://github.com/{r}\"
 
-            app "SafeShot.app"
+            app \"SafeShot.app\"
 
             zap trash: [
-              "~/Library/Application Support/SafeShot",
-              "~/Library/LaunchAgents/com.chiappina.safeshot.plist",
+              \"~/Library/Application Support/SafeShot\",
+              \"~/Library/LaunchAgents/com.chiappina.safeshot.plist\",
             ]
-          end
-          EOF
+          end''')
+          " "$VERSION" "$REPO" "$INTEL_SHA" "$ARM_SHA" > Casks/safeshot.rb
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add -A
