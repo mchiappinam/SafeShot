@@ -193,9 +193,10 @@ jobs:
           git clone https://x-access-token:${GH_TOKEN}@github.com/mchiappinam/homebrew-safeshot.git
           cd homebrew-safeshot
           python3 -c "
-          import sys
+          import sys, textwrap
           v, r, isha, asha = sys.argv[1:5]
-          print(f'''cask \"safeshot\" do
+          cask = textwrap.dedent(f'''
+          cask \"safeshot\" do
             version \"{v}\"
 
             on_intel do
@@ -218,7 +219,9 @@ jobs:
               \"~/Library/Application Support/SafeShot\",
               \"~/Library/LaunchAgents/com.chiappina.safeshot.plist\",
             ]
-          end''')
+          end
+          ''').strip()
+          print(cask)
           " "$VERSION" "$REPO" "$INTEL_SHA" "$ARM_SHA" > Casks/safeshot.rb
           git config user.name "github-actions"
           git config user.email "actions@github.com"
