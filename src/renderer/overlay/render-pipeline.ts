@@ -22,14 +22,18 @@ let _tmpCtx: CanvasRenderingContext2D | null = null;
 /** Pixelate a region and draw it clipped to a shape path.
  *  Since putImageData ignores clip/transform, we pixelate onto a temp canvas
  *  then drawImage it back through the clip path.
+ *  Uses getTransform() to correctly map logical coords to pixel buffer coords.
  *  @param dprOverride - override devicePixelRatio for export canvases */
 function pixelateClipped(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, blockSize: number = 10, dprOverride?: number): void {
   if (w <= 0 || h <= 0) return;
+  // Use the current transform to map logical coords to actual pixel buffer coords
+  const t = ctx.getTransform();
+  const px = Math.round(t.a * x + t.e);
+  const py = Math.round(t.d * y + t.f);
+  const pw = Math.round(w * t.a);
+  const ph = Math.round(h * t.d);
+  if (pw <= 0 || ph <= 0) return;
   const dpr = dprOverride ?? (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
-  const px = Math.round(x * dpr);
-  const py = Math.round(y * dpr);
-  const pw = Math.round(w * dpr);
-  const ph = Math.round(h * dpr);
   try {
     const imageData = ctx.getImageData(px, py, pw, ph);
     const bs = Math.max(1, Math.round(blockSize * dpr));
@@ -55,8 +59,7 @@ function pixelateClipped(ctx: CanvasRenderingContext2D, x: number, y: number, w:
       _tmpCanvas.width = pw; _tmpCanvas.height = ph;
     }
     _tmpCtx.putImageData(imageData, 0, 0);
-    // drawImage respects the current clip path and transform on ctx.
-    // Source: full temp canvas region. Dest: logical coords (ctx is scaled by dpr).
+    // drawImage respects the current clip path and transform on ctx
     ctx.drawImage(_tmpCanvas, 0, 0, pw, ph, x, y, w, h);
   } catch { /* getImageData can fail on tainted canvas */ }
 }
