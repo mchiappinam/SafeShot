@@ -77,7 +77,8 @@ export default function App(): React.ReactElement {
       if (mode === 'hollow' || mode === 'solid' || mode === 'blur' || mode === 'redact') setFillMode(mode);
     }).catch(() => {});
     invoke<string>('get_last_tool').then(tool => {
-      if (tool) setActiveTool(tool as ToolType);
+      const valid: ToolType[] = ['pencil', 'line', 'arrow', 'sharpie', 'circle', 'triangle', 'octagon', 'square', 'text', 'hand', 'eyedropper'];
+      if (tool && valid.includes(tool as ToolType)) setActiveTool(tool as ToolType);
     }).catch(() => {});
     invoke<Record<string, unknown>>('get_text_settings').then(ts => {
       if (ts.bold !== undefined) setTextBold(ts.bold as boolean);
@@ -148,8 +149,8 @@ export default function App(): React.ReactElement {
       {showToolbars && toolbarPositions && (
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
           <DrawingToolbar activeTool={activeTool} onToolSelect={(t) => { setActiveTool(t); if (t) invoke('set_last_tool', { tool: t }).catch(() => {}); }}
-            onColorPickerOpen={() => { setColorPickerOpen(true); setThicknessOpen(false); }}
-            onThicknessOpen={() => { setThicknessOpen(true); setColorPickerOpen(false); }}
+            onColorPickerOpen={() => { setColorPickerOpen(v => !v); setThicknessOpen(false); }}
+            onThicknessOpen={() => { setThicknessOpen(v => !v); setColorPickerOpen(false); }}
             activeColor={activeColor} strokeWidth={strokeWidth}
             fillMode={fillMode} onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); }}
             position={{ x: toolbarPositions.drawing.x, y: toolbarPositions.drawing.y }} />

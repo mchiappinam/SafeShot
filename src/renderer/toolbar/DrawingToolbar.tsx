@@ -31,7 +31,7 @@ const FILL_MODES: { mode: FillMode; icon: string; tooltip: string }[] = [
   { mode: 'hollow', icon: '◻', tooltip: 'Hollow' },
   { mode: 'solid',  icon: '◼', tooltip: 'Solid' },
   { mode: 'blur',   icon: '▦', tooltip: 'Blur (shapes only)' },
-  { mode: 'redact', icon: '█', tooltip: 'Redact text (shapes only)' },
+  { mode: 'redact', icon: '▬', tooltip: 'Redact text (shapes only)' },
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
@@ -42,7 +42,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   };
 
   const cycleFillMode = () => {
-    const order: FillMode[] = ['hollow', 'solid', 'blur'];
+    const order: FillMode[] = ['hollow', 'solid', 'blur', 'redact'];
     const next = order[(order.indexOf(fillMode) + 1) % order.length];
     onFillModeChange(next);
   };

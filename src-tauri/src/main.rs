@@ -44,7 +44,7 @@ fn main() {
 
     log("SafeShot starting...");
 
-    let mut app = tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             // Second instance tried to launch, trigger a capture on the running instance
             start_capture(app);
@@ -186,20 +186,7 @@ fn main() {
 
             // Register global shortcuts
             // Windows/Linux: PrtScn, macOS: Cmd+Shift+S
-            #[cfg(target_os = "windows")]
-            {
-                let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
-                let app_handle = app.handle().clone();
-                match app
-                    .global_shortcut()
-                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
-                        start_capture(&app_handle);
-                    }) {
-                    Ok(_) => log("PrtScn shortcut registered"),
-                    Err(e) => log(&format!("PrtScn shortcut failed: {}", e)),
-                }
-            }
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "windows", target_os = "linux"))]
             {
                 let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
                 let app_handle = app.handle().clone();
@@ -259,14 +246,21 @@ fn main() {
 
     // Hide from Dock on macOS, show only in menu bar
     #[cfg(target_os = "macos")]
-    app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-
-    app.run(|_app, event| {
-            // Keep the app alive when all windows are closed (tray-only mode)
+    {
+        let mut app = app;
+        app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+        app.run(|_app, event| {
             if let tauri::RunEvent::ExitRequested { api, .. } = event {
                 api.prevent_exit();
             }
         });
+    }
+    #[cfg(not(target_os = "macos"))]
+    app.run(|_app, event| {
+        if let tauri::RunEvent::ExitRequested { api, .. } = event {
+            api.prevent_exit();
+        }
+    });
 
     log("SafeShot exited normally");
 }
