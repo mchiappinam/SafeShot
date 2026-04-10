@@ -249,9 +249,11 @@ fn main() {
     {
         let mut app = app;
         app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-        app.run(|_app, event| {
-            if let tauri::RunEvent::ExitRequested { api, .. } = event {
-                api.prevent_exit();
+        app.run(|app, event| {
+            match event {
+                tauri::RunEvent::ExitRequested { api, .. } => api.prevent_exit(),
+                tauri::RunEvent::Reopen { .. } => start_capture(app),
+                _ => {}
             }
         });
     }
