@@ -79,6 +79,31 @@ pub fn set_last_thickness(thickness: u32) {
 }
 
 #[tauri::command]
+pub fn get_fill_mode() -> String {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(mode) = json.get("fillMode").and_then(|v| v.as_str()) {
+                return mode.to_string();
+            }
+        }
+    }
+    "hollow".to_string()
+}
+
+#[tauri::command]
+pub fn set_fill_mode(mode: String) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["fillMode"] = serde_json::json!(mode);
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
+#[tauri::command]
 pub fn get_text_settings() -> serde_json::Value {
     let path = config_path();
     if let Ok(data) = fs::read_to_string(&path) {

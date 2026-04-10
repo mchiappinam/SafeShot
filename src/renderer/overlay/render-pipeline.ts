@@ -15,38 +15,6 @@ function getHandlePoints(sel: Selection): HandlePoint[] {
   ];
 }
 
-/** Pixelate a rectangular region of the canvas to create an obfuscation effect.
- *  Works in device-pixel space using getImageData/putImageData.
- *  @param dprOverride - override devicePixelRatio for export canvases */
-function pixelateRegion(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, blockSize: number = 10, dprOverride?: number): void {
-  if (w <= 0 || h <= 0) return;
-  const dpr = dprOverride ?? (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
-  const px = Math.round(x * dpr);
-  const py = Math.round(y * dpr);
-  const pw = Math.round(w * dpr);
-  const ph = Math.round(h * dpr);
-  try {
-    const imageData = ctx.getImageData(px, py, pw, ph);
-    const bs = Math.max(1, Math.round(blockSize * dpr));
-    const data = imageData.data;
-    for (let by = 0; by < ph; by += bs) {
-      for (let bx = 0; bx < pw; bx += bs) {
-        const sx = Math.min(bx + Math.floor(bs / 2), pw - 1);
-        const sy = Math.min(by + Math.floor(bs / 2), ph - 1);
-        const idx = (sy * pw + sx) * 4;
-        const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
-        for (let dy = by; dy < Math.min(by + bs, ph); dy++) {
-          for (let dx = bx; dx < Math.min(bx + bs, pw); dx++) {
-            const i = (dy * pw + dx) * 4;
-            data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = a;
-          }
-        }
-      }
-    }
-    ctx.putImageData(imageData, px, py);
-  } catch { /* getImageData can fail on tainted canvas */ }
-}
-
 // Reusable temp canvas for pixelateClipped to avoid creating one per frame
 let _tmpCanvas: HTMLCanvasElement | null = null;
 let _tmpCtx: CanvasRenderingContext2D | null = null;
@@ -176,7 +144,12 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
         if (isBlur) {
           const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
           const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
-          pixelateRegion(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(bx, by, bw, bh);
+          ctx.clip();
+          pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
         } else {
           drawSquare(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
         }

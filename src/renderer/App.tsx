@@ -73,6 +73,9 @@ export default function App(): React.ReactElement {
     invoke<number>('get_last_thickness').then(t => {
       if (t > 0) setStrokeWidth(t);
     }).catch(() => {});
+    invoke<string>('get_fill_mode').then(mode => {
+      if (mode === 'hollow' || mode === 'solid' || mode === 'blur') setFillMode(mode);
+    }).catch(() => {});
     invoke<Record<string, unknown>>('get_text_settings').then(ts => {
       if (ts.bold !== undefined) setTextBold(ts.bold as boolean);
       if (ts.italic !== undefined) setTextItalic(ts.italic as boolean);
@@ -145,7 +148,7 @@ export default function App(): React.ReactElement {
             onColorPickerOpen={() => { setColorPickerOpen(true); setThicknessOpen(false); }}
             onThicknessOpen={() => { setThicknessOpen(true); setColorPickerOpen(false); }}
             activeColor={activeColor} strokeWidth={strokeWidth}
-            fillMode={fillMode} onFillModeChange={setFillMode}
+            fillMode={fillMode} onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); }}
             position={{ x: toolbarPositions.drawing.x, y: toolbarPositions.drawing.y }} />
         </div>
       )}
