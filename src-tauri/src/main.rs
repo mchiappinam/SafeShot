@@ -130,6 +130,7 @@ fn main() {
                 None::<&str>,
             )?;
             let about_item = MenuItem::with_id(app, "about", "About", true, None::<&str>)?;
+            let guide_item = MenuItem::with_id(app, "guide", "How to Use", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit SafeShot", true, None::<&str>)?;
             let menu = Menu::with_items(
                 app,
@@ -137,6 +138,7 @@ fn main() {
                     &capture_item,
                     &open_folder,
                     &autostart_item,
+                    &guide_item,
                     &about_item,
                     &quit_item,
                 ],
@@ -152,6 +154,7 @@ fn main() {
                     "capture" => start_capture(app),
                     "open_folder" => open_save_folder(app),
                     "autostart" => toggle_autostart(app),
+                    "guide" => show_guide(app),
                     "about" => show_about(app),
                     "quit" => {
                         log("Quit requested");
@@ -228,7 +231,7 @@ fn main() {
                     )
                     .title("Welcome to SafeShot")
                     .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png")).unwrap()).unwrap()
-                    .inner_size(420.0, 440.0)
+                    .inner_size(420.0, 520.0)
                     .resizable(false)
                     .maximizable(false)
                     .minimizable(false)
@@ -535,6 +538,22 @@ fn open_save_folder(_app: &AppHandle) {
             .spawn()
             .ok();
     }
+}
+
+fn show_guide(app: &AppHandle) {
+    if app.get_webview_window("welcome").is_some() {
+        return;
+    }
+    let _ = WebviewWindowBuilder::new(app, "welcome", WebviewUrl::App("welcome.html?noclose=1".into()))
+        .title("How to Use SafeShot")
+        .inner_size(420.0, 520.0)
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(false)
+        .decorations(false)
+        .always_on_top(true)
+        .center()
+        .build();
 }
 
 fn show_about(app: &AppHandle) {
