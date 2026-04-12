@@ -1,15 +1,12 @@
 import React from 'react';
-import type { FillMode, ToolType } from '../../shared/types';
+import type { ToolType } from '../../shared/types';
 
 interface DrawingToolbarProps {
   activeTool: ToolType | null;
   onToolSelect: (tool: ToolType | null) => void;
   onColorPickerOpen: () => void;
-  onThicknessOpen: () => void;
+  onSettingsOpen: () => void;
   activeColor: string;
-  strokeWidth: number;
-  fillMode: FillMode;
-  onFillModeChange: (mode: FillMode) => void;
   position: { x: number; y: number };
 }
 
@@ -27,27 +24,12 @@ const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }
   { id: 'text',     label: 'T',  tooltip: 'Text' },
 ];
 
-const FILL_MODES: { mode: FillMode; icon: string; tooltip: string }[] = [
-  { mode: 'hollow', icon: '◻', tooltip: 'Hollow' },
-  { mode: 'solid',  icon: '◼', tooltip: 'Solid' },
-  { mode: 'blur',   icon: '▦', tooltip: 'Blur (shapes only)' },
-  { mode: 'redact', icon: '▬', tooltip: 'Redact text (shapes only)' },
-];
-
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
-  activeTool, onToolSelect, onColorPickerOpen, onThicknessOpen, activeColor, strokeWidth, fillMode, onFillModeChange, position,
+  activeTool, onToolSelect, onColorPickerOpen, onSettingsOpen, activeColor, position,
 }) => {
   const handleToolClick = (tool: ToolType) => {
     onToolSelect(activeTool === tool ? null : tool);
   };
-
-  const cycleFillMode = () => {
-    const order: FillMode[] = ['hollow', 'solid', 'blur', 'redact'];
-    const next = order[(order.indexOf(fillMode) + 1) % order.length];
-    onFillModeChange(next);
-  };
-
-  const currentFill = FILL_MODES.find(f => f.mode === fillMode) ?? FILL_MODES[0];
 
   const btnStyle = (active: boolean): React.CSSProperties => ({
     width: 32,
@@ -89,24 +71,17 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         </div>
       ))}
       <div style={{ position: 'relative' }} className="tooltip-wrap">
-        <button onClick={cycleFillMode}
-          style={{ ...btnStyle(false), border: '2px solid #fff' }}>
-          {currentFill.icon}
-        </button>
-        <span className="tooltip-text">{currentFill.tooltip}</span>
-      </div>
-      <div style={{ position: 'relative' }} className="tooltip-wrap">
         <button onClick={onColorPickerOpen}
           style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 0, background: activeColor, cursor: 'pointer' }}
         />
         <span className="tooltip-text">Color</span>
       </div>
       <div style={{ position: 'relative' }} className="tooltip-wrap">
-        <button onClick={onThicknessOpen}
-          style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 0, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: Math.min(strokeWidth, 20), height: Math.min(strokeWidth, 20), borderRadius: '50%', background: '#fff' }} />
+        <button onClick={onSettingsOpen}
+          style={{ ...btnStyle(false), border: '2px solid #fff', fontSize: 18 }}>
+          ⚙
         </button>
-        <span className="tooltip-text">Thickness</span>
+        <span className="tooltip-text">Settings</span>
       </div>
     </div>
   );

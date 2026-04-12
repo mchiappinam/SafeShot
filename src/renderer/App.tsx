@@ -7,7 +7,7 @@ import type { OverlayCanvasHandle } from './overlay/OverlayCanvas';
 import DrawingToolbar from './toolbar/DrawingToolbar';
 import ActionToolbar from './toolbar/ActionToolbar';
 import ColorPicker from './toolbar/ColorPicker';
-import ThicknessPicker from './toolbar/ThicknessPicker';
+import SettingsPopup from './toolbar/SettingsPopup';
 import TextFormatBar from './toolbar/TextFormatBar';
 import './toolbar/toolbar.css';
 
@@ -52,7 +52,7 @@ export default function App(): React.ReactElement {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
-  const [thicknessOpen, setThicknessOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [fillMode, setFillMode] = useState<FillMode>('hollow');
   const [textBold, setTextBold] = useState(false);
@@ -149,10 +149,9 @@ export default function App(): React.ReactElement {
       {showToolbars && toolbarPositions && (
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
           <DrawingToolbar activeTool={activeTool} onToolSelect={(t) => { setActiveTool(t); if (t) invoke('set_last_tool', { tool: t }).catch(() => {}); }}
-            onColorPickerOpen={() => { setColorPickerOpen(v => !v); setThicknessOpen(false); }}
-            onThicknessOpen={() => { setThicknessOpen(v => !v); setColorPickerOpen(false); }}
-            activeColor={activeColor} strokeWidth={strokeWidth}
-            fillMode={fillMode} onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); }}
+            onColorPickerOpen={() => { setColorPickerOpen(v => !v); setSettingsOpen(false); }}
+            onSettingsOpen={() => { setSettingsOpen(v => !v); setColorPickerOpen(false); }}
+            activeColor={activeColor}
             position={{ x: toolbarPositions.drawing.x, y: toolbarPositions.drawing.y }} />
         </div>
       )}
@@ -176,10 +175,11 @@ export default function App(): React.ReactElement {
           position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}
 
-      {thicknessOpen && toolbarPositions && (
-        <ThicknessPicker value={strokeWidth}
-          onChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); }}
-          onClose={() => setThicknessOpen(false)}
+      {settingsOpen && toolbarPositions && (
+        <SettingsPopup strokeWidth={strokeWidth} fillMode={fillMode}
+          onStrokeWidthChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); }}
+          onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); }}
+          onClose={() => setSettingsOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}
 
