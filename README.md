@@ -54,8 +54,7 @@ winget install SafeShot
 ### macOS (Homebrew)
 
 ```
-brew tap mchiappinam/safeshot
-brew install --cask safeshot
+brew install mchiappinam/safeshot/safeshot
 ```
 
 ### Manual install
@@ -117,7 +116,7 @@ Right-click the SafeShot icon in your system tray for:
 ## Features
 
 - Instant screen capture with area selection
-- 10 annotation tools with color picker and thickness control
+- 11 annotation tools with color picker and thickness control
 - Solid, hollow, blur, or redact shapes
 - Blur pixelates content underneath a shape
 - Redact auto-detects text lines and covers them with bars
@@ -125,7 +124,7 @@ Right-click the SafeShot icon in your system tray for:
 - Keyboard shortcuts for everything
 - Auto-start on boot
 - Saves to your Pictures/SafeShot folder
-- Remembers your last color and thickness
+- Remembers your last color, thickness, tool, and fill mode
 - Tiny installer (~4 MB)
 - Zero network access, fully offline
 
