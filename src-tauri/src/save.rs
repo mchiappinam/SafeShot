@@ -182,6 +182,31 @@ fn decode_data_url(image_data_url: &str) -> Result<Vec<u8>, String> {
         .map_err(|e| e.to_string())
 }
 
+fn get_last_save_dir() -> String {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(dir) = json.get("lastSaveDir").and_then(|v| v.as_str()) {
+                if std::path::Path::new(dir).exists() {
+                    return dir.to_string();
+                }
+            }
+        }
+    }
+    get_save_directory()
+}
+
+fn set_last_save_dir(dir: &str) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["lastSaveDir"] = serde_json::json!(dir);
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
 #[tauri::command]
 pub fn save_screenshot(
     image_data_url: String,
@@ -213,16 +238,21 @@ pub fn save_screenshot(
         if let Some(win) = app_handle.get_webview_window("overlay") {
             win.hide().ok();
         }
-        // Brief pause to let the window fully hide before the blocking dialog opens
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        // Wait for the window to fully hide before opening the blocking dialog
+        std::thread::sleep(std::time::Duration::from_millis(200));
 
         let default_name = timestamp_filename();
+        let save_dir = get_last_save_dir();
         let dialog = rfd::FileDialog::new()
             .set_file_name(&default_name)
-            .set_directory(&dir)
+            .set_directory(&save_dir)
             .add_filter("PNG Image", &["png"]);
         match dialog.save_file() {
             Some(path) => {
+                // Remember the directory the user chose
+                if let Some(parent) = path.parent() {
+                    set_last_save_dir(&parent.to_string_lossy());
+                }
                 let result = match fs::write(&path, &png_bytes) {
                     Ok(_) => SaveResult {
                         success: true,
@@ -242,7 +272,8 @@ pub fn save_screenshot(
                 return result;
             }
             None => {
-                // User cancelled - show overlay again
+                // User cancelled, show overlay again with a small delay
+                std::thread::sleep(std::time::Duration::from_millis(100));
                 if let Some(win) = app_handle.get_webview_window("overlay") {
                     win.show().ok();
                     win.set_focus().ok();
