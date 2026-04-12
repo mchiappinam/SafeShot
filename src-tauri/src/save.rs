@@ -272,11 +272,9 @@ pub fn save_screenshot(
                 return result;
             }
             None => {
-                // User cancelled, show overlay again with a small delay
-                std::thread::sleep(std::time::Duration::from_millis(100));
+                // User cancelled, close overlay
                 if let Some(win) = app_handle.get_webview_window("overlay") {
-                    win.show().ok();
-                    win.set_focus().ok();
+                    win.close().ok();
                 }
                 return SaveResult {
                     success: false,
