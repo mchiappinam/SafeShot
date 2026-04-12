@@ -162,16 +162,6 @@ fn main() {
                     }
                     _ => {}
                 })
-                .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        button_state: MouseButtonState::Up,
-                        ..
-                    } = event
-                    {
-                        start_capture(tray.app_handle());
-                    }
-                })
                 .build(app)?;
             log("Tray icon created");
 
