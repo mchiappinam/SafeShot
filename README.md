@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/mchiappinam/SafeShot/releases/latest">
-    <img src="https://img.shields.io/github/v/release/mchiappinam/SafeShot?color=2322F0&label=Download&style=for-the-badge&v=2" alt="Download" />
+    <img src="https://img.shields.io/github/v/release/mchiappinam/SafeShot?color=2322F0&label=Download&style=for-the-badge" alt="Download" />
   </a>
 </p>
 
@@ -31,13 +31,13 @@ Oh, and the installer is under 4 MB.
 
 ## Platform Support
 
-| Platform | Status | File to download |
-|----------|--------|------------------|
-| Windows 10+ | ✅ Passed QA | `SafeShot-Windows-x64.exe` |
-| macOS 11+ (Intel) | ✅ Passed QA | `SafeShot-macOS-Intel-x64.dmg` |
-| macOS 11+ (Apple Silicon) | 🔶 Untested | `SafeShot-macOS-AppleSilicon-aarch64.dmg` |
-| Ubuntu / Debian | 🔶 Untested | `SafeShot-Linux-amd64.deb` |
-| Fedora / Arch / Other | 🔶 Untested | `SafeShot-Linux-amd64.AppImage` |
+| Platform | Status |
+|----------|--------|
+| Windows 10+ | ✅ Passed QA |
+| macOS 11+ (Intel) | ✅ Passed QA |
+| macOS 11+ (Apple Silicon) | 🔶 Untested |
+| Ubuntu / Debian | 🔶 Untested |
+| Fedora / Arch / Other | 🔶 Untested |
 
 All downloads available on the [releases page](https://github.com/mchiappinam/SafeShot/releases/latest).
 
