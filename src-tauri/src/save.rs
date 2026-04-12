@@ -234,12 +234,10 @@ pub fn save_screenshot(
     };
 
     if show_dialog {
-        // Hide overlay first so the save dialog isn't obscured by the frozen screen
+        // Close overlay before opening the dialog so it can't obscure it
         if let Some(win) = app_handle.get_webview_window("overlay") {
-            win.hide().ok();
+            win.close().ok();
         }
-        // Wait for the window to fully hide before opening the blocking dialog
-        std::thread::sleep(std::time::Duration::from_millis(200));
 
         let default_name = timestamp_filename();
         let save_dir = get_last_save_dir();
@@ -265,17 +263,9 @@ pub fn save_screenshot(
                         error: Some(e.to_string()),
                     },
                 };
-                // Close overlay after dialog is done
-                if let Some(win) = app_handle.get_webview_window("overlay") {
-                    win.close().ok();
-                }
                 return result;
             }
             None => {
-                // User cancelled, close overlay
-                if let Some(win) = app_handle.get_webview_window("overlay") {
-                    win.close().ok();
-                }
                 return SaveResult {
                     success: false,
                     file_path: None,
