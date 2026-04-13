@@ -706,7 +706,7 @@ fn show_settings(app: &AppHandle) {
     }
     let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
         .title("SafeShot Settings")
-        .inner_size(460.0, 380.0)
+        .inner_size(460.0, 420.0)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)
