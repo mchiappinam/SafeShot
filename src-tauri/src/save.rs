@@ -312,8 +312,10 @@ pub fn save_screenshot(
                 if let Some(parent) = path.parent() {
                     set_last_save_dir(&parent.to_string_lossy());
                 }
-                let flag = app_handle.state::<crate::DialogActive>();
-                *flag.0.lock().unwrap() = false;
+                {
+                    let flag = app_handle.state::<crate::DialogActive>();
+                    *flag.0.lock().unwrap() = false;
+                }
                 return match fs::write(&path, &png_bytes) {
                     Ok(_) => SaveResult {
                         success: true,
@@ -328,8 +330,10 @@ pub fn save_screenshot(
                 };
             }
             None => {
-                let flag = app_handle.state::<crate::DialogActive>();
-                *flag.0.lock().unwrap() = false;
+                {
+                    let flag = app_handle.state::<crate::DialogActive>();
+                    *flag.0.lock().unwrap() = false;
+                }
                 return SaveResult {
                     success: false,
                     file_path: None,

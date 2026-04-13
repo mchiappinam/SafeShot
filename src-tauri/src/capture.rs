@@ -174,12 +174,11 @@ pub fn do_capture() -> Result<Vec<ScreenData>, String> {
 
         let mut png_bytes = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
-        image::ImageEncoder::write_image(
-            encoder,
+        encoder.encode(
             image.as_raw(),
             image.width(),
             image.height(),
-            image::ExtendedColorType::Rgba8,
+            image::ColorType::Rgba8,
         )
         .map_err(|e| e.to_string())?;
 
