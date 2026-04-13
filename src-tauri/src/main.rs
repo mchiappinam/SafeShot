@@ -36,6 +36,9 @@ fn log(msg: &str) {
     }
 }
 
+/// Tracks whether a blocking dialog (Save As, Browse folder) is active
+pub struct DialogActive(pub std::sync::Mutex<bool>);
+
 fn parse_hotkey(s: &str) -> Option<Shortcut> {
     let parts: Vec<&str> = s.split('+').collect();
     let mut mods = Modifiers::empty();
@@ -111,6 +114,7 @@ fn main() {
         ))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(capture::CaptureCache(std::sync::Mutex::new(Vec::new())))
+        .manage(DialogActive(std::sync::Mutex::new(false)))
         .invoke_handler(tauri::generate_handler![
             capture::capture_screens,
             save::save_screenshot,
@@ -134,6 +138,8 @@ fn main() {
             close_about,
             close_settings,
             register_hotkey,
+            pause_hotkey,
+            resume_hotkey,
             open_url,
             show_overlay,
         ])
@@ -369,6 +375,38 @@ fn register_hotkey(app: AppHandle, hotkey: String) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     log(&format!("Hotkey re-registered: {}", hotkey));
     Ok(())
+}
+
+#[tauri::command]
+fn pause_hotkey(app: AppHandle) {
+    app.global_shortcut().unregister_all().ok();
+    log("Hotkey paused for capture");
+}
+
+#[tauri::command]
+fn resume_hotkey(app: AppHandle) {
+    // Re-read from config and register
+    let hotkey_str = {
+        let path = save::config_path();
+        if let Ok(data) = std::fs::read_to_string(&path) {
+            serde_json::from_str::<serde_json::Value>(&data)
+                .ok()
+                .and_then(|j| j.get("hotkey").and_then(|v| v.as_str()).map(String::from))
+        } else {
+            None
+        }
+    }.unwrap_or_else(|| {
+        if cfg!(target_os = "macos") { "Meta+Shift+KeyS".to_string() }
+        else { "PrintScreen".to_string() }
+    });
+    if let Some(shortcut) = parse_hotkey(&hotkey_str) {
+        let app_handle = app.clone();
+        app.global_shortcut()
+            .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                start_capture(&app_handle);
+            }).ok();
+        log(&format!("Hotkey resumed: {}", hotkey_str));
+    }
 }
 
 #[tauri::command]
@@ -622,8 +660,14 @@ fn open_save_folder(_app: &AppHandle) {
     }
 }
 
+fn is_blocked(app: &AppHandle) -> bool {
+    if app.get_webview_window("overlay").is_some() { return true; }
+    let flag = app.state::<DialogActive>();
+    *flag.0.lock().unwrap()
+}
+
 fn show_guide(app: &AppHandle) {
-    if app.get_webview_window("welcome").is_some() || app.get_webview_window("overlay").is_some() {
+    if app.get_webview_window("welcome").is_some() || is_blocked(app) {
         return;
     }
     let _ = WebviewWindowBuilder::new(app, "welcome", WebviewUrl::App("welcome.html?noclose=1".into()))
@@ -639,11 +683,7 @@ fn show_guide(app: &AppHandle) {
 }
 
 fn show_settings(app: &AppHandle) {
-    if app.get_webview_window("settings").is_some() {
-        return;
-    }
-    // Don't open settings while overlay or a dialog might be blocking
-    if app.get_webview_window("overlay").is_some() {
+    if app.get_webview_window("settings").is_some() || is_blocked(app) {
         return;
     }
     let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
@@ -658,7 +698,7 @@ fn show_settings(app: &AppHandle) {
 }
 
 fn show_about(app: &AppHandle) {
-    if app.get_webview_window("about").is_some() || app.get_webview_window("overlay").is_some() {
+    if app.get_webview_window("about").is_some() || is_blocked(app) {
         return;
     }
     let _ = WebviewWindowBuilder::new(app, "about", WebviewUrl::App("about.html".into()))

@@ -250,8 +250,17 @@ pub fn set_setting(key: String, value: String) {
 }
 
 #[tauri::command]
-pub fn pick_folder() -> Option<String> {
-    rfd::FileDialog::new().pick_folder().map(|p| p.to_string_lossy().to_string())
+pub fn pick_folder(app_handle: tauri::AppHandle) -> Option<String> {
+    {
+        let flag = app_handle.state::<crate::DialogActive>();
+        *flag.0.lock().unwrap() = true;
+    }
+    let result = rfd::FileDialog::new().pick_folder().map(|p| p.to_string_lossy().to_string());
+    {
+        let flag = app_handle.state::<crate::DialogActive>();
+        *flag.0.lock().unwrap() = false;
+    }
+    result
 }
 
 #[tauri::command]
@@ -286,6 +295,11 @@ pub fn save_screenshot(
             win.close().ok();
         }
 
+        {
+            let flag = app_handle.state::<crate::DialogActive>();
+            *flag.0.lock().unwrap() = true;
+        }
+
         let default_name = timestamp_filename();
         let save_dir = get_last_save_dir();
         let dialog = rfd::FileDialog::new()
@@ -294,11 +308,12 @@ pub fn save_screenshot(
             .add_filter("PNG Image", &["png"]);
         match dialog.save_file() {
             Some(path) => {
-                // Remember the directory the user chose
                 if let Some(parent) = path.parent() {
                     set_last_save_dir(&parent.to_string_lossy());
                 }
-                let result = match fs::write(&path, &png_bytes) {
+                let flag = app_handle.state::<crate::DialogActive>();
+                *flag.0.lock().unwrap() = false;
+                return match fs::write(&path, &png_bytes) {
                     Ok(_) => SaveResult {
                         success: true,
                         file_path: Some(path.to_string_lossy().to_string()),
@@ -310,9 +325,10 @@ pub fn save_screenshot(
                         error: Some(e.to_string()),
                     },
                 };
-                return result;
             }
             None => {
+                let flag = app_handle.state::<crate::DialogActive>();
+                *flag.0.lock().unwrap() = false;
                 return SaveResult {
                     success: false,
                     file_path: None,

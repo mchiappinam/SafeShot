@@ -52,7 +52,7 @@
     .hotkey-input {
       background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
       color: #2AE3FF; padding: 6px 10px; font-size: 12px; font-family: monospace;
-      outline: none; cursor: pointer; text-align: center; min-width: 120px;
+      outline: none; cursor: pointer; text-align: center; min-width: 200px; flex: 1;
     }
     .hint { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 3px; }
     .error-msg { font-size: 9px; color: #FF4488; margin-top: 3px; display: none; }
@@ -126,7 +126,14 @@
   var onHotkeyKey = null;
 
   function invoke(cmd, args) { return window.__TAURI__.core.invoke(cmd, args); }
-  function displayHotkey(key) { return hotkeyDisplay[key] || key; }
+  function displayHotkey(key) {
+    if (hotkeyDisplay[key]) return hotkeyDisplay[key];
+    // Convert modifier names to symbols on macOS
+    if (navigator.platform.indexOf('Mac') !== -1) {
+      return key.replace('Meta+', '\u2318').replace('Shift+', '\u21E7').replace('Ctrl+', '\u2303').replace('Alt+', '\u2325');
+    }
+    return key;
+  }
 
   function stopListening() {
     if (!listening) return;
@@ -134,6 +141,7 @@
     document.getElementById('hotkey').style.borderColor = '';
     if (onHotkeyKey) window.removeEventListener('keydown', onHotkeyKey);
     onHotkeyKey = null;
+    invoke('resume_hotkey');
   }
 
   invoke('get_settings').then(function(s) {
@@ -161,9 +169,10 @@
   hotkeyEl.addEventListener('click', function() {
     if (listening) return;
     listening = true;
-    hotkeyEl.value = 'Press a key... (ESC to cancel)';
+    hotkeyEl.value = 'Listening... (ESC cancel)';
     hotkeyEl.style.borderColor = 'rgba(42,227,255,0.8)';
     errorEl.style.display = 'none';
+    invoke('pause_hotkey');
 
     onHotkeyKey = function(e) {
       e.preventDefault();
@@ -224,8 +233,8 @@
     invoke('close_settings');
   });
 
-  document.getElementById('cancelBtn').addEventListener('click', function() { invoke('close_settings'); });
-  document.getElementById('close-x').addEventListener('click', function() { invoke('close_settings'); });
+  document.getElementById('cancelBtn').addEventListener('click', function() { stopListening(); invoke('close_settings'); });
+  document.getElementById('close-x').addEventListener('click', function() { stopListening(); invoke('close_settings'); });
 
   if (navigator.platform.indexOf('Mac') !== -1) {
     document.getElementById('lbl-quick').textContent = 'Quick save folder (\u2318S)';
