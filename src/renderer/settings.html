@@ -15,6 +15,7 @@
     .header {
       display: flex; align-items: center; justify-content: space-between;
       padding: 12px 16px 8px;
+      -webkit-app-region: drag; cursor: move;
     }
     .header h2 {
       font-size: 16px; font-weight: 700;
@@ -24,9 +25,10 @@
     .close-x {
       background: none; border: none; color: rgba(255,255,255,0.3);
       font-size: 18px; cursor: pointer; transition: color 0.15s;
+      -webkit-app-region: no-drag;
     }
     .close-x:hover { color: #fff; }
-    .content { flex: 1; padding: 0 16px 16px; overflow-y: auto; }
+    .content { flex: 1; padding: 0 16px 16px; }
     .section { margin-bottom: 16px; }
     .section-title {
       font-size: 10px; color: rgba(42,227,255,0.7); text-transform: uppercase;
@@ -40,7 +42,6 @@
       color: #fff; padding: 6px 10px; font-size: 12px; font-family: inherit;
       outline: none; transition: border-color 0.15s;
     }
-    .field-input:focus { border-color: rgba(42,227,255,0.5); }
     .field-input:read-only { color: rgba(255,255,255,0.5); }
     .btn-small {
       background: rgba(42,227,255,0.12); border: 1px solid rgba(42,227,255,0.25);
@@ -53,28 +54,21 @@
       color: #2AE3FF; padding: 6px 10px; font-size: 12px; font-family: monospace;
       outline: none; cursor: pointer; text-align: center; min-width: 120px;
     }
-    .hotkey-input:focus { border-color: rgba(42,227,255,0.5); }
     .hint { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 3px; }
+    .error-msg { font-size: 9px; color: #FF4488; margin-top: 3px; display: none; }
     .footer {
       padding: 10px 16px; display: flex; justify-content: flex-end; gap: 8px;
     }
     .btn-save {
       background: rgba(42,227,255,0.2); border: 1px solid rgba(42,227,255,0.4);
-      color: #fff; padding: 7px 20px; font-size: 12px; cursor: pointer;
-      transition: all 0.15s;
+      color: #fff; padding: 7px 20px; font-size: 12px; cursor: pointer; transition: all 0.15s;
     }
     .btn-save:hover { background: rgba(42,227,255,0.35); }
     .btn-cancel {
       background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.6); padding: 7px 20px; font-size: 12px; cursor: pointer;
-      transition: all 0.15s;
+      color: rgba(255,255,255,0.6); padding: 7px 20px; font-size: 12px; cursor: pointer; transition: all 0.15s;
     }
     .btn-cancel:hover { background: rgba(255,255,255,0.1); }
-    .saved-msg {
-      font-size: 11px; color: #2AE3FF; opacity: 0; transition: opacity 0.3s;
-      align-self: center;
-    }
-    .saved-msg.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -86,15 +80,15 @@
     <div class="section">
       <div class="section-title">Save locations</div>
       <div class="field">
-        <div class="field-label">Quick save folder (Ctrl+S)</div>
+        <div class="field-label" id="lbl-quick">Quick save folder (Ctrl+S)</div>
         <div class="field-row">
           <input type="text" class="field-input" id="quickSaveDir" readonly />
           <button class="btn-small" id="browseQuickSave">Browse</button>
         </div>
-        <div class="hint">Where screenshots go when you press Ctrl+S</div>
+        <div class="hint" id="hint-quick">Where screenshots go when you press Ctrl+S</div>
       </div>
       <div class="field">
-        <div class="field-label">Save As default folder (Ctrl+B)</div>
+        <div class="field-label" id="lbl-saveas">Save As default folder (Ctrl+B)</div>
         <div class="field-row">
           <input type="text" class="field-input" id="lastSaveDir" readonly />
           <button class="btn-small" id="browseSaveAs">Browse</button>
@@ -107,80 +101,106 @@
       <div class="field">
         <div class="field-label">Capture screenshot</div>
         <div class="field-row">
-          <input type="text" class="hotkey-input" id="hotkey" readonly placeholder="Press a key..." />
+          <input type="text" class="hotkey-input" id="hotkey" readonly />
           <button class="btn-small" id="resetHotkey">Reset</button>
         </div>
-        <div class="hint">Click the box and press your preferred key combination</div>
+        <div class="hint" id="hint-hotkey">Click the box and press your preferred key combination</div>
+        <div class="error-msg" id="hotkeyError"></div>
       </div>
     </div>
   </div>
   <div class="footer">
-    <span class="saved-msg" id="savedMsg">Settings saved</span>
     <button class="btn-cancel" id="cancelBtn">Cancel</button>
     <button class="btn-save" id="saveBtn">Save</button>
   </div>
   <script>
   var settings = {};
-  var hotkeyDisplay = { PrintScreen: 'Print Screen', 'Meta+Shift+KeyS': '⌘⇧S' };
+  var originalHotkey = '';
+  var hotkeyDisplay = { PrintScreen: 'Print Screen', 'Meta+Shift+KeyS': '\u2318\u21E7S' };
+  var reservedKeys = [
+    'Ctrl+KeyZ', 'Ctrl+KeyY', 'Ctrl+KeyS', 'Ctrl+KeyB', 'Ctrl+KeyC', 'Ctrl+KeyA',
+    'Meta+KeyZ', 'Meta+KeyY', 'Meta+KeyS', 'Meta+KeyB', 'Meta+KeyC', 'Meta+KeyA',
+    'Ctrl+Shift+KeyZ', 'Meta+Shift+KeyZ', 'Escape',
+  ];
+  var listening = false;
+  var onHotkeyKey = null;
 
-  function invoke(cmd, args) {
-    return window.__TAURI__.core.invoke(cmd, args);
+  function invoke(cmd, args) { return window.__TAURI__.core.invoke(cmd, args); }
+  function displayHotkey(key) { return hotkeyDisplay[key] || key; }
+
+  function stopListening() {
+    if (!listening) return;
+    listening = false;
+    document.getElementById('hotkey').style.borderColor = '';
+    if (onHotkeyKey) window.removeEventListener('keydown', onHotkeyKey);
+    onHotkeyKey = null;
   }
 
-  function displayHotkey(key) {
-    return hotkeyDisplay[key] || key;
-  }
-
-  // Load settings
   invoke('get_settings').then(function(s) {
     settings = s;
+    originalHotkey = s.hotkey || 'PrintScreen';
     document.getElementById('quickSaveDir').value = s.quickSaveDir || '';
     document.getElementById('lastSaveDir').value = s.lastSaveDir || '';
-    document.getElementById('hotkey').value = displayHotkey(s.hotkey || 'PrintScreen');
+    document.getElementById('hotkey').value = displayHotkey(originalHotkey);
   });
 
-  // Browse buttons
   document.getElementById('browseQuickSave').addEventListener('click', function() {
     invoke('pick_folder').then(function(dir) {
-      if (dir) {
-        document.getElementById('quickSaveDir').value = dir;
-        settings.quickSaveDir = dir;
-      }
+      if (dir) { document.getElementById('quickSaveDir').value = dir; settings.quickSaveDir = dir; }
     });
   });
-
   document.getElementById('browseSaveAs').addEventListener('click', function() {
     invoke('pick_folder').then(function(dir) {
-      if (dir) {
-        document.getElementById('lastSaveDir').value = dir;
-        settings.lastSaveDir = dir;
-      }
+      if (dir) { document.getElementById('lastSaveDir').value = dir; settings.lastSaveDir = dir; }
     });
   });
 
-  // Hotkey capture
   var hotkeyEl = document.getElementById('hotkey');
+  var errorEl = document.getElementById('hotkeyError');
+
   hotkeyEl.addEventListener('click', function() {
-    hotkeyEl.value = 'Press a key...';
+    if (listening) return;
+    listening = true;
+    hotkeyEl.value = 'Press a key... (ESC to cancel)';
     hotkeyEl.style.borderColor = 'rgba(42,227,255,0.8)';
-    function onKey(e) {
+    errorEl.style.display = 'none';
+
+    onHotkeyKey = function(e) {
       e.preventDefault();
-      var parts = [];
-      if (e.ctrlKey) parts.push('Ctrl');
-      if (e.altKey) parts.push('Alt');
-      if (e.shiftKey) parts.push('Shift');
-      if (e.metaKey) parts.push('Meta');
-      var key = e.code;
-      if (!['ControlLeft','ControlRight','ShiftLeft','ShiftRight','AltLeft','AltRight','MetaLeft','MetaRight'].includes(key)) {
-        parts.push(key);
-        var combo = parts.join('+');
-        hotkeyEl.value = combo;
-        settings.hotkey = combo;
-        hotkeyEl.style.borderColor = '';
-        window.removeEventListener('keydown', onKey);
+      if (e.key === 'Escape') {
+        hotkeyEl.value = displayHotkey(settings.hotkey || originalHotkey);
+        errorEl.style.display = 'none';
+        stopListening();
+        return;
       }
+      var mods = [];
+      if (e.ctrlKey) mods.push('Ctrl');
+      if (e.altKey) mods.push('Alt');
+      if (e.shiftKey) mods.push('Shift');
+      if (e.metaKey) mods.push('Meta');
+      var key = e.code;
+      if (['ControlLeft','ControlRight','ShiftLeft','ShiftRight','AltLeft','AltRight','MetaLeft','MetaRight'].includes(key)) return;
+      mods.push(key);
+      var combo = mods.join('+');
+      if (reservedKeys.includes(combo)) {
+        errorEl.textContent = 'That shortcut is reserved by SafeShot';
+        errorEl.style.display = 'block';
+        return;
+      }
+      errorEl.style.display = 'none';
+      hotkeyEl.value = displayHotkey(combo);
+      settings.hotkey = combo;
+      stopListening();
+    };
+    window.addEventListener('keydown', onHotkeyKey);
+  });
+
+  document.addEventListener('click', function(e) {
+    if (listening && e.target !== hotkeyEl) {
+      hotkeyEl.value = displayHotkey(settings.hotkey || originalHotkey);
+      errorEl.style.display = 'none';
+      stopListening();
     }
-    window.addEventListener('keydown', onKey);
   });
 
   document.getElementById('resetHotkey').addEventListener('click', function() {
@@ -188,32 +208,29 @@
     var def = isMac ? 'Meta+Shift+KeyS' : 'PrintScreen';
     hotkeyEl.value = displayHotkey(def);
     settings.hotkey = def;
+    errorEl.style.display = 'none';
+    stopListening();
   });
 
-  // Save
   document.getElementById('saveBtn').addEventListener('click', function() {
     if (settings.quickSaveDir) invoke('set_setting', { key: 'quickSaveDir', value: settings.quickSaveDir });
     if (settings.lastSaveDir) invoke('set_setting', { key: 'lastSaveDir', value: settings.lastSaveDir });
-    if (settings.hotkey) invoke('set_setting', { key: 'hotkey', value: settings.hotkey });
-    var msg = document.getElementById('savedMsg');
-    msg.classList.add('show');
-    setTimeout(function() { msg.classList.remove('show'); }, 2000);
-  });
-
-  // Cancel / Close
-  document.getElementById('cancelBtn').addEventListener('click', function() {
-    invoke('close_settings');
-  });
-  document.getElementById('close-x').addEventListener('click', function() {
+    if (settings.hotkey) {
+      invoke('set_setting', { key: 'hotkey', value: settings.hotkey });
+      invoke('register_hotkey', { hotkey: settings.hotkey }).catch(function(err) {
+        console.error('Failed to register hotkey:', err);
+      });
+    }
     invoke('close_settings');
   });
 
-  // macOS hints
+  document.getElementById('cancelBtn').addEventListener('click', function() { invoke('close_settings'); });
+  document.getElementById('close-x').addEventListener('click', function() { invoke('close_settings'); });
+
   if (navigator.platform.indexOf('Mac') !== -1) {
-    document.querySelector('.hint').textContent = 'Where screenshots go when you press ⌘S';
-    document.querySelectorAll('.field-label')[0].textContent = 'Quick save folder (⌘S)';
-    document.querySelectorAll('.field-label')[1].textContent = 'Save As default folder (⌘B)';
-    document.querySelectorAll('.hint')[1].textContent = 'Starting folder for the Save As dialog';
+    document.getElementById('lbl-quick').textContent = 'Quick save folder (\u2318S)';
+    document.getElementById('hint-quick').textContent = 'Where screenshots go when you press \u2318S';
+    document.getElementById('lbl-saveas').textContent = 'Save As default folder (\u2318B)';
   }
   </script>
 </body>

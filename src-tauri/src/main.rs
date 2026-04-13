@@ -8,7 +8,7 @@ use std::io::Write;
 
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    tray::TrayIconBuilder,
     AppHandle, Manager, WebviewUrl, WebviewWindowBuilder,
 };
 use tauri_plugin_autostart::ManagerExt;
@@ -34,6 +34,62 @@ fn log(msg: &str) {
             );
         }
     }
+}
+
+fn parse_hotkey(s: &str) -> Option<Shortcut> {
+    let parts: Vec<&str> = s.split('+').collect();
+    let mut mods = Modifiers::empty();
+    let mut code: Option<Code> = None;
+    for part in &parts {
+        match *part {
+            "Ctrl" => mods |= Modifiers::CONTROL,
+            "Alt" => mods |= Modifiers::ALT,
+            "Shift" => mods |= Modifiers::SHIFT,
+            "Meta" => mods |= Modifiers::META,
+            key => {
+                code = match key {
+                    "PrintScreen" => Some(Code::PrintScreen),
+                    "KeyA" => Some(Code::KeyA), "KeyB" => Some(Code::KeyB), "KeyC" => Some(Code::KeyC),
+                    "KeyD" => Some(Code::KeyD), "KeyE" => Some(Code::KeyE), "KeyF" => Some(Code::KeyF),
+                    "KeyG" => Some(Code::KeyG), "KeyH" => Some(Code::KeyH), "KeyI" => Some(Code::KeyI),
+                    "KeyJ" => Some(Code::KeyJ), "KeyK" => Some(Code::KeyK), "KeyL" => Some(Code::KeyL),
+                    "KeyM" => Some(Code::KeyM), "KeyN" => Some(Code::KeyN), "KeyO" => Some(Code::KeyO),
+                    "KeyP" => Some(Code::KeyP), "KeyQ" => Some(Code::KeyQ), "KeyR" => Some(Code::KeyR),
+                    "KeyS" => Some(Code::KeyS), "KeyT" => Some(Code::KeyT), "KeyU" => Some(Code::KeyU),
+                    "KeyV" => Some(Code::KeyV), "KeyW" => Some(Code::KeyW), "KeyX" => Some(Code::KeyX),
+                    "KeyY" => Some(Code::KeyY), "KeyZ" => Some(Code::KeyZ),
+                    "Digit0" => Some(Code::Digit0), "Digit1" => Some(Code::Digit1),
+                    "Digit2" => Some(Code::Digit2), "Digit3" => Some(Code::Digit3),
+                    "Digit4" => Some(Code::Digit4), "Digit5" => Some(Code::Digit5),
+                    "Digit6" => Some(Code::Digit6), "Digit7" => Some(Code::Digit7),
+                    "Digit8" => Some(Code::Digit8), "Digit9" => Some(Code::Digit9),
+                    "F1" => Some(Code::F1), "F2" => Some(Code::F2), "F3" => Some(Code::F3),
+                    "F4" => Some(Code::F4), "F5" => Some(Code::F5), "F6" => Some(Code::F6),
+                    "F7" => Some(Code::F7), "F8" => Some(Code::F8), "F9" => Some(Code::F9),
+                    "F10" => Some(Code::F10), "F11" => Some(Code::F11), "F12" => Some(Code::F12),
+                    "Space" => Some(Code::Space), "Escape" => Some(Code::Escape),
+                    "Backquote" => Some(Code::Backquote), "Pause" => Some(Code::Pause),
+                    "ScrollLock" => Some(Code::ScrollLock), "Insert" => Some(Code::Insert),
+                    "Home" => Some(Code::Home), "End" => Some(Code::End),
+                    "PageUp" => Some(Code::PageUp), "PageDown" => Some(Code::PageDown),
+                    "Delete" => Some(Code::Delete), "Backspace" => Some(Code::Backspace),
+                    "Tab" => Some(Code::Tab), "Enter" => Some(Code::Enter),
+                    "ArrowUp" => Some(Code::ArrowUp), "ArrowDown" => Some(Code::ArrowDown),
+                    "ArrowLeft" => Some(Code::ArrowLeft), "ArrowRight" => Some(Code::ArrowRight),
+                    "Minus" => Some(Code::Minus), "Equal" => Some(Code::Equal),
+                    "BracketLeft" => Some(Code::BracketLeft), "BracketRight" => Some(Code::BracketRight),
+                    "Semicolon" => Some(Code::Semicolon), "Quote" => Some(Code::Quote),
+                    "Comma" => Some(Code::Comma), "Period" => Some(Code::Period),
+                    "Slash" => Some(Code::Slash), "Backslash" => Some(Code::Backslash),
+                    "NumpadAdd" => Some(Code::NumpadAdd), "NumpadSubtract" => Some(Code::NumpadSubtract),
+                    "NumpadMultiply" => Some(Code::NumpadMultiply), "NumpadDivide" => Some(Code::NumpadDivide),
+                    _ => None,
+                };
+            }
+        }
+    }
+    let c = code?;
+    Some(Shortcut::new(if mods.is_empty() { Some(Modifiers::empty()) } else { Some(mods) }, c))
 }
 
 fn main() {
@@ -77,6 +133,7 @@ fn main() {
             close_welcome,
             close_about,
             close_settings,
+            register_hotkey,
             open_url,
             show_overlay,
         ])
@@ -184,32 +241,34 @@ fn main() {
                 log("Windows PrtScn Snipping Tool override disabled");
             }
 
-            // Register global shortcuts
-            // Windows/Linux: PrtScn, macOS: Cmd+Shift+S
-            #[cfg(any(target_os = "windows", target_os = "linux"))]
+            // Register global shortcut from config (or platform default)
             {
-                let shortcut = Shortcut::new(Some(Modifiers::empty()), Code::PrintScreen);
-                let app_handle = app.handle().clone();
-                match app
-                    .global_shortcut()
-                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
-                        start_capture(&app_handle);
-                    }) {
-                    Ok(_) => log("PrtScn shortcut registered"),
-                    Err(e) => log(&format!("PrtScn shortcut failed: {}", e)),
-                }
-            }
-            #[cfg(target_os = "macos")]
-            {
-                let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
-                let app_handle = app.handle().clone();
-                match app
-                    .global_shortcut()
-                    .on_shortcut(shortcut, move |_app, _shortcut, _event| {
-                        start_capture(&app_handle);
-                    }) {
-                    Ok(_) => log("Cmd+Shift+S shortcut registered"),
-                    Err(e) => log(&format!("Cmd+Shift+S shortcut failed: {}", e)),
+                let hotkey_str = {
+                    let path = save::config_path();
+                    if let Ok(data) = std::fs::read_to_string(&path) {
+                        serde_json::from_str::<serde_json::Value>(&data)
+                            .ok()
+                            .and_then(|j| j.get("hotkey").and_then(|v| v.as_str()).map(String::from))
+                    } else {
+                        None
+                    }
+                }.unwrap_or_else(|| {
+                    if cfg!(target_os = "macos") { "Meta+Shift+KeyS".to_string() }
+                    else { "PrintScreen".to_string() }
+                });
+
+                if let Some(shortcut) = parse_hotkey(&hotkey_str) {
+                    let app_handle = app.handle().clone();
+                    match app
+                        .global_shortcut()
+                        .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                            start_capture(&app_handle);
+                        }) {
+                        Ok(_) => log(&format!("Shortcut registered: {}", hotkey_str)),
+                        Err(e) => log(&format!("Shortcut failed ({}): {}", hotkey_str, e)),
+                    }
+                } else {
+                    log(&format!("Could not parse hotkey: {}", hotkey_str));
                 }
             }
 
@@ -294,6 +353,22 @@ fn close_settings(app: AppHandle) {
     if let Some(win) = app.get_webview_window("settings") {
         win.close().ok();
     }
+}
+
+#[tauri::command]
+fn register_hotkey(app: AppHandle, hotkey: String) -> Result<(), String> {
+    // Unregister all existing shortcuts first
+    app.global_shortcut().unregister_all().map_err(|e| e.to_string())?;
+    // Parse and register the new one
+    let shortcut = parse_hotkey(&hotkey).ok_or_else(|| format!("Invalid hotkey: {}", hotkey))?;
+    let app_handle = app.clone();
+    app.global_shortcut()
+        .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+            start_capture(&app_handle);
+        })
+        .map_err(|e| e.to_string())?;
+    log(&format!("Hotkey re-registered: {}", hotkey));
+    Ok(())
 }
 
 #[tauri::command]
@@ -548,7 +623,7 @@ fn open_save_folder(_app: &AppHandle) {
 }
 
 fn show_guide(app: &AppHandle) {
-    if app.get_webview_window("welcome").is_some() {
+    if app.get_webview_window("welcome").is_some() || app.get_webview_window("overlay").is_some() {
         return;
     }
     let _ = WebviewWindowBuilder::new(app, "welcome", WebviewUrl::App("welcome.html?noclose=1".into()))
@@ -567,9 +642,13 @@ fn show_settings(app: &AppHandle) {
     if app.get_webview_window("settings").is_some() {
         return;
     }
+    // Don't open settings while overlay or a dialog might be blocking
+    if app.get_webview_window("overlay").is_some() {
+        return;
+    }
     let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
         .title("SafeShot Settings")
-        .inner_size(460.0, 340.0)
+        .inner_size(460.0, 380.0)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)
@@ -579,7 +658,7 @@ fn show_settings(app: &AppHandle) {
 }
 
 fn show_about(app: &AppHandle) {
-    if app.get_webview_window("about").is_some() {
+    if app.get_webview_window("about").is_some() || app.get_webview_window("overlay").is_some() {
         return;
     }
     let _ = WebviewWindowBuilder::new(app, "about", WebviewUrl::App("about.html".into()))

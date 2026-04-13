@@ -237,6 +237,8 @@ pub fn get_settings() -> serde_json::Value {
 
 #[tauri::command]
 pub fn set_setting(key: String, value: String) {
+    let allowed = ["quickSaveDir", "lastSaveDir", "hotkey"];
+    if !allowed.contains(&key.as_str()) { return; }
     let path = config_path();
     let mut json = if let Ok(data) = fs::read_to_string(&path) {
         serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
