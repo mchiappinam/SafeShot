@@ -227,10 +227,11 @@ pub fn get_settings() -> serde_json::Value {
         serde_json::json!({})
     };
     let default_dir = get_save_directory();
+    let default_hotkey = if cfg!(target_os = "macos") { "Meta+Shift+KeyS" } else { "PrintScreen" };
     serde_json::json!({
         "quickSaveDir": json.get("quickSaveDir").and_then(|v| v.as_str()).unwrap_or(&default_dir),
         "lastSaveDir": json.get("lastSaveDir").and_then(|v| v.as_str()).unwrap_or(&default_dir),
-        "hotkey": json.get("hotkey").and_then(|v| v.as_str()).unwrap_or("PrintScreen"),
+        "hotkey": json.get("hotkey").and_then(|v| v.as_str()).unwrap_or(default_hotkey),
     })
 }
 

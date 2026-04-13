@@ -119,10 +119,7 @@
     <button class="btn-cancel" id="cancelBtn">Cancel</button>
     <button class="btn-save" id="saveBtn">Save</button>
   </div>
-</body>
-</html>
-
-<script>
+  <script>
   var settings = {};
   var hotkeyDisplay = { PrintScreen: 'Print Screen', 'Meta+Shift+KeyS': '⌘⇧S' };
 
@@ -214,6 +211,10 @@
   // macOS hints
   if (navigator.platform.indexOf('Mac') !== -1) {
     document.querySelector('.hint').textContent = 'Where screenshots go when you press ⌘S';
+    document.querySelectorAll('.field-label')[0].textContent = 'Quick save folder (⌘S)';
     document.querySelectorAll('.field-label')[1].textContent = 'Save As default folder (⌘B)';
+    document.querySelectorAll('.hint')[1].textContent = 'Starting folder for the Save As dialog';
   }
-</script>
+  </script>
+</body>
+</html>
