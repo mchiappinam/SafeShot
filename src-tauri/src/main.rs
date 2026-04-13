@@ -70,9 +70,13 @@ fn main() {
             save::set_last_tool,
             save::get_text_settings,
             save::set_text_settings,
+            save::get_settings,
+            save::set_setting,
+            save::pick_folder,
             close_overlay,
             close_welcome,
             close_about,
+            close_settings,
             open_url,
             show_overlay,
         ])
@@ -131,6 +135,7 @@ fn main() {
             )?;
             let about_item = MenuItem::with_id(app, "about", "About", true, None::<&str>)?;
             let guide_item = MenuItem::with_id(app, "guide", "How to Use", true, None::<&str>)?;
+            let settings_item = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit SafeShot", true, None::<&str>)?;
             let menu = Menu::with_items(
                 app,
@@ -139,6 +144,7 @@ fn main() {
                     &open_folder,
                     &autostart_item,
                     &guide_item,
+                    &settings_item,
                     &about_item,
                     &quit_item,
                 ],
@@ -155,6 +161,7 @@ fn main() {
                     "open_folder" => open_save_folder(app),
                     "autostart" => toggle_autostart(app),
                     "guide" => show_guide(app),
+                    "settings" => show_settings(app),
                     "about" => show_about(app),
                     "quit" => {
                         log("Quit requested");
@@ -283,9 +290,19 @@ fn close_about(app: AppHandle) {
 }
 
 #[tauri::command]
+fn close_settings(app: AppHandle) {
+    if let Some(win) = app.get_webview_window("settings") {
+        win.close().ok();
+    }
+}
+
+#[tauri::command]
 fn open_url(url: String) {
     // Only allow known safe URLs
-    if url != "https://chiappina.com" && url != "https://github.com/mchiappinam/SafeShot" { return; }
+    if url != "https://chiappina.com"
+        && url != "https://github.com/mchiappinam/SafeShot"
+        && url != "https://github.com/mchiappinam/SafeShot/blob/main/LICENSE"
+    { return; }
     #[cfg(target_os = "windows")]
     { std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().ok(); }
     #[cfg(target_os = "macos")]
@@ -542,6 +559,21 @@ fn show_guide(app: &AppHandle) {
         .minimizable(false)
         .decorations(false)
         .always_on_top(true)
+        .center()
+        .build();
+}
+
+fn show_settings(app: &AppHandle) {
+    if app.get_webview_window("settings").is_some() {
+        return;
+    }
+    let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
+        .title("SafeShot Settings")
+        .inner_size(460.0, 340.0)
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(false)
+        .decorations(false)
         .center()
         .build();
 }

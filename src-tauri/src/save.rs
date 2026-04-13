@@ -154,7 +154,18 @@ pub fn set_text_settings(settings: serde_json::Value) {
 }
 
 pub fn get_save_directory() -> String {
-    // Use Pictures directory on all platforms
+    // Check if user set a custom quick save directory
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(dir) = json.get("quickSaveDir").and_then(|v| v.as_str()) {
+                if std::path::Path::new(dir).exists() {
+                    return dir.to_string();
+                }
+            }
+        }
+    }
+    // Default: Pictures/SafeShot
     let base = dirs::picture_dir().unwrap_or_else(|| {
         dirs::home_dir()
             .unwrap_or_else(|| PathBuf::from("."))
@@ -205,6 +216,39 @@ fn set_last_save_dir(dir: &str) {
     };
     json["lastSaveDir"] = serde_json::json!(dir);
     fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
+#[tauri::command]
+pub fn get_settings() -> serde_json::Value {
+    let path = config_path();
+    let json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    let default_dir = get_save_directory();
+    serde_json::json!({
+        "quickSaveDir": json.get("quickSaveDir").and_then(|v| v.as_str()).unwrap_or(&default_dir),
+        "lastSaveDir": json.get("lastSaveDir").and_then(|v| v.as_str()).unwrap_or(&default_dir),
+        "hotkey": json.get("hotkey").and_then(|v| v.as_str()).unwrap_or("PrintScreen"),
+    })
+}
+
+#[tauri::command]
+pub fn set_setting(key: String, value: String) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json[&key] = serde_json::json!(value);
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
+#[tauri::command]
+pub fn pick_folder() -> Option<String> {
+    rfd::FileDialog::new().pick_folder().map(|p| p.to_string_lossy().to_string())
 }
 
 #[tauri::command]
