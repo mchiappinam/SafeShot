@@ -681,7 +681,8 @@ fn open_save_folder(_app: &AppHandle) {
 fn is_blocked(app: &AppHandle) -> bool {
     if app.get_webview_window("overlay").is_some() { return true; }
     let flag = app.state::<DialogActive>();
-    *flag.0.lock().unwrap()
+    let active = *flag.0.lock().unwrap();
+    active
 }
 
 fn show_guide(app: &AppHandle) {

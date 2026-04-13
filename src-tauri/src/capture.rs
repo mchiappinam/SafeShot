@@ -155,8 +155,12 @@ pub fn do_capture() -> Result<Vec<ScreenData>, String> {
     let mut results = Vec::new();
 
     for screen in screens {
-        let mut image = screen.capture().map_err(|e| e.to_string())?;
+        let captured = screen.capture().map_err(|e| e.to_string())?;
         let info = screen.display_info;
+        let (cw, ch) = (captured.width(), captured.height());
+        // Convert from screenshots' image type to our image crate version
+        let mut image = image::RgbaImage::from_raw(cw, ch, captured.into_raw())
+            .ok_or_else(|| "Failed to convert captured image".to_string())?;
 
         // Draw cursor if it's on this screen
         if let Some((cx, cy)) = cursor_pos {
@@ -174,11 +178,12 @@ pub fn do_capture() -> Result<Vec<ScreenData>, String> {
 
         let mut png_bytes = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
-        encoder.encode(
+        image::ImageEncoder::write_image(
+            encoder,
             image.as_raw(),
             image.width(),
             image.height(),
-            image::ColorType::Rgba8,
+            image::ExtendedColorType::Rgba8,
         )
         .map_err(|e| e.to_string())?;
 
