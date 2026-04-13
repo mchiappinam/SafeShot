@@ -128,11 +128,15 @@
   function invoke(cmd, args) { return window.__TAURI__.core.invoke(cmd, args); }
   function displayHotkey(key) {
     if (hotkeyDisplay[key]) return hotkeyDisplay[key];
+    var display = key;
+    // Strip Key/Digit prefixes from codes for readability
+    display = display.replace(/Key([A-Z])/g, '$1');
+    display = display.replace(/Digit([0-9])/g, '$1');
     // Convert modifier names to symbols on macOS
     if (navigator.platform.indexOf('Mac') !== -1) {
-      return key.replace('Meta+', '\u2318').replace('Shift+', '\u21E7').replace('Ctrl+', '\u2303').replace('Alt+', '\u2325');
+      display = display.replace('Meta+', '\u2318').replace('Shift+', '\u21E7').replace('Ctrl+', '\u2303').replace('Alt+', '\u2325');
     }
-    return key;
+    return display;
   }
 
   function stopListening() {
@@ -226,11 +230,15 @@
     if (settings.lastSaveDir) invoke('set_setting', { key: 'lastSaveDir', value: settings.lastSaveDir });
     if (settings.hotkey) {
       invoke('set_setting', { key: 'hotkey', value: settings.hotkey });
-      invoke('register_hotkey', { hotkey: settings.hotkey }).catch(function(err) {
-        console.error('Failed to register hotkey:', err);
+      invoke('register_hotkey', { hotkey: settings.hotkey }).then(function() {
+        invoke('close_settings');
+      }).catch(function(err) {
+        errorEl.textContent = 'Failed to register hotkey: ' + err;
+        errorEl.style.display = 'block';
       });
+    } else {
+      invoke('close_settings');
     }
-    invoke('close_settings');
   });
 
   document.getElementById('cancelBtn').addEventListener('click', function() { stopListening(); invoke('close_settings'); });

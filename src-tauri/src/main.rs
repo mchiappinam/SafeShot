@@ -271,10 +271,24 @@ fn main() {
                             start_capture(&app_handle);
                         }) {
                         Ok(_) => log(&format!("Shortcut registered: {}", hotkey_str)),
-                        Err(e) => log(&format!("Shortcut failed ({}): {}", hotkey_str, e)),
+                        Err(e) => {
+                            let msg = format!("Failed to register hotkey '{}': {}", hotkey_str, e);
+                            log(&msg);
+                            rfd::MessageDialog::new()
+                                .set_title("SafeShot")
+                                .set_description(&msg)
+                                .set_level(rfd::MessageLevel::Warning)
+                                .show();
+                        }
                     }
                 } else {
-                    log(&format!("Could not parse hotkey: {}", hotkey_str));
+                    let msg = format!("Invalid hotkey in config: '{}'. Reset it in Settings.", hotkey_str);
+                    log(&msg);
+                    rfd::MessageDialog::new()
+                        .set_title("SafeShot")
+                        .set_description(&msg)
+                        .set_level(rfd::MessageLevel::Warning)
+                        .show();
                 }
             }
 
@@ -372,7 +386,11 @@ fn register_hotkey(app: AppHandle, hotkey: String) -> Result<(), String> {
         .on_shortcut(shortcut, move |_app, _shortcut, _event| {
             start_capture(&app_handle);
         })
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            let msg = format!("Failed to register hotkey '{}': {}", hotkey, e);
+            log(&msg);
+            msg
+        })?;
     log(&format!("Hotkey re-registered: {}", hotkey));
     Ok(())
 }
