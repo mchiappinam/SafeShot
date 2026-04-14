@@ -111,7 +111,7 @@ fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f
         &[0,0,0,0,0,0,0,2,1,2,0,0],
         &[0,0,0,0,0,0,0,2,2,0,0,0],
     ];
-    let s = (scale + 1.0).round() as u32;
+    let s = ((scale + 1.0).round() as u32).max(3);
     let (w, h) = (image.width(), image.height());
     for (row, line) in cursor.iter().enumerate() {
         for (col, &pixel) in line.iter().enumerate() {
