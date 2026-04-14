@@ -8,6 +8,7 @@ import DrawingToolbar from './toolbar/DrawingToolbar';
 import ActionToolbar from './toolbar/ActionToolbar';
 import ColorPicker from './toolbar/ColorPicker';
 import SettingsPopup from './toolbar/SettingsPopup';
+import type { SelectionPreset } from './toolbar/SettingsPopup';
 import TextFormatBar from './toolbar/TextFormatBar';
 import './toolbar/toolbar.css';
 
@@ -62,6 +63,7 @@ export default function App(): React.ReactElement {
   const [textSize, setTextSize] = useState(16);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [initialSelection, setInitialSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [selectionPreset, setSelectionPreset] = useState<SelectionPreset>('custom');
 
   useEffect(() => {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
@@ -91,6 +93,7 @@ export default function App(): React.ReactElement {
     // Load selection preset setting
     invoke<Record<string, unknown>>('get_settings').then(s => {
       const preset = (s.selectionPreset as string) || 'custom';
+      setSelectionPreset(preset as SelectionPreset);
       if (preset === 'last') {
         invoke<Record<string, unknown> | null>('get_last_selection').then(sel => {
           if (sel && typeof sel.x === 'number' && typeof sel.width === 'number' && sel.width > 0 && sel.height as number > 0) {
@@ -212,9 +215,10 @@ export default function App(): React.ReactElement {
       )}
 
       {settingsOpen && toolbarPositions && (
-        <SettingsPopup strokeWidth={strokeWidth} fillMode={fillMode}
+        <SettingsPopup strokeWidth={strokeWidth} fillMode={fillMode} selectionPreset={selectionPreset}
           onStrokeWidthChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); }}
           onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); }}
+          onSelectionPresetChange={(p) => { setSelectionPreset(p); invoke('set_setting', { key: 'selectionPreset', value: p }).catch(() => {}); }}
           onClose={() => setSettingsOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}
