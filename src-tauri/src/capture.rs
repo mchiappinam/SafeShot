@@ -183,9 +183,6 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
     #[repr(C)]
     #[derive(Copy, Clone)]
     struct NSPoint { x: f64, y: f64 }
-    #[repr(C)]
-    #[derive(Copy, Clone)]
-    struct NSRect { origin: NSPoint, size: NSSize }
 
     unsafe {
         // NSCursor *cursor = [NSCursor currentSystemCursor]
