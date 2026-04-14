@@ -110,25 +110,30 @@ fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f
         &[0,0,0,0,0,0,2,1,1,2,0,0],
         &[0,0,0,0,0,0,0,2,2,0,0,0],
     ];
-    let s = scale.round().max(1.0) as u32;
+    // Scale cursor to match DPI: at 100% scale=1.0 the bitmap is drawn 1:1,
+    // at 150% each cursor pixel maps to 1.5 image pixels, etc.
     let (w, h) = (image.width(), image.height());
-    for (row, line) in cursor.iter().enumerate() {
-        for (col, &pixel) in line.iter().enumerate() {
+    let cursor_h = cursor.len();
+    let cursor_w = cursor[0].len();
+    let scaled_w = (cursor_w as f64 * scale).round() as u32;
+    let scaled_h = (cursor_h as f64 * scale).round() as u32;
+    for py_out in 0..scaled_h {
+        for px_out in 0..scaled_w {
+            // Map back to source cursor pixel
+            let src_row = (py_out as f64 / scale) as usize;
+            let src_col = (px_out as f64 / scale) as usize;
+            if src_row >= cursor_h || src_col >= cursor_w { continue; }
+            let pixel = cursor[src_row][src_col];
             if pixel == 0 { continue; }
             let color = if pixel == 1 {
                 image::Rgba([255, 255, 255, 255])
             } else {
                 image::Rgba([0, 0, 0, 255])
             };
-            // Draw a scaled block for each cursor pixel
-            for dy in 0..s {
-                for dx in 0..s {
-                    let px = cx + col as u32 * s + dx;
-                    let py = cy + row as u32 * s + dy;
-                    if px < w && py < h {
-                        image.put_pixel(px, py, color);
-                    }
-                }
+            let ix = cx + px_out;
+            let iy = cy + py_out;
+            if ix < w && iy < h {
+                image.put_pixel(ix, iy, color);
             }
         }
     }
