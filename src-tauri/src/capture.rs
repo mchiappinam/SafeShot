@@ -269,44 +269,19 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
             }
         }
 
-        // The cursor bitmap is at pixel resolution (e.g. 2x on Retina) but we need
-        // it at logical resolution since cursor position is in logical coords scaled
-        // to the capture image. Downsample if pixel dims differ from logical dims.
-        let (out_w, out_h, out_rgba, out_hotx, out_hoty);
-        if pw != w || ph != h {
-            out_w = w;
-            out_h = h;
-            out_hotx = hotspot.x.round() as u32;
-            out_hoty = hotspot.y.round() as u32;
-            let sx = pw as f64 / w as f64;
-            let sy = ph as f64 / h as f64;
-            let mut downscaled = vec![0u8; (w * h * 4) as usize];
-            for row in 0..h {
-                for col in 0..w {
-                    let src_col = (col as f64 * sx) as u32;
-                    let src_row = (row as f64 * sy) as u32;
-                    let si = ((src_row * pw + src_col) * 4) as usize;
-                    let di = ((row * w + col) * 4) as usize;
-                    downscaled[di] = rgba[si];
-                    downscaled[di + 1] = rgba[si + 1];
-                    downscaled[di + 2] = rgba[si + 2];
-                    downscaled[di + 3] = rgba[si + 3];
-                }
-            }
-            out_rgba = downscaled;
-        } else {
-            out_w = pw;
-            out_h = ph;
-            out_hotx = hotspot.x.round() as u32;
-            out_hoty = hotspot.y.round() as u32;
-            out_rgba = rgba;
-        }
+        // The cursor bitmap from NSBitmapImageRep is at pixel resolution (e.g. 2x on
+        // Retina). The cursor position cx/cy is also in pixel coords (logical * scale),
+        // so we return the full pixel-resolution bitmap to match.
+        let scale_x = pw as f64 / w as f64;
+        let scale_y = ph as f64 / h as f64;
+        let hotx = (hotspot.x * scale_x).round() as u32;
+        let hoty = (hotspot.y * scale_y).round() as u32;
 
         // Release the bitmap rep
         let sel_release = sel_registerName(b"release\0".as_ptr() as *const _);
         objc_msgSend(bmp_rep, sel_release);
 
-        Some((out_rgba, out_w, out_h, out_hotx, out_hoty))
+        Some((rgba, pw, ph, hotx, hoty))
     }
 }
 
@@ -322,9 +297,9 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
         height: u16,
         xhot: u16,
         yhot: u16,
-        cursor_serial: u64,
-        pixels: *const u64, // actually unsigned long (ARGB per pixel)
-        atom: u64,
+        cursor_serial: std::ffi::c_ulong,
+        pixels: *const std::ffi::c_ulong, // unsigned long: 4 bytes on 32-bit, 8 on 64-bit
+        atom: std::ffi::c_ulong,
         name: *const std::ffi::c_char,
     }
     #[link(name = "X11")]
@@ -360,7 +335,7 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
         let hotx = (*img).xhot as u32;
         let hoty = (*img).yhot as u32;
 
-        // XFixesCursorImage pixels are unsigned long (8 bytes on 64-bit) with ARGB format
+        // XFixesCursorImage pixels are unsigned long (ARGB format)
         let mut rgba = vec![0u8; (w * h * 4) as usize];
         for i in 0..(w * h) as usize {
             let pixel = *(*img).pixels.add(i) as u32;
