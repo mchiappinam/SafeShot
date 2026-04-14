@@ -91,10 +91,11 @@ fn get_cursor_position() -> Option<(i32, i32)> {
 fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
     use windows_sys::Win32::UI::WindowsAndMessaging::*;
     use windows_sys::Win32::Graphics::Gdi::*;
+    use std::ptr::null_mut;
     unsafe {
         let mut ci: CURSORINFO = std::mem::zeroed();
         ci.cbSize = std::mem::size_of::<CURSORINFO>() as u32;
-        if GetCursorInfo(&mut ci) == 0 || ci.hCursor == 0 { return None; }
+        if GetCursorInfo(&mut ci) == 0 || ci.hCursor.is_null() { return None; }
 
         let mut ii: ICONINFO = std::mem::zeroed();
         if GetIconInfo(ci.hCursor, &mut ii) == 0 { return None; }
@@ -104,29 +105,29 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
 
         // Get bitmap dimensions from the mask (always present)
         let mut bm: BITMAP = std::mem::zeroed();
-        if GetObjectW(ii.hbmMask as isize, std::mem::size_of::<BITMAP>() as i32, &mut bm as *mut _ as *mut _) == 0 {
-            if ii.hbmMask != 0 { DeleteObject(ii.hbmMask as isize); }
-            if ii.hbmColor != 0 { DeleteObject(ii.hbmColor as isize); }
+        if GetObjectW(ii.hbmMask as _, std::mem::size_of::<BITMAP>() as i32, &mut bm as *mut _ as *mut _) == 0 {
+            if !ii.hbmMask.is_null() { DeleteObject(ii.hbmMask as _); }
+            if !ii.hbmColor.is_null() { DeleteObject(ii.hbmColor as _); }
             return None;
         }
 
         let w = bm.bmWidth as u32;
         // If no color bitmap, mask is double-height (AND mask + XOR mask)
-        let h = if ii.hbmColor != 0 { bm.bmHeight as u32 } else { bm.bmHeight as u32 / 2 };
+        let h = if !ii.hbmColor.is_null() { bm.bmHeight as u32 } else { bm.bmHeight as u32 / 2 };
 
-        let hdc_screen = GetDC(0);
+        let hdc_screen = GetDC(null_mut());
         let hdc_mem = CreateCompatibleDC(hdc_screen);
         let hbmp = CreateCompatibleBitmap(hdc_screen, w as i32, h as i32);
-        let old = SelectObject(hdc_mem, hbmp as isize);
+        let old = SelectObject(hdc_mem, hbmp as _);
 
         // Clear to transparent black
         let brush = CreateSolidBrush(0x00000000);
         let rc = windows_sys::Win32::Foundation::RECT { left: 0, top: 0, right: w as i32, bottom: h as i32 };
         FillRect(hdc_mem, &rc, brush);
-        DeleteObject(brush as isize);
+        DeleteObject(brush as _);
 
         // Draw the cursor icon onto our DC
-        DrawIconEx(hdc_mem, 0, 0, ci.hCursor, w as i32, h as i32, 0, 0, DI_NORMAL);
+        DrawIconEx(hdc_mem, 0, 0, ci.hCursor, w as i32, h as i32, 0, null_mut(), DI_NORMAL);
 
         // Read pixels back
         let mut bmi: BITMAPINFO = std::mem::zeroed();
@@ -141,11 +142,11 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
         GetDIBits(hdc_mem, hbmp, 0, h, pixels.as_mut_ptr() as *mut _, &mut bmi, DIB_RGB_COLORS);
 
         SelectObject(hdc_mem, old);
-        DeleteObject(hbmp as isize);
+        DeleteObject(hbmp as _);
         DeleteDC(hdc_mem);
-        ReleaseDC(0, hdc_screen);
-        if ii.hbmMask != 0 { DeleteObject(ii.hbmMask as isize); }
-        if ii.hbmColor != 0 { DeleteObject(ii.hbmColor as isize); }
+        ReleaseDC(null_mut(), hdc_screen);
+        if !ii.hbmMask.is_null() { DeleteObject(ii.hbmMask as _); }
+        if !ii.hbmColor.is_null() { DeleteObject(ii.hbmColor as _); }
 
         // Windows gives us BGRA, convert to RGBA and fix alpha
         // DrawIconEx on a 0-alpha surface leaves alpha=0 for cursor pixels on some drivers,
