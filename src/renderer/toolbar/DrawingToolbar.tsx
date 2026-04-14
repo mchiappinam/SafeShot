@@ -14,7 +14,8 @@ interface DrawingToolbarProps {
 const SHAPE_TOOLS = new Set<ToolType>(['square', 'circle', 'triangle', 'octagon']);
 const FILL_LABELS: Record<FillMode, string> = { hollow: 'Hollow', solid: 'Solid', blur: 'Blur', redact: 'Redact' };
 
-const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }[] = [
+const TOOLS: { id: ToolType | null; label: string; tooltip: string; fontSize?: number }[] = [
+  { id: null,        label: '✥',  tooltip: 'Move Selection' },
   { id: 'hand',      label: '✋', tooltip: 'Move Objects' },
   { id: 'eyedropper',label: '💧', tooltip: 'Pick Color' },
   { id: 'pencil',   label: '🖊', tooltip: 'Sharpie' },
