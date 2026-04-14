@@ -161,6 +161,13 @@ jobs:
     if: "needs.release.result == 'success'"
     runs-on: windows-latest
     steps:
+      - name: Sync winget-pkgs fork
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          # Sync the forked winget-pkgs repo with upstream before submitting
+          gh repo sync mchiappinam/winget-pkgs --force
       - name: Submit to winget
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
@@ -223,8 +230,8 @@ jobs:
           ''').strip()
           print(cask)
           " "$VERSION" "$REPO" "$INTEL_SHA" "$ARM_SHA" > Casks/safeshot.rb
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "mchiappinam"
+          git config user.email "mchiappinam@users.noreply.github.com"
           git add -A
           git commit -m "v${VERSION}"
           git push
