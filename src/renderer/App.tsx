@@ -67,18 +67,16 @@ export default function App(): React.ReactElement {
 
   /** Resolve a preset string to a selection rect, or null for 'custom'/'last'. */
   const resolvePreset = useCallback((preset: string): { x: number; y: number; width: number; height: number } | null => {
+    const sw = window.innerWidth;
+    const sh = window.innerHeight;
     if (preset === 'fullscreen') {
-      return { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+      return { x: 0, y: 0, width: sw, height: sh };
     }
     const match = preset.match(/^(\d+)x(\d+)$/);
     if (match) {
-      const pw = parseInt(match[1], 10);
-      const ph = parseInt(match[2], 10);
-      const sw = window.innerWidth;
-      const sh = window.innerHeight;
-      if (pw <= sw && ph <= sh) {
-        return { x: Math.round((sw - pw) / 2), y: Math.round((sh - ph) / 2), width: pw, height: ph };
-      }
+      const pw = Math.min(parseInt(match[1], 10), sw);
+      const ph = Math.min(parseInt(match[2], 10), sh);
+      return { x: Math.round((sw - pw) / 2), y: Math.round((sh - ph) / 2), width: pw, height: ph };
     }
     return null;
   }, []);
