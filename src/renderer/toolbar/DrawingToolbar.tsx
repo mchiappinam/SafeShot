@@ -71,7 +71,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             style={{ ...btnStyle(activeTool === id), fontSize: fontSize ?? 16 }}>
             {label}
           </button>
-          <span className="tooltip-text">{SHAPE_TOOLS.has(id) ? `${tooltip} (${FILL_LABELS[fillMode]})` : tooltip}</span>
+          <span className="tooltip-text">{SHAPE_TOOLS.has(id) ? `${tooltip} (${FILL_LABELS[fillMode]} ⚙)` : tooltip}</span>
         </div>
       ))}
       <div style={{ position: 'relative' }} className="tooltip-wrap">
