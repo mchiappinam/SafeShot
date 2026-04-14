@@ -65,6 +65,24 @@ export default function App(): React.ReactElement {
   const [initialSelection, setInitialSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [selectionPreset, setSelectionPreset] = useState<SelectionPreset>('custom');
 
+  /** Resolve a preset string to a selection rect, or null for 'custom'/'last'. */
+  const resolvePreset = useCallback((preset: string): { x: number; y: number; width: number; height: number } | null => {
+    if (preset === 'fullscreen') {
+      return { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+    }
+    const match = preset.match(/^(\d+)x(\d+)$/);
+    if (match) {
+      const pw = parseInt(match[1], 10);
+      const ph = parseInt(match[2], 10);
+      const sw = window.innerWidth;
+      const sh = window.innerHeight;
+      if (pw <= sw && ph <= sh) {
+        return { x: Math.round((sw - pw) / 2), y: Math.round((sh - ph) / 2), width: pw, height: ph };
+      }
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
       setScreens(mapScreenData(raw));
@@ -101,18 +119,8 @@ export default function App(): React.ReactElement {
           }
         }).catch(() => {});
       } else if (preset !== 'custom') {
-        // Parse WxH preset and center it on screen
-        const match = preset.match(/^(\d+)x(\d+)$/);
-        if (match) {
-          const pw = parseInt(match[1], 10);
-          const ph = parseInt(match[2], 10);
-          const sw = window.innerWidth;
-          const sh = window.innerHeight;
-          // Only apply if it fits on screen
-          if (pw <= sw && ph <= sh) {
-            setInitialSelection({ x: Math.round((sw - pw) / 2), y: Math.round((sh - ph) / 2), width: pw, height: ph });
-          }
-        }
+        const rect = resolvePreset(preset);
+        if (rect) setInitialSelection(rect);
       }
     }).catch(() => {});
   }, []);
@@ -218,7 +226,22 @@ export default function App(): React.ReactElement {
         <SettingsPopup strokeWidth={strokeWidth} fillMode={fillMode} selectionPreset={selectionPreset}
           onStrokeWidthChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); }}
           onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); }}
-          onSelectionPresetChange={(p) => { setSelectionPreset(p); invoke('set_setting', { key: 'selectionPreset', value: p }).catch(() => {}); }}
+          onSelectionPresetChange={(p) => {
+            setSelectionPreset(p);
+            invoke('set_setting', { key: 'selectionPreset', value: p }).catch(() => {});
+            // Apply immediately
+            if (p === 'custom') return;
+            if (p === 'last') {
+              invoke<Record<string, unknown> | null>('get_last_selection').then(sel => {
+                if (sel && typeof sel.x === 'number' && typeof sel.width === 'number' && sel.width > 0 && sel.height as number > 0) {
+                  overlayRef.current?.applySelection({ x: sel.x as number, y: sel.y as number, width: sel.width as number, height: sel.height as number });
+                }
+              }).catch(() => {});
+            } else {
+              const rect = resolvePreset(p);
+              if (rect) overlayRef.current?.applySelection(rect);
+            }
+          }}
           onClose={() => setSettingsOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}

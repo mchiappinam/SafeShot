@@ -1,7 +1,7 @@
 import React from 'react';
 import type { FillMode } from '../../shared/types';
 
-export type SelectionPreset = 'custom' | 'last' | '1920x1080' | '1280x720' | '800x600';
+export type SelectionPreset = 'custom' | 'last' | 'fullscreen' | '1920x1080' | '1280x720' | '1024x768' | '800x600' | '640x480';
 
 interface SettingsPopupProps {
   strokeWidth: number;
@@ -24,9 +24,12 @@ const FILL_MODES: { mode: FillMode; icon: string; label: string }[] = [
 const PRESETS: { value: SelectionPreset; label: string }[] = [
   { value: 'custom', label: 'Custom' },
   { value: 'last', label: 'Last used' },
+  { value: 'fullscreen', label: 'Full screen' },
   { value: '1920x1080', label: '1920 x 1080' },
   { value: '1280x720', label: '1280 x 720' },
+  { value: '1024x768', label: '1024 x 768' },
   { value: '800x600', label: '800 x 600' },
+  { value: '640x480', label: '640 x 480' },
 ];
 
 export const SettingsPopup: React.FC<SettingsPopupProps> = ({

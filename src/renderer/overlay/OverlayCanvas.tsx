@@ -32,6 +32,7 @@ export interface OverlayCanvasHandle {
   undo: () => void;
   redo: () => void;
   getSelectionDataURL: (forceScale?: number) => string | null;
+  applySelection: (sel: { x: number; y: number; width: number; height: number }) => void;
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
@@ -112,11 +113,23 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     return exportCanvas.toDataURL('image/png');
   }, []);
 
+  const applySelection = useCallback((sel: { x: number; y: number; width: number; height: number }) => {
+    const selMgr = selMgrRef.current;
+    if (!selMgr) return;
+    selMgr.discardSelection();
+    selMgr.startSelection({ x: sel.x, y: sel.y });
+    selMgr.updateSelection({ x: sel.x + sel.width, y: sel.y + sel.height });
+    selMgr.finalizeSelection();
+    setCaptureState('area-finalized');
+    syncPipeline();
+  }, [syncPipeline]);
+
   useImperativeHandle(ref, () => ({
     undo: () => { annEngRef.current?.undo(); notifyAnnotations(); syncPipeline(); },
     redo: () => { annEngRef.current?.redo(); notifyAnnotations(); syncPipeline(); },
     getSelectionDataURL,
-  }), [notifyAnnotations, syncPipeline, getSelectionDataURL]);
+    applySelection,
+  }), [notifyAnnotations, syncPipeline, getSelectionDataURL, applySelection]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
