@@ -62,7 +62,6 @@ export default function App(): React.ReactElement {
   const [textSize, setTextSize] = useState(16);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [initialSelection, setInitialSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const selectionPresetRef = useRef('custom');
 
   useEffect(() => {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
@@ -92,7 +91,6 @@ export default function App(): React.ReactElement {
     // Load selection preset setting
     invoke<Record<string, unknown>>('get_settings').then(s => {
       const preset = (s.selectionPreset as string) || 'custom';
-      selectionPresetRef.current = preset;
       if (preset === 'last') {
         invoke<Record<string, unknown> | null>('get_last_selection').then(sel => {
           if (sel && typeof sel.x === 'number' && typeof sel.width === 'number' && sel.width > 0 && sel.height as number > 0) {
@@ -148,11 +146,14 @@ export default function App(): React.ReactElement {
   const handleAnnotationsChange = useCallback((undo: boolean, redo: boolean) => { setCanUndo(undo); setCanRedo(redo); }, []);
   const handleSelectionChange = useCallback((sel: { x: number; y: number; width: number; height: number } | null) => {
     setSelection(sel);
-    // Always save last selection so "last used" preset has data
-    if (sel) {
-      invoke('set_last_selection', { x: sel.x, y: sel.y, width: sel.width, height: sel.height }).catch(() => {});
-    }
   }, []);
+
+  // Save selection to disk only when capture state transitions to finalized
+  useEffect(() => {
+    if (captureState === 'area-finalized' && selection) {
+      invoke('set_last_selection', { x: selection.x, y: selection.y, width: selection.width, height: selection.height }).catch(() => {});
+    }
+  }, [captureState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Use window dimensions as bounds for toolbar clamping
   const bounds: Rectangle = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };

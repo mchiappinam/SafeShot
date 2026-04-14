@@ -146,20 +146,6 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     }
     selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
     pipelineRef.current.setScreens(screens).then(() => {
-      // Apply saved selection if provided
-      if (initialSelection && selMgrRef.current) {
-        const s = initialSelection;
-        // Clamp to current screen bounds
-        const maxW = window.innerWidth;
-        const maxH = window.innerHeight;
-        if (s.x >= 0 && s.y >= 0 && s.x + s.width <= maxW && s.y + s.height <= maxH && s.width > 5 && s.height > 5) {
-          selMgrRef.current.startSelection({ x: s.x, y: s.y });
-          selMgrRef.current.updateSelection({ x: s.x + s.width, y: s.y + s.height });
-          selMgrRef.current.finalizeSelection();
-          setCaptureState('area-finalized');
-          syncPipeline();
-        }
-      }
       pipelineRef.current?.requestRender();
       // Wait for the actual paint before showing the window
       requestAnimationFrame(() => {
@@ -169,6 +155,23 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       });
     }).catch(console.error);
   }, [screens]);
+
+  // Apply initial selection when it arrives (may load after screens due to async settings)
+  useEffect(() => {
+    if (!initialSelection || !selMgrRef.current || !pipelineRef.current) return;
+    // Don't override if user already made a selection
+    if (captureStateRef.current !== 'capturing') return;
+    const s = initialSelection;
+    const maxW = window.innerWidth;
+    const maxH = window.innerHeight;
+    if (s.x >= 0 && s.y >= 0 && s.x + s.width <= maxW && s.y + s.height <= maxH && s.width > 5 && s.height > 5) {
+      selMgrRef.current.startSelection({ x: s.x, y: s.y });
+      selMgrRef.current.updateSelection({ x: s.x + s.width, y: s.y + s.height });
+      selMgrRef.current.finalizeSelection();
+      setCaptureState('area-finalized');
+      syncPipeline();
+    }
+  }, [initialSelection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement> | MouseEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
