@@ -165,53 +165,248 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
     }
 }
 
-/// Draw the system cursor onto the captured image at the given pixel position.
-/// On Windows, uses the real cursor bitmap from the OS.
-/// On other platforms, draws a simple arrow fallback.
-fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, _scale: f64) {
-    #[cfg(target_os = "windows")]
-    {
-        if let Some((pixels, cw, ch, hotx, hoty)) = get_system_cursor_bitmap() {
-            let (iw, ih) = (image.width(), image.height());
-            let ox = cx.saturating_sub(hotx);
-            let oy = cy.saturating_sub(hoty);
-            for row in 0..ch {
-                for col in 0..cw {
-                    let idx = ((row * cw + col) * 4) as usize;
-                    let a = pixels[idx + 3];
-                    if a == 0 { continue; }
-                    let px = ox + col;
-                    let py = oy + row;
-                    if px < iw && py < ih {
-                        let r = pixels[idx];
-                        let g = pixels[idx + 1];
-                        let b = pixels[idx + 2];
-                        if a == 255 {
-                            image.put_pixel(px, py, image::Rgba([r, g, b, 255]));
-                        } else {
-                            // Alpha blend
-                            let dst = image.get_pixel(px, py);
-                            let af = a as f32 / 255.0;
-                            let inv = 1.0 - af;
-                            image.put_pixel(px, py, image::Rgba([
-                                (r as f32 * af + dst[0] as f32 * inv) as u8,
-                                (g as f32 * af + dst[1] as f32 * inv) as u8,
-                                (b as f32 * af + dst[2] as f32 * inv) as u8,
-                                255,
-                            ]));
-                        }
-                    }
+/// Get the current system cursor as an RGBA bitmap with its hotspot offset.
+/// Returns (rgba_pixels, width, height, hotspot_x, hotspot_y) or None.
+#[cfg(target_os = "macos")]
+fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
+    // NSCursor/NSBitmapImageRep live in AppKit, objc runtime functions in libobjc
+    #[link(name = "AppKit", kind = "framework")]
+    extern "C" {}
+    extern "C" {
+        fn objc_getClass(name: *const std::ffi::c_char) -> *mut std::ffi::c_void;
+        fn sel_registerName(name: *const std::ffi::c_char) -> *mut std::ffi::c_void;
+        fn objc_msgSend(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void, ...) -> *mut std::ffi::c_void;
+    }
+    #[repr(C)]
+    #[derive(Copy, Clone)]
+    struct NSSize { width: f64, height: f64 }
+    #[repr(C)]
+    #[derive(Copy, Clone)]
+    struct NSPoint { x: f64, y: f64 }
+    #[repr(C)]
+    #[derive(Copy, Clone)]
+    struct NSRect { origin: NSPoint, size: NSSize }
+
+    unsafe {
+        // NSCursor *cursor = [NSCursor currentSystemCursor]
+        let ns_cursor_class = objc_getClass(b"NSCursor\0".as_ptr() as *const _);
+        if ns_cursor_class.is_null() { return None; }
+        let sel_current = sel_registerName(b"currentSystemCursor\0".as_ptr() as *const _);
+        let cursor = objc_msgSend(ns_cursor_class, sel_current);
+        if cursor.is_null() { return None; }
+
+        // NSImage *image = [cursor image]
+        let sel_image = sel_registerName(b"image\0".as_ptr() as *const _);
+        let ns_image = objc_msgSend(cursor, sel_image);
+        if ns_image.is_null() { return None; }
+
+        // NSPoint hotSpot = [cursor hotSpot]
+        // hotSpot is a small struct returned in registers on arm64/x86_64
+        extern "C" {
+            #[link_name = "objc_msgSend"]
+            fn objc_msgSend_point(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void) -> NSPoint;
+            #[link_name = "objc_msgSend"]
+            fn objc_msgSend_size(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void) -> NSSize;
+        }
+        let sel_hotspot = sel_registerName(b"hotSpot\0".as_ptr() as *const _);
+        let hotspot = objc_msgSend_point(cursor, sel_hotspot);
+
+        // NSSize size = [ns_image size]
+        let sel_size = sel_registerName(b"size\0".as_ptr() as *const _);
+        let size = objc_msgSend_size(ns_image, sel_size);
+        let w = size.width as u32;
+        let h = size.height as u32;
+        if w == 0 || h == 0 { return None; }
+
+        // Get the best representation for the cursor
+        // NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:[ns_image TIFFRepresentation]]
+        let sel_tiff = sel_registerName(b"TIFFRepresentation\0".as_ptr() as *const _);
+        let tiff_data = objc_msgSend(ns_image, sel_tiff);
+        if tiff_data.is_null() { return None; }
+
+        let bmp_class = objc_getClass(b"NSBitmapImageRep\0".as_ptr() as *const _);
+        if bmp_class.is_null() { return None; }
+        let sel_alloc = sel_registerName(b"alloc\0".as_ptr() as *const _);
+        let sel_init_data = sel_registerName(b"initWithData:\0".as_ptr() as *const _);
+        let bmp_alloc = objc_msgSend(bmp_class, sel_alloc);
+        let bmp_rep = objc_msgSend(bmp_alloc, sel_init_data, tiff_data);
+        if bmp_rep.is_null() { return None; }
+
+        // Get pixel dimensions (may differ from logical size on Retina)
+        let sel_pw = sel_registerName(b"pixelsWide\0".as_ptr() as *const _);
+        let sel_ph = sel_registerName(b"pixelsHigh\0".as_ptr() as *const _);
+        let sel_bdata = sel_registerName(b"bitmapData\0".as_ptr() as *const _);
+        let sel_bpr = sel_registerName(b"bytesPerRow\0".as_ptr() as *const _);
+        let sel_spp = sel_registerName(b"samplesPerPixel\0".as_ptr() as *const _);
+
+        extern "C" {
+            #[link_name = "objc_msgSend"]
+            fn objc_msgSend_isize(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void) -> isize;
+        }
+
+        let pw = objc_msgSend_isize(bmp_rep, sel_pw) as u32;
+        let ph = objc_msgSend_isize(bmp_rep, sel_ph) as u32;
+        let bpr = objc_msgSend_isize(bmp_rep, sel_bpr) as u32;
+        let spp = objc_msgSend_isize(bmp_rep, sel_spp) as u32;
+        let bdata = objc_msgSend(bmp_rep, sel_bdata) as *const u8;
+        if bdata.is_null() || pw == 0 || ph == 0 { return None; }
+
+        // Copy pixel data to RGBA
+        let mut rgba = vec![0u8; (pw * ph * 4) as usize];
+        for row in 0..ph {
+            for col in 0..pw {
+                let src = (row * bpr + col * spp) as usize;
+                let dst = ((row * pw + col) * 4) as usize;
+                if spp >= 4 {
+                    rgba[dst] = *bdata.add(src);
+                    rgba[dst + 1] = *bdata.add(src + 1);
+                    rgba[dst + 2] = *bdata.add(src + 2);
+                    rgba[dst + 3] = *bdata.add(src + 3);
+                } else if spp >= 3 {
+                    rgba[dst] = *bdata.add(src);
+                    rgba[dst + 1] = *bdata.add(src + 1);
+                    rgba[dst + 2] = *bdata.add(src + 2);
+                    rgba[dst + 3] = 255;
                 }
             }
+        }
+
+        // Scale hotspot from logical to pixel coords
+        let scale_x = pw as f64 / w as f64;
+        let scale_y = ph as f64 / h as f64;
+        let hotx = (hotspot.x * scale_x).round() as u32;
+        let hoty = (hotspot.y * scale_y).round() as u32;
+
+        // Release the bitmap rep
+        let sel_release = sel_registerName(b"release\0".as_ptr() as *const _);
+        objc_msgSend(bmp_rep, sel_release);
+
+        Some((rgba, pw, ph, hotx, hoty))
+    }
+}
+
+/// Get the current system cursor as an RGBA bitmap with its hotspot offset.
+/// Uses XFixesGetCursorImage which returns the cursor pixels directly.
+#[cfg(target_os = "linux")]
+fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
+    #[repr(C)]
+    struct XFixesCursorImage {
+        x: i16,
+        y: i16,
+        width: u16,
+        height: u16,
+        xhot: u16,
+        yhot: u16,
+        cursor_serial: u64,
+        pixels: *const u64, // actually unsigned long (ARGB per pixel)
+        atom: u64,
+        name: *const std::ffi::c_char,
+    }
+    #[link(name = "X11")]
+    extern "C" {
+        fn XOpenDisplay(name: *const std::ffi::c_char) -> *mut std::ffi::c_void;
+        fn XCloseDisplay(display: *mut std::ffi::c_void) -> i32;
+        fn XFree(data: *mut std::ffi::c_void) -> i32;
+    }
+    #[link(name = "Xfixes")]
+    extern "C" {
+        fn XFixesQueryExtension(display: *mut std::ffi::c_void, event_base: *mut i32, error_base: *mut i32) -> i32;
+        fn XFixesGetCursorImage(display: *mut std::ffi::c_void) -> *mut XFixesCursorImage;
+    }
+    unsafe {
+        let display = XOpenDisplay(std::ptr::null());
+        if display.is_null() { return None; }
+
+        let mut event_base = 0i32;
+        let mut error_base = 0i32;
+        if XFixesQueryExtension(display, &mut event_base, &mut error_base) == 0 {
+            XCloseDisplay(display);
+            return None;
+        }
+
+        let img = XFixesGetCursorImage(display);
+        if img.is_null() {
+            XCloseDisplay(display);
+            return None;
+        }
+
+        let w = (*img).width as u32;
+        let h = (*img).height as u32;
+        let hotx = (*img).xhot as u32;
+        let hoty = (*img).yhot as u32;
+
+        // XFixesCursorImage pixels are unsigned long (8 bytes on 64-bit) with ARGB format
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        for i in 0..(w * h) as usize {
+            let pixel = *(*img).pixels.add(i) as u32;
+            let a = ((pixel >> 24) & 0xFF) as u8;
+            let r = ((pixel >> 16) & 0xFF) as u8;
+            let g = ((pixel >> 8) & 0xFF) as u8;
+            let b = (pixel & 0xFF) as u8;
+            let dst = i * 4;
+            rgba[dst] = r;
+            rgba[dst + 1] = g;
+            rgba[dst + 2] = b;
+            rgba[dst + 3] = a;
+        }
+
+        XFree(img as *mut _);
+        XCloseDisplay(display);
+
+        Some((rgba, w, h, hotx, hoty))
+    }
+}
+
+/// Composite an RGBA cursor bitmap onto the screenshot image with alpha blending.
+fn blit_cursor(image: &mut image::RgbaImage, pixels: &[u8], cw: u32, ch: u32, cx: u32, cy: u32, hotx: u32, hoty: u32) {
+    let (iw, ih) = (image.width(), image.height());
+    let ox = cx.saturating_sub(hotx);
+    let oy = cy.saturating_sub(hoty);
+    for row in 0..ch {
+        for col in 0..cw {
+            let idx = ((row * cw + col) * 4) as usize;
+            let a = pixels[idx + 3];
+            if a == 0 { continue; }
+            let px = ox + col;
+            let py = oy + row;
+            if px >= iw || py >= ih { continue; }
+            let r = pixels[idx];
+            let g = pixels[idx + 1];
+            let b = pixels[idx + 2];
+            if a == 255 {
+                image.put_pixel(px, py, image::Rgba([r, g, b, 255]));
+            } else {
+                let dst = image.get_pixel(px, py);
+                let af = a as f32 / 255.0;
+                let inv = 1.0 - af;
+                image.put_pixel(px, py, image::Rgba([
+                    (r as f32 * af + dst[0] as f32 * inv) as u8,
+                    (g as f32 * af + dst[1] as f32 * inv) as u8,
+                    (b as f32 * af + dst[2] as f32 * inv) as u8,
+                    255,
+                ]));
+            }
+        }
+    }
+}
+
+/// Draw the system cursor onto the captured image at the given pixel position.
+/// Uses the real cursor bitmap from the OS on all platforms.
+/// Falls back to a simple arrow if the native API fails.
+fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, _scale: f64) {
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+    {
+        if let Some((pixels, cw, ch, hotx, hoty)) = get_system_cursor_bitmap() {
+            blit_cursor(image, &pixels, cw, ch, cx, cy, hotx, hoty);
             return;
         }
     }
 
-    // Fallback for macOS/Linux or if Windows API fails
+    // Fallback if native API fails
     draw_cursor_fallback(image, cx, cy, _scale);
 }
 
-/// Simple arrow cursor fallback for non-Windows platforms
+/// Simple arrow cursor fallback
 fn draw_cursor_fallback(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f64) {
     let cursor: &[&[u8]] = &[
         &[2,0,0,0,0,0,0,0,0,0,0,0],
