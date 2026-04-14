@@ -1,4 +1,6 @@
 !macro NSIS_HOOK_POSTUNINSTALL
-  ; Remove SafeShot user data folder (config, logs)
-  RMDir /r "$LOCALAPPDATA\SafeShot"
+  ; Only remove user data if the "Delete app data" checkbox was checked
+  ${If} $DeleteAppDataCheckboxState == 1
+    RMDir /r "$LOCALAPPDATA\SafeShot"
+  ${EndIf}
 !macroend
