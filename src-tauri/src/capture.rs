@@ -85,11 +85,134 @@ fn get_cursor_position() -> Option<(i32, i32)> {
     }
 }
 
-/// Draw a simple arrow cursor onto an RGBA image buffer at the given pixel position.
-/// The cursor is scaled to match HiDPI displays.
-fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f64) {
-    // Standard Windows arrow cursor (12x19, matches the real default pointer)
-    // 1 = white fill, 2 = black border, 0 = transparent
+/// Get the current system cursor as an RGBA bitmap with its hotspot offset.
+/// Returns (rgba_pixels, width, height, hotspot_x, hotspot_y) or None.
+#[cfg(target_os = "windows")]
+fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
+    use windows_sys::Win32::UI::WindowsAndMessaging::*;
+    use windows_sys::Win32::Graphics::Gdi::*;
+    unsafe {
+        let mut ci: CURSORINFO = std::mem::zeroed();
+        ci.cbSize = std::mem::size_of::<CURSORINFO>() as u32;
+        if GetCursorInfo(&mut ci) == 0 || ci.hCursor == 0 { return None; }
+
+        let mut ii: ICONINFO = std::mem::zeroed();
+        if GetIconInfo(ci.hCursor, &mut ii) == 0 { return None; }
+
+        let hotx = ii.xHotspot;
+        let hoty = ii.yHotspot;
+
+        // Get bitmap dimensions from the mask (always present)
+        let mut bm: BITMAP = std::mem::zeroed();
+        if GetObjectW(ii.hbmMask as isize, std::mem::size_of::<BITMAP>() as i32, &mut bm as *mut _ as *mut _) == 0 {
+            if ii.hbmMask != 0 { DeleteObject(ii.hbmMask as isize); }
+            if ii.hbmColor != 0 { DeleteObject(ii.hbmColor as isize); }
+            return None;
+        }
+
+        let w = bm.bmWidth as u32;
+        // If no color bitmap, mask is double-height (AND mask + XOR mask)
+        let h = if ii.hbmColor != 0 { bm.bmHeight as u32 } else { bm.bmHeight as u32 / 2 };
+
+        let hdc_screen = GetDC(0);
+        let hdc_mem = CreateCompatibleDC(hdc_screen);
+        let hbmp = CreateCompatibleBitmap(hdc_screen, w as i32, h as i32);
+        let old = SelectObject(hdc_mem, hbmp as isize);
+
+        // Clear to transparent black
+        let brush = CreateSolidBrush(0x00000000);
+        let rc = windows_sys::Win32::Foundation::RECT { left: 0, top: 0, right: w as i32, bottom: h as i32 };
+        FillRect(hdc_mem, &rc, brush);
+        DeleteObject(brush as isize);
+
+        // Draw the cursor icon onto our DC
+        DrawIconEx(hdc_mem, 0, 0, ci.hCursor, w as i32, h as i32, 0, 0, DI_NORMAL);
+
+        // Read pixels back
+        let mut bmi: BITMAPINFO = std::mem::zeroed();
+        bmi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
+        bmi.bmiHeader.biWidth = w as i32;
+        bmi.bmiHeader.biHeight = -(h as i32); // top-down
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        let mut pixels = vec![0u8; (w * h * 4) as usize];
+        GetDIBits(hdc_mem, hbmp, 0, h, pixels.as_mut_ptr() as *mut _, &mut bmi, DIB_RGB_COLORS);
+
+        SelectObject(hdc_mem, old);
+        DeleteObject(hbmp as isize);
+        DeleteDC(hdc_mem);
+        ReleaseDC(0, hdc_screen);
+        if ii.hbmMask != 0 { DeleteObject(ii.hbmMask as isize); }
+        if ii.hbmColor != 0 { DeleteObject(ii.hbmColor as isize); }
+
+        // Windows gives us BGRA, convert to RGBA and fix alpha
+        // DrawIconEx on a 0-alpha surface leaves alpha=0 for cursor pixels on some drivers,
+        // so we set alpha=255 for any pixel that has color data
+        for i in (0..pixels.len()).step_by(4) {
+            let b = pixels[i];
+            let r = pixels[i + 2];
+            pixels[i] = r;       // R
+            pixels[i + 2] = b;   // B
+            // If any color channel is non-zero, pixel is opaque
+            if pixels[i] != 0 || pixels[i + 1] != 0 || pixels[i + 2] != 0 {
+                pixels[i + 3] = 255;
+            }
+        }
+
+        Some((pixels, w, h, hotx, hoty))
+    }
+}
+
+/// Draw the system cursor onto the captured image at the given pixel position.
+/// On Windows, uses the real cursor bitmap from the OS.
+/// On other platforms, draws a simple arrow fallback.
+fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, _scale: f64) {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some((pixels, cw, ch, hotx, hoty)) = get_system_cursor_bitmap() {
+            let (iw, ih) = (image.width(), image.height());
+            let ox = cx.saturating_sub(hotx);
+            let oy = cy.saturating_sub(hoty);
+            for row in 0..ch {
+                for col in 0..cw {
+                    let idx = ((row * cw + col) * 4) as usize;
+                    let a = pixels[idx + 3];
+                    if a == 0 { continue; }
+                    let px = ox + col;
+                    let py = oy + row;
+                    if px < iw && py < ih {
+                        let r = pixels[idx];
+                        let g = pixels[idx + 1];
+                        let b = pixels[idx + 2];
+                        if a == 255 {
+                            image.put_pixel(px, py, image::Rgba([r, g, b, 255]));
+                        } else {
+                            // Alpha blend
+                            let dst = image.get_pixel(px, py);
+                            let af = a as f32 / 255.0;
+                            let inv = 1.0 - af;
+                            image.put_pixel(px, py, image::Rgba([
+                                (r as f32 * af + dst[0] as f32 * inv) as u8,
+                                (g as f32 * af + dst[1] as f32 * inv) as u8,
+                                (b as f32 * af + dst[2] as f32 * inv) as u8,
+                                255,
+                            ]));
+                        }
+                    }
+                }
+            }
+            return;
+        }
+    }
+
+    // Fallback for macOS/Linux or if Windows API fails
+    draw_cursor_fallback(image, cx, cy, _scale);
+}
+
+/// Simple arrow cursor fallback for non-Windows platforms
+fn draw_cursor_fallback(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f64) {
     let cursor: &[&[u8]] = &[
         &[2,0,0,0,0,0,0,0,0,0,0,0],
         &[2,2,0,0,0,0,0,0,0,0,0,0],
@@ -110,8 +233,6 @@ fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f
         &[0,0,0,0,0,0,2,1,1,2,0,0],
         &[0,0,0,0,0,0,0,2,2,0,0,0],
     ];
-    // Scale cursor to match DPI: at 100% scale=1.0 the bitmap is drawn 1:1,
-    // at 150% each cursor pixel maps to 1.5 image pixels, etc.
     let (w, h) = (image.width(), image.height());
     let cursor_h = cursor.len();
     let cursor_w = cursor[0].len();
@@ -119,7 +240,6 @@ fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f
     let scaled_h = (cursor_h as f64 * scale).round() as u32;
     for py_out in 0..scaled_h {
         for px_out in 0..scaled_w {
-            // Map back to source cursor pixel
             let src_row = (py_out as f64 / scale) as usize;
             let src_col = (px_out as f64 / scale) as usize;
             if src_row >= cursor_h || src_col >= cursor_w { continue; }
