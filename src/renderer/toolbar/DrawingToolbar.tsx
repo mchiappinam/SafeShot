@@ -31,7 +31,8 @@ const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   activeTool, onToolSelect, onColorPickerOpen, onSettingsOpen, activeColor, fillMode, position,
 }) => {
-  const handleToolClick = (tool: ToolType) => {
+  const handleToolClick = (tool: ToolType | null) => {
+    if (tool === null) { onToolSelect(null); return; }
     onToolSelect(activeTool === tool ? null : tool);
   };
 
@@ -66,12 +67,12 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
       }}
     >
       {TOOLS.map(({ id, label, tooltip, fontSize }) => (
-        <div key={id} style={{ position: 'relative' }} className="tooltip-wrap">
+        <div key={id ?? '_move'} style={{ position: 'relative' }} className="tooltip-wrap">
           <button onClick={() => handleToolClick(id)}
-            style={{ ...btnStyle(activeTool === id), fontSize: fontSize ?? 16 }}>
+            style={{ ...btnStyle(id === null ? activeTool === null : activeTool === id), fontSize: fontSize ?? 16 }}>
             {label}
           </button>
-          <span className="tooltip-text">{SHAPE_TOOLS.has(id) ? `${tooltip} (${FILL_LABELS[fillMode]} ⚙)` : tooltip}</span>
+          <span className="tooltip-text">{id !== null && SHAPE_TOOLS.has(id) ? `${tooltip} (${FILL_LABELS[fillMode]} ⚙)` : tooltip}</span>
         </div>
       ))}
       <div style={{ position: 'relative' }} className="tooltip-wrap">
