@@ -557,16 +557,24 @@ export class RenderPipeline {
   private drawDimensionLabel(sel: Selection): void {
     const ctx = this.ctx;
     const label = `${Math.round(sel.width)} × ${Math.round(sel.height)}`;
-    const padding = 4, fontSize = 12;
+    const padding = 4, fontSize = 12, gap = 4;
     ctx.save();
     ctx.font = `${fontSize}px sans-serif`;
     const boxWidth = ctx.measureText(label).width + padding * 2;
     const boxHeight = fontSize + padding * 2;
+    // Default: outside, just above the top-left corner
+    let bx = sel.x;
+    let by = sel.y - boxHeight - gap;
+    // If it goes above the screen, put it inside the selection
+    if (by < 0) {
+      bx = sel.x + gap;
+      by = sel.y + gap;
+    }
     ctx.fillStyle = 'rgba(0,0,0,0.65)';
-    ctx.fillRect(sel.x + 4, sel.y + 4, boxWidth, boxHeight);
+    ctx.fillRect(bx, by, boxWidth, boxHeight);
     ctx.fillStyle = 'white';
     ctx.textBaseline = 'top';
-    ctx.fillText(label, sel.x + 4 + padding, sel.y + 4 + padding);
+    ctx.fillText(label, bx + padding, by + padding);
     ctx.restore();
   }
 }
