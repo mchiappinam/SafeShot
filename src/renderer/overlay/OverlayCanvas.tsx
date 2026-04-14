@@ -157,9 +157,10 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   }, [screens]);
 
   // Apply initial selection when it arrives (may load after screens due to async settings)
+  const initialAppliedRef = useRef(false);
   useEffect(() => {
+    if (initialAppliedRef.current) return;
     if (!initialSelection || !selMgrRef.current || !pipelineRef.current) return;
-    // Don't override if user already made a selection
     if (captureStateRef.current !== 'capturing') return;
     const s = initialSelection;
     const maxW = window.innerWidth;
@@ -169,9 +170,10 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       selMgrRef.current.updateSelection({ x: s.x + s.width, y: s.y + s.height });
       selMgrRef.current.finalizeSelection();
       setCaptureState('area-finalized');
+      initialAppliedRef.current = true;
       syncPipeline();
     }
-  }, [initialSelection]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialSelection, screens]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement> | MouseEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
