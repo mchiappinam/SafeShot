@@ -62,7 +62,7 @@ export default function App(): React.ReactElement {
   const [textSize, setTextSize] = useState(16);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [initialSelection, setInitialSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const rememberSelectionRef = useRef(false);
+  const selectionPresetRef = useRef('custom');
 
   useEffect(() => {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
@@ -89,16 +89,29 @@ export default function App(): React.ReactElement {
       if (ts.highlight !== undefined) setTextHighlight(ts.highlight as boolean);
       if (ts.size !== undefined) setTextSize(ts.size as number);
     }).catch(() => {});
-    // Load remember selection setting and last selection
+    // Load selection preset setting
     invoke<Record<string, unknown>>('get_settings').then(s => {
-      const remember = s.rememberSelection as boolean || false;
-      rememberSelectionRef.current = remember;
-      if (remember) {
+      const preset = (s.selectionPreset as string) || 'custom';
+      selectionPresetRef.current = preset;
+      if (preset === 'last') {
         invoke<Record<string, unknown> | null>('get_last_selection').then(sel => {
           if (sel && typeof sel.x === 'number' && typeof sel.width === 'number' && sel.width > 0 && sel.height as number > 0) {
             setInitialSelection({ x: sel.x as number, y: sel.y as number, width: sel.width as number, height: sel.height as number });
           }
         }).catch(() => {});
+      } else if (preset !== 'custom') {
+        // Parse WxH preset and center it on screen
+        const match = preset.match(/^(\d+)x(\d+)$/);
+        if (match) {
+          const pw = parseInt(match[1], 10);
+          const ph = parseInt(match[2], 10);
+          const sw = window.innerWidth;
+          const sh = window.innerHeight;
+          // Only apply if it fits on screen
+          if (pw <= sw && ph <= sh) {
+            setInitialSelection({ x: Math.round((sw - pw) / 2), y: Math.round((sh - ph) / 2), width: pw, height: ph });
+          }
+        }
       }
     }).catch(() => {});
   }, []);
@@ -135,7 +148,8 @@ export default function App(): React.ReactElement {
   const handleAnnotationsChange = useCallback((undo: boolean, redo: boolean) => { setCanUndo(undo); setCanRedo(redo); }, []);
   const handleSelectionChange = useCallback((sel: { x: number; y: number; width: number; height: number } | null) => {
     setSelection(sel);
-    if (sel && rememberSelectionRef.current) {
+    // Always save last selection so "last used" preset has data
+    if (sel) {
       invoke('set_last_selection', { x: sel.x, y: sel.y, width: sel.width, height: sel.height }).catch(() => {});
     }
   }, []);

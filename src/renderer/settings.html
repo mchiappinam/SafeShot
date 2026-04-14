@@ -117,10 +117,15 @@
         </label>
       </div>
       <div class="field">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="rememberSelection" style="accent-color: #2AE3FF; width: 16px; height: 16px;" />
-          <span class="field-label" style="margin: 0;">Remember last selection position and size</span>
-        </label>
+        <div class="field-label">Default selection</div>
+        <select id="selectionPreset" class="field-input" style="cursor: pointer; appearance: auto;">
+          <option value="custom">Custom (draw your own)</option>
+          <option value="last">Last used</option>
+          <option value="1920x1080">1920 x 1080</option>
+          <option value="1280x720">1280 x 720</option>
+          <option value="800x600">800 x 600</option>
+        </select>
+        <div class="hint">Pre-select an area when capture starts</div>
       </div>
     </div>
   </div>
@@ -170,7 +175,7 @@
     document.getElementById('lastSaveDir').value = s.lastSaveDir || '';
     document.getElementById('hotkey').value = displayHotkey(originalHotkey);
     document.getElementById('captureCursor').checked = s.captureCursor || false;
-    document.getElementById('rememberSelection').checked = s.rememberSelection || false;
+    document.getElementById('selectionPreset').value = s.selectionPreset || 'custom';
   });
 
   document.getElementById('browseQuickSave').addEventListener('click', function() {
@@ -246,7 +251,7 @@
     if (settings.quickSaveDir) invoke('set_setting', { key: 'quickSaveDir', value: settings.quickSaveDir });
     if (settings.lastSaveDir) invoke('set_setting', { key: 'lastSaveDir', value: settings.lastSaveDir });
     invoke('set_setting', { key: 'captureCursor', value: document.getElementById('captureCursor').checked ? 'true' : 'false' });
-    invoke('set_setting', { key: 'rememberSelection', value: document.getElementById('rememberSelection').checked ? 'true' : 'false' });
+    invoke('set_setting', { key: 'selectionPreset', value: document.getElementById('selectionPreset').value });
     if (settings.hotkey) {
       invoke('set_setting', { key: 'hotkey', value: settings.hotkey });
       invoke('register_hotkey', { hotkey: settings.hotkey }).then(function() {
