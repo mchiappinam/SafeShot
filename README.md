@@ -83,6 +83,7 @@ Once you've selected an area, a toolbar appears with drawing tools:
 
 | Tool | Description |
 |------|-------------|
+| ✥ Move Selection | Move or resize the selected area |
 | ✋ Move Objects | Move annotations around |
 | 💧 Pick Color | Sample a color from the screen |
 | 🖊 Sharpie | Freehand drawing |
@@ -94,9 +95,8 @@ Once you've selected an area, a toolbar appears with drawing tools:
 | △ Triangle | Triangle shape |
 | ⬡ Octagon | Regular octagon |
 | T Text | Click to type text |
-| ◻/◼/▦/▬ Fill Mode | Cycle: hollow, solid, blur, redact |
 | 🎨 Color | Pick a color |
-| ⚪ Thickness | Adjust stroke width |
+| ⚙ Settings | Thickness, fill mode, selection presets |
 
 ### Save and Copy
 - **Ctrl+C** / **⌘C** copies the screenshot to your clipboard
@@ -110,13 +110,15 @@ Right-click the SafeShot icon in your system tray for:
 - Capture Screenshot
 - Open Save Folder
 - Start on Boot (toggle)
+- How to Use
+- Settings
 - About
 - Quit
 
 ## Features
 
 - Instant screen capture with area selection
-- 11 annotation tools with color picker and thickness control
+- 12 annotation tools with color picker and thickness control
 - Solid, hollow, blur, or redact shapes
 - Blur pixelates content underneath a shape
 - Redact auto-detects text lines and covers them with bars
@@ -125,6 +127,10 @@ Right-click the SafeShot icon in your system tray for:
 - Auto-start on boot
 - Saves to your Pictures/SafeShot folder
 - Remembers your last color, thickness, tool, and fill mode
+- Selection presets: custom, last used, full screen, or fixed sizes
+- Optional cursor capture in screenshots
+- Configurable hotkey
+- Custom save folders for quick save and Save As
 - Tiny installer (~4 MB)
 - Zero network access, fully offline
 
