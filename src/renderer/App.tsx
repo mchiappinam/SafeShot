@@ -61,6 +61,8 @@ export default function App(): React.ReactElement {
   const [textHighlight, setTextHighlight] = useState(false);
   const [textSize, setTextSize] = useState(16);
   const [selection, setSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [initialSelection, setInitialSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const rememberSelectionRef = useRef(false);
 
   useEffect(() => {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
@@ -86,6 +88,18 @@ export default function App(): React.ReactElement {
       if (ts.underline !== undefined) setTextUnderline(ts.underline as boolean);
       if (ts.highlight !== undefined) setTextHighlight(ts.highlight as boolean);
       if (ts.size !== undefined) setTextSize(ts.size as number);
+    }).catch(() => {});
+    // Load remember selection setting and last selection
+    invoke<Record<string, unknown>>('get_settings').then(s => {
+      const remember = s.rememberSelection as boolean || false;
+      rememberSelectionRef.current = remember;
+      if (remember) {
+        invoke<Record<string, unknown> | null>('get_last_selection').then(sel => {
+          if (sel && typeof sel.x === 'number' && typeof sel.width === 'number' && sel.width > 0 && sel.height as number > 0) {
+            setInitialSelection({ x: sel.x as number, y: sel.y as number, width: sel.width as number, height: sel.height as number });
+          }
+        }).catch(() => {});
+      }
     }).catch(() => {});
   }, []);
 
@@ -119,7 +133,12 @@ export default function App(): React.ReactElement {
   }, [textBold, textItalic, textUnderline, textHighlight, textSize]);
 
   const handleAnnotationsChange = useCallback((undo: boolean, redo: boolean) => { setCanUndo(undo); setCanRedo(redo); }, []);
-  const handleSelectionChange = useCallback((sel: { x: number; y: number; width: number; height: number } | null) => setSelection(sel), []);
+  const handleSelectionChange = useCallback((sel: { x: number; y: number; width: number; height: number } | null) => {
+    setSelection(sel);
+    if (sel && rememberSelectionRef.current) {
+      invoke('set_last_selection', { x: sel.x, y: sel.y, width: sel.width, height: sel.height }).catch(() => {});
+    }
+  }, []);
 
   // Use window dimensions as bounds for toolbar clamping
   const bounds: Rectangle = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
@@ -137,6 +156,7 @@ export default function App(): React.ReactElement {
         fillMode={fillMode}
         textBold={textBold} textItalic={textItalic} textUnderline={textUnderline}
         textHighlight={textHighlight} textSize={textSize}
+        initialSelection={initialSelection}
         onStateChange={handleStateChange}
         onAnnotationsChange={handleAnnotationsChange}
         onSelectionChange={handleSelectionChange}
@@ -152,6 +172,7 @@ export default function App(): React.ReactElement {
             onColorPickerOpen={() => { setColorPickerOpen(v => !v); setSettingsOpen(false); }}
             onSettingsOpen={() => { setSettingsOpen(v => !v); setColorPickerOpen(false); }}
             activeColor={activeColor}
+            fillMode={fillMode}
             position={{ x: toolbarPositions.drawing.x, y: toolbarPositions.drawing.y }} />
         </div>
       )}

@@ -18,6 +18,7 @@ export interface OverlayCanvasProps {
   textUnderline: boolean;
   textHighlight: boolean;
   textSize: number;
+  initialSelection?: { x: number; y: number; width: number; height: number } | null;
   onStateChange: (state: CaptureState) => void;
   onAnnotationsChange: (canUndo: boolean, canRedo: boolean) => void;
   onSelectionChange: (sel: { x: number; y: number; width: number; height: number } | null) => void;
@@ -34,7 +35,7 @@ export interface OverlayCanvasHandle {
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
-  screens, activeTool, activeColor, strokeWidth, fillMode, textBold, textItalic, textUnderline, textHighlight, textSize, onStateChange, onAnnotationsChange, onSelectionChange,
+  screens, activeTool, activeColor, strokeWidth, fillMode, textBold, textItalic, textUnderline, textHighlight, textSize, initialSelection, onStateChange, onAnnotationsChange, onSelectionChange,
   onClose, onSave, onCopy, onColorPick,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -145,6 +146,20 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     }
     selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
     pipelineRef.current.setScreens(screens).then(() => {
+      // Apply saved selection if provided
+      if (initialSelection && selMgrRef.current) {
+        const s = initialSelection;
+        // Clamp to current screen bounds
+        const maxW = window.innerWidth;
+        const maxH = window.innerHeight;
+        if (s.x >= 0 && s.y >= 0 && s.x + s.width <= maxW && s.y + s.height <= maxH && s.width > 5 && s.height > 5) {
+          selMgrRef.current.startSelection({ x: s.x, y: s.y });
+          selMgrRef.current.updateSelection({ x: s.x + s.width, y: s.y + s.height });
+          selMgrRef.current.finalizeSelection();
+          setCaptureState('area-finalized');
+          syncPipeline();
+        }
+      }
       pipelineRef.current?.requestRender();
       // Wait for the actual paint before showing the window
       requestAnimationFrame(() => {

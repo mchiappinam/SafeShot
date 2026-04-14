@@ -132,6 +132,8 @@ fn main() {
             save::set_text_settings,
             save::get_settings,
             save::set_setting,
+            save::get_last_selection,
+            save::set_last_selection,
             save::pick_folder,
             close_overlay,
             close_welcome,

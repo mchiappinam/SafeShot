@@ -233,12 +233,13 @@ pub fn get_settings() -> serde_json::Value {
         "lastSaveDir": json.get("lastSaveDir").and_then(|v| v.as_str()).unwrap_or(&default_dir),
         "hotkey": json.get("hotkey").and_then(|v| v.as_str()).unwrap_or(default_hotkey),
         "captureCursor": json.get("captureCursor").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))).unwrap_or(false),
+        "rememberSelection": json.get("rememberSelection").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))).unwrap_or(false),
     })
 }
 
 #[tauri::command]
 pub fn set_setting(key: String, value: String) {
-    let allowed = ["quickSaveDir", "lastSaveDir", "hotkey", "captureCursor"];
+    let allowed = ["quickSaveDir", "lastSaveDir", "hotkey", "captureCursor", "rememberSelection"];
     if !allowed.contains(&key.as_str()) { return; }
     let path = config_path();
     let mut json = if let Ok(data) = fs::read_to_string(&path) {
@@ -247,6 +248,31 @@ pub fn set_setting(key: String, value: String) {
         serde_json::json!({})
     };
     json[&key] = serde_json::json!(value);
+    fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
+}
+
+#[tauri::command]
+pub fn get_last_selection() -> serde_json::Value {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(sel) = json.get("lastSelection") {
+                return sel.clone();
+            }
+        }
+    }
+    serde_json::json!(null)
+}
+
+#[tauri::command]
+pub fn set_last_selection(x: f64, y: f64, width: f64, height: f64) {
+    let path = config_path();
+    let mut json = if let Ok(data) = fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["lastSelection"] = serde_json::json!({ "x": x, "y": y, "width": width, "height": height });
     fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
 }
 

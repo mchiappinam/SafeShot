@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ToolType } from '../../shared/types';
+import type { FillMode, ToolType } from '../../shared/types';
 
 interface DrawingToolbarProps {
   activeTool: ToolType | null;
@@ -7,8 +7,12 @@ interface DrawingToolbarProps {
   onColorPickerOpen: () => void;
   onSettingsOpen: () => void;
   activeColor: string;
+  fillMode: FillMode;
   position: { x: number; y: number };
 }
+
+const SHAPE_TOOLS = new Set<ToolType>(['square', 'circle', 'triangle', 'octagon']);
+const FILL_LABELS: Record<FillMode, string> = { hollow: 'Hollow', solid: 'Solid', blur: 'Blur', redact: 'Redact' };
 
 const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }[] = [
   { id: 'hand',      label: '✋', tooltip: 'Move Objects' },
@@ -25,7 +29,7 @@ const TOOLS: { id: ToolType; label: string; tooltip: string; fontSize?: number }
 ];
 
 export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
-  activeTool, onToolSelect, onColorPickerOpen, onSettingsOpen, activeColor, position,
+  activeTool, onToolSelect, onColorPickerOpen, onSettingsOpen, activeColor, fillMode, position,
 }) => {
   const handleToolClick = (tool: ToolType) => {
     onToolSelect(activeTool === tool ? null : tool);
@@ -67,7 +71,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             style={{ ...btnStyle(activeTool === id), fontSize: fontSize ?? 16 }}>
             {label}
           </button>
-          <span className="tooltip-text">{tooltip}</span>
+          <span className="tooltip-text">{SHAPE_TOOLS.has(id) ? `${tooltip} (${FILL_LABELS[fillMode]})` : tooltip}</span>
         </div>
       ))}
       <div style={{ position: 'relative' }} className="tooltip-wrap">
