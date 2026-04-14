@@ -269,17 +269,44 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
             }
         }
 
-        // Scale hotspot from logical to pixel coords
-        let scale_x = pw as f64 / w as f64;
-        let scale_y = ph as f64 / h as f64;
-        let hotx = (hotspot.x * scale_x).round() as u32;
-        let hoty = (hotspot.y * scale_y).round() as u32;
+        // The cursor bitmap is at pixel resolution (e.g. 2x on Retina) but we need
+        // it at logical resolution since cursor position is in logical coords scaled
+        // to the capture image. Downsample if pixel dims differ from logical dims.
+        let (out_w, out_h, out_rgba, out_hotx, out_hoty);
+        if pw != w || ph != h {
+            out_w = w;
+            out_h = h;
+            out_hotx = hotspot.x.round() as u32;
+            out_hoty = hotspot.y.round() as u32;
+            let sx = pw as f64 / w as f64;
+            let sy = ph as f64 / h as f64;
+            let mut downscaled = vec![0u8; (w * h * 4) as usize];
+            for row in 0..h {
+                for col in 0..w {
+                    let src_col = (col as f64 * sx) as u32;
+                    let src_row = (row as f64 * sy) as u32;
+                    let si = ((src_row * pw + src_col) * 4) as usize;
+                    let di = ((row * w + col) * 4) as usize;
+                    downscaled[di] = rgba[si];
+                    downscaled[di + 1] = rgba[si + 1];
+                    downscaled[di + 2] = rgba[si + 2];
+                    downscaled[di + 3] = rgba[si + 3];
+                }
+            }
+            out_rgba = downscaled;
+        } else {
+            out_w = pw;
+            out_h = ph;
+            out_hotx = hotspot.x.round() as u32;
+            out_hoty = hotspot.y.round() as u32;
+            out_rgba = rgba;
+        }
 
         // Release the bitmap rep
         let sel_release = sel_registerName(b"release\0".as_ptr() as *const _);
         objc_msgSend(bmp_rep, sel_release);
 
-        Some((rgba, pw, ph, hotx, hoty))
+        Some((out_rgba, out_w, out_h, out_hotx, out_hoty))
     }
 }
 
