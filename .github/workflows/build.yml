@@ -154,6 +154,7 @@ jobs:
         with:
           files: release/*
           generate_release_notes: true
+          token: ${{ secrets.RELEASE_TOKEN }}
 
   update-winget:
     name: Update winget
