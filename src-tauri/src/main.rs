@@ -524,7 +524,9 @@ fn start_capture(app: &AppHandle) {
         .skip_taskbar(true)
         .focused(true)
         .transparent(true)
-        .visible(false)
+        // On macOS, WebKit defers JS execution for hidden windows, so start visible.
+        // The window is transparent so nothing shows until the frontend renders.
+        .visible(cfg!(target_os = "macos"))
         .build()
     {
         Ok(w) => {
