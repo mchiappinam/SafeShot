@@ -260,7 +260,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       else { selMgr?.discardSelection(); setTextInput(null); notifyAnnotations(); selMgr?.startSelection({ x, y }); setCaptureState('selecting'); }
     }
     syncPipeline();
-  }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations, onClose, textInput]);
+  }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations, onClose, onColorPick, textInput]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = getCoords(e);
