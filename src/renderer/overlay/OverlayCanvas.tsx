@@ -162,11 +162,19 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       pipelineRef.current?.requestRender();
     }).catch(console.error);
     // Show overlay once screens are handed off, don't wait for bitmap decoding
-    requestAnimationFrame(() => {
+    // Retry a few times in case the IPC bridge isn't ready on macOS
+    let shown = false;
+    const tryShow = () => {
+      if (shown) return;
       if (window.__TAURI__) {
-        window.__TAURI__.core.invoke('show_overlay').catch(() => {});
+        window.__TAURI__.core.invoke('show_overlay').then(() => { shown = true; }).catch(() => {
+          setTimeout(tryShow, 100);
+        });
+      } else {
+        setTimeout(tryShow, 100);
       }
-    });
+    };
+    requestAnimationFrame(tryShow);
   }, [screens]);
 
   // Apply initial selection when it arrives (may load after screens due to async settings)
