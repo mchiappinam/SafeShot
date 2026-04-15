@@ -168,8 +168,9 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
 
 /// Get the current system cursor as an RGBA bitmap with its hotspot offset.
 /// Returns (rgba_pixels, width, height, hotspot_x, hotspot_y) or None.
+/// `capture_scale` is the ratio of capture image pixels to logical screen pixels.
 #[cfg(target_os = "macos")]
-fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
+fn get_system_cursor_bitmap(capture_scale: f64) -> Option<(Vec<u8>, u32, u32, u32, u32)> {
     // NSCursor/NSBitmapImageRep live in AppKit, objc runtime functions in libobjc
     #[link(name = "AppKit", kind = "framework")]
     extern "C" {}
@@ -269,19 +270,35 @@ fn get_system_cursor_bitmap() -> Option<(Vec<u8>, u32, u32, u32, u32)> {
             }
         }
 
-        // The cursor bitmap from NSBitmapImageRep is at pixel resolution (e.g. 2x on
-        // Retina). The cursor position cx/cy is also in pixel coords (logical * scale),
-        // so we return the full pixel-resolution bitmap to match.
-        let scale_x = pw as f64 / w as f64;
-        let scale_y = ph as f64 / h as f64;
-        let hotx = (hotspot.x * scale_x).round() as u32;
-        let hoty = (hotspot.y * scale_y).round() as u32;
+        // NSImage.size gives logical dimensions (points). The cursor position cx/cy
+        // is logical_offset * capture_scale, so the cursor bitmap needs to be
+        // logical_size * capture_scale to match. Resample from pixel res to target size.
+        let target_w = (w as f64 * capture_scale).round() as u32;
+        let target_h = (h as f64 * capture_scale).round() as u32;
+        let hotx = (hotspot.x * capture_scale).round() as u32;
+        let hoty = (hotspot.y * capture_scale).round() as u32;
+
+        let mut out = vec![0u8; (target_w * target_h * 4) as usize];
+        let sx = pw as f64 / target_w as f64;
+        let sy = ph as f64 / target_h as f64;
+        for row in 0..target_h {
+            for col in 0..target_w {
+                let src_col = ((col as f64 * sx) as u32).min(pw - 1);
+                let src_row = ((row as f64 * sy) as u32).min(ph - 1);
+                let si = ((src_row * pw + src_col) * 4) as usize;
+                let di = ((row * target_w + col) * 4) as usize;
+                out[di] = rgba[si];
+                out[di + 1] = rgba[si + 1];
+                out[di + 2] = rgba[si + 2];
+                out[di + 3] = rgba[si + 3];
+            }
+        }
 
         // Release the bitmap rep
         let sel_release = sel_registerName(b"release\0".as_ptr() as *const _);
         objc_msgSend(bmp_rep, sel_release);
 
-        Some((rgba, pw, ph, hotx, hoty))
+        Some((out, target_w, target_h, hotx, hoty))
     }
 }
 
@@ -393,8 +410,22 @@ fn blit_cursor(image: &mut image::RgbaImage, pixels: &[u8], cw: u32, ch: u32, cx
 /// Draw the system cursor onto the captured image at the given pixel position.
 /// Uses the real cursor bitmap from the OS on all platforms.
 /// Falls back to a simple arrow if the native API fails.
-fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, _scale: f64) {
-    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, scale: f64) {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some((pixels, cw, ch, hotx, hoty)) = get_system_cursor_bitmap() {
+            blit_cursor(image, &pixels, cw, ch, cx, cy, hotx, hoty);
+            return;
+        }
+    }
+    #[cfg(target_os = "macos")]
+    {
+        if let Some((pixels, cw, ch, hotx, hoty)) = get_system_cursor_bitmap(scale) {
+            blit_cursor(image, &pixels, cw, ch, cx, cy, hotx, hoty);
+            return;
+        }
+    }
+    #[cfg(target_os = "linux")]
     {
         if let Some((pixels, cw, ch, hotx, hoty)) = get_system_cursor_bitmap() {
             blit_cursor(image, &pixels, cw, ch, cx, cy, hotx, hoty);
@@ -403,7 +434,7 @@ fn draw_cursor_on_image(image: &mut image::RgbaImage, cx: u32, cy: u32, _scale: 
     }
 
     // Fallback if native API fails
-    draw_cursor_fallback(image, cx, cy, _scale);
+    draw_cursor_fallback(image, cx, cy, scale);
 }
 
 /// Simple arrow cursor fallback
