@@ -160,13 +160,13 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     selMgrRef.current = new SelectionManager({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
     pipelineRef.current.setScreens(screens).then(() => {
       pipelineRef.current?.requestRender();
-      // Wait for the actual paint before showing the window
-      requestAnimationFrame(() => {
-        if (window.__TAURI__) {
-          window.__TAURI__.core.invoke('show_overlay').catch(() => {});
-        }
-      });
     }).catch(console.error);
+    // Show overlay once screens are handed off, don't wait for bitmap decoding
+    requestAnimationFrame(() => {
+      if (window.__TAURI__) {
+        window.__TAURI__.core.invoke('show_overlay').catch(() => {});
+      }
+    });
   }, [screens]);
 
   // Apply initial selection when it arrives (may load after screens due to async settings)
