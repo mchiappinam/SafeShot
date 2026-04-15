@@ -166,8 +166,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          # Sync the forked winget-pkgs repo with upstream before submitting
-          gh repo sync mchiappinam/winget-pkgs --force
+          $headers = @{ Authorization = "token $env:GH_TOKEN"; Accept = "application/vnd.github+json" }
+          Invoke-RestMethod -Uri "https://api.github.com/repos/mchiappinam/winget-pkgs/merge-upstream" -Method Post -Headers $headers -Body '{"branch":"master"}' -ContentType "application/json" -ErrorAction SilentlyContinue
       - name: Submit to winget
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
