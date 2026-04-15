@@ -161,13 +161,6 @@ jobs:
     if: "needs.release.result == 'success'"
     runs-on: windows-latest
     steps:
-      - name: Sync winget-pkgs fork
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          $headers = @{ Authorization = "token $env:GH_TOKEN"; Accept = "application/vnd.github+json" }
-          Invoke-RestMethod -Uri "https://api.github.com/repos/mchiappinam/winget-pkgs/merge-upstream" -Method Post -Headers $headers -Body '{"branch":"master"}' -ContentType "application/json" -ErrorAction SilentlyContinue
       - name: Submit to winget
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
