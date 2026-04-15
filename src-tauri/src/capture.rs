@@ -201,6 +201,7 @@ fn get_system_cursor_bitmap(capture_scale: f64) -> Option<(Vec<u8>, u32, u32, u3
 
         // NSPoint hotSpot = [cursor hotSpot]
         // hotSpot is a small struct returned in registers on arm64/x86_64
+        #[allow(clashing_extern_declarations)]
         extern "C" {
             #[link_name = "objc_msgSend"]
             fn objc_msgSend_point(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void) -> NSPoint;
@@ -238,6 +239,7 @@ fn get_system_cursor_bitmap(capture_scale: f64) -> Option<(Vec<u8>, u32, u32, u3
         let sel_bpr = sel_registerName(b"bytesPerRow\0".as_ptr() as *const _);
         let sel_spp = sel_registerName(b"samplesPerPixel\0".as_ptr() as *const _);
 
+        #[allow(clashing_extern_declarations)]
         extern "C" {
             #[link_name = "objc_msgSend"]
             fn objc_msgSend_isize(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void) -> isize;
