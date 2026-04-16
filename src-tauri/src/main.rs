@@ -217,7 +217,11 @@ fn main() {
             log("Tray menu built");
 
             let _tray = TrayIconBuilder::new()
-                .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png")).unwrap())
+                .icon(tauri::image::Image::from_bytes(if cfg!(target_os = "macos") {
+                    include_bytes!("../icons/tray-icon.png")
+                } else {
+                    include_bytes!("../icons/tray-icon-dark.png")
+                }).unwrap())
                 .icon_as_template(true)
                 .tooltip("SafeShot")
                 .menu(&menu)
