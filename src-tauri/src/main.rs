@@ -216,32 +216,12 @@ fn main() {
             )?;
             log("Tray menu built");
 
-            // On macOS, icon_as_template auto-inverts for light/dark.
-            // On Windows, check the system theme to pick the right icon.
-            // On Linux, default to dark (most panels are light or have enough contrast).
-            #[cfg(target_os = "windows")]
-            let tray_icon_bytes: &[u8] = {
-                // Read AppsUseLightTheme: 0 = dark mode, 1 = light mode
-                let is_light = std::process::Command::new("reg")
-                    .args(["query", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "/v", "SystemUsesLightTheme"])
-                    .output()
-                    .ok()
-                    .and_then(|o| String::from_utf8(o.stdout).ok())
-                    .map(|s| s.contains("0x1"))
-                    .unwrap_or(false);
-                if is_light {
-                    include_bytes!("../icons/tray-icon-dark.png")
-                } else {
-                    include_bytes!("../icons/tray-icon.png")
-                }
-            };
-            #[cfg(target_os = "macos")]
-            let tray_icon_bytes: &[u8] = include_bytes!("../icons/tray-icon.png");
-            #[cfg(target_os = "linux")]
-            let tray_icon_bytes: &[u8] = include_bytes!("../icons/tray-icon-dark.png");
-
             let _tray = TrayIconBuilder::new()
-                .icon(tauri::image::Image::from_bytes(tray_icon_bytes).unwrap())
+                .icon(tauri::image::Image::from_bytes(if cfg!(target_os = "macos") {
+                    include_bytes!("../icons/tray-icon.png")
+                } else {
+                    include_bytes!("../icons/tray-icon-blue.png")
+                }).unwrap())
                 .icon_as_template(true)
                 .tooltip("SafeShot")
                 .menu(&menu)
