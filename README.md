@@ -48,7 +48,7 @@ All downloads available on the [releases page](https://github.com/mchiappinam/Sa
 ### Windows (winget)
 
 ```
-winget install SafeShot
+winget install safeshot
 ```
 
 ### macOS (Homebrew)
@@ -71,6 +71,9 @@ SafeShot starts automatically when your computer boots. You can toggle this from
 ### Capture a Screenshot
 - Press **Print Screen** (Windows/Linux) or **⌘⇧S** (macOS), or
 - Click the **SafeShot icon** in your system tray
+- On macOS, click the SafeShot icon in the Dock or Launchpad
+
+The capture hotkey can be changed in Settings.
 
 ### Select an Area
 - Click and drag to select the area you want to capture
@@ -114,6 +117,13 @@ Right-click the SafeShot icon in your system tray for:
 - Settings
 - About
 - Quit
+
+### Settings
+Open from the tray menu to configure:
+- **Quick save folder** - Where Ctrl+S / ⌘S saves screenshots (default: Pictures/SafeShot)
+- **Save As folder** - Starting folder for the Ctrl+B / ⌘B dialog
+- **Capture hotkey** - Change the screenshot shortcut to any key combination
+- **Cursor capture** - Include the mouse cursor in screenshots
 
 ## Features
 
