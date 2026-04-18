@@ -168,6 +168,7 @@ fn main() {
                         serde_json::json!({})
                     };
                     json["welcomed"] = serde_json::json!(true);
+                    json["autostart"] = serde_json::json!(true);
                     std::fs::write(
                         &path,
                         serde_json::to_string_pretty(&json).unwrap_or_default(),
@@ -180,6 +181,22 @@ fn main() {
                     log("First run: autostart enabled");
                     true
                 } else {
+                    // Restore autostart if config says it should be on but the
+                    // registry entry was lost (e.g. after upgrade/reinstall)
+                    let config_autostart = if let Ok(data) = std::fs::read_to_string(&path) {
+                        serde_json::from_str::<serde_json::Value>(&data)
+                            .ok()
+                            .and_then(|j| j.get("autostart").and_then(|v| v.as_bool()))
+                            .unwrap_or(false)
+                    } else {
+                        false
+                    };
+                    let autostart = app.autolaunch();
+                    let system_enabled = autostart.is_enabled().unwrap_or(false);
+                    if config_autostart && !system_enabled {
+                        autostart.enable().ok();
+                        log("Autostart restored after reinstall");
+                    }
                     false
                 }
             };
@@ -467,6 +484,16 @@ fn toggle_autostart(app: &AppHandle) {
         autostart.enable().ok();
         log("Autostart enabled");
     }
+    // Persist the new state so it survives reinstalls
+    let new_state = !enabled;
+    let path = save::config_path();
+    let mut json = if let Ok(data) = std::fs::read_to_string(&path) {
+        serde_json::from_str::<serde_json::Value>(&data).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    json["autostart"] = serde_json::json!(new_state);
+    std::fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
 }
 
 fn start_capture(app: &AppHandle) {
