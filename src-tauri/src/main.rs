@@ -98,8 +98,10 @@ fn parse_hotkey(s: &str) -> Option<Shortcut> {
 /// Check if Windows is using a light taskbar theme.
 #[cfg(target_os = "windows")]
 fn is_windows_light_theme() -> bool {
+    use std::os::windows::process::CommandExt;
     std::process::Command::new("reg")
         .args(["query", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "/v", "SystemUsesLightTheme"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .ok()
         .and_then(|o| String::from_utf8(o.stdout).ok())
@@ -333,10 +335,11 @@ fn main() {
             // On Windows 11, disable the built-in Snipping Tool PrtScn override
             #[cfg(target_os = "windows")]
             {
-                use std::process::Command;
+                use std::os::windows::process::CommandExt;
                 // Set registry key to disable Windows Snipping Tool PrtScn capture
-                Command::new("reg")
+                std::process::Command::new("reg")
                     .args(["add", r"HKCU\Control Panel\Keyboard", "/v", "PrintScreenKeyForSnippingEnabled", "/t", "REG_DWORD", "/d", "0", "/f"])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
                     .output()
                     .ok();
                 log("Windows PrtScn Snipping Tool override disabled");
@@ -530,7 +533,10 @@ fn open_url(url: String) {
         && url != "https://github.com/mchiappinam/SafeShot/blob/main/LICENSE"
     { return; }
     #[cfg(target_os = "windows")]
-    { std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().ok(); }
+    {
+        use std::os::windows::process::CommandExt;
+        std::process::Command::new("cmd").args(["/c", "start", &url]).creation_flags(0x08000000).spawn().ok();
+    }
     #[cfg(target_os = "macos")]
     { std::process::Command::new("open").arg(&url).spawn().ok(); }
     #[cfg(target_os = "linux")]
