@@ -33,13 +33,33 @@ fn should_notify() -> bool {
     true
 }
 
-fn send_notification(app: &tauri::AppHandle, body: &str) {
+fn send_notification(app: &tauri::AppHandle, title: &str, body: &str) {
     if !should_notify() { return; }
     app.notification()
         .builder()
-        .title("SafeShot")
+        .id(1)
+        .title(title)
         .body(body)
         .auto_cancel()
+        .show()
+        .ok();
+    // Auto-dismiss after 3 seconds by replacing with a silent empty notification
+    let handle = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(3));
+        dismiss_notification(&handle);
+    });
+}
+
+pub fn dismiss_notification(app: &tauri::AppHandle) {
+    // Skip on Linux — empty replacement notification may flash as a visible bubble
+    if cfg!(target_os = "linux") { return; }
+    app.notification()
+        .builder()
+        .id(1)
+        .title("")
+        .body("")
+        .silent()
         .show()
         .ok();
 }
@@ -399,7 +419,17 @@ pub fn save_screenshot(
 
     match fs::write(&path, &png_bytes) {
         Ok(_) => {
-            send_notification(&app_handle, &format!("Screenshot saved to {}", dir));
+            let short_dir = std::path::Path::new(&dir)
+                .components()
+                .rev()
+                .take(2)
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect::<PathBuf>()
+                .to_string_lossy()
+                .to_string();
+            send_notification(&app_handle, "Screenshot saved ✓", &format!("Saved to {}", short_dir));
             SaveResult {
                 success: true,
                 file_path: Some(path.to_string_lossy().to_string()),
@@ -429,7 +459,12 @@ pub fn copy_to_clipboard(image_data_url: String, app_handle: tauri::AppHandle) -
         bytes: std::borrow::Cow::Borrowed(rgba.as_raw()),
     };
     clipboard.set_image(img_data).map_err(|e| e.to_string())?;
-    send_notification(&app_handle, "Screenshot copied to clipboard");
+    let paste_hint = if cfg!(target_os = "macos") {
+        "Paste it anywhere with ⌘V."
+    } else {
+        "Paste it anywhere with Ctrl+V."
+    };
+    send_notification(&app_handle, "Screenshot copied ✓", paste_hint);
 
     Ok(())
 }

@@ -573,6 +573,7 @@ fn start_capture(app: &AppHandle) {
     if app.get_webview_window("overlay").is_some() {
         return;
     }
+    save::dismiss_notification(app);
     log("Starting capture...");
 
     // Capture screens BEFORE opening the overlay so we don't screenshot our own window
@@ -750,9 +751,11 @@ fn start_capture(app: &AppHandle) {
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(3));
         if let Some(win) = app_clone.get_webview_window("overlay") {
-            log("Safety timeout: force-showing overlay");
-            win.show().ok();
-            win.set_focus().ok();
+            if !win.is_visible().unwrap_or(true) {
+                log("Safety timeout: force-showing overlay");
+                win.show().ok();
+                win.set_focus().ok();
+            }
         }
     });
 }
@@ -782,6 +785,7 @@ fn open_save_folder(_app: &AppHandle) {
 
 fn is_blocked(app: &AppHandle) -> bool {
     if app.get_webview_window("overlay").is_some() { return true; }
+    if app.get_webview_window("welcome").is_some() { return true; }
     let flag = app.state::<DialogActive>();
     let active = *flag.0.lock().unwrap();
     active
@@ -804,6 +808,10 @@ fn show_guide(app: &AppHandle) {
 
 #[tauri::command]
 fn open_settings(app: AppHandle) {
+    // Close welcome window first if open, to avoid conflicts
+    if let Some(win) = app.get_webview_window("welcome") {
+        win.close().ok();
+    }
     show_settings(&app);
 }
 
@@ -813,7 +821,7 @@ fn show_settings(app: &AppHandle) {
     }
     let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
         .title("SafeShot Settings")
-        .inner_size(460.0, 440.0)
+        .inner_size(460.0, 480.0)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)
