@@ -783,7 +783,6 @@ fn open_save_folder(_app: &AppHandle) {
 
 fn is_blocked(app: &AppHandle) -> bool {
     if app.get_webview_window("overlay").is_some() { return true; }
-    if app.get_webview_window("welcome").is_some() { return true; }
     let flag = app.state::<DialogActive>();
     let active = *flag.0.lock().unwrap();
     active
@@ -793,7 +792,7 @@ fn show_guide(app: &AppHandle) {
     if app.get_webview_window("welcome").is_some() || is_blocked(app) {
         return;
     }
-    let _ = WebviewWindowBuilder::new(app, "welcome", WebviewUrl::App("welcome.html?noclose=1".into()))
+    let _ = WebviewWindowBuilder::new(app, "welcome", WebviewUrl::App("welcome.html".into()))
         .title("How to Use SafeShot")
         .inner_size(420.0, 520.0)
         .resizable(false)
@@ -806,10 +805,6 @@ fn show_guide(app: &AppHandle) {
 
 #[tauri::command]
 fn open_settings(app: AppHandle) {
-    // Close welcome window first if open, to avoid conflicts
-    if let Some(win) = app.get_webview_window("welcome") {
-        win.close().ok();
-    }
     show_settings(&app);
 }
 
