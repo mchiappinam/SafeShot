@@ -572,7 +572,6 @@ fn start_capture(app: &AppHandle) {
     if app.get_webview_window("overlay").is_some() {
         return;
     }
-    save::dismiss_notification(app);
     log("Starting capture...");
 
     // Capture screens BEFORE opening the overlay so we don't screenshot our own window

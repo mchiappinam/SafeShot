@@ -43,25 +43,6 @@ fn send_notification(app: &tauri::AppHandle, title: &str, body: &str) {
         .auto_cancel()
         .show()
         .ok();
-    // Auto-dismiss after 3 seconds by replacing with a silent empty notification
-    let handle = app.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_secs(3));
-        dismiss_notification(&handle);
-    });
-}
-
-pub fn dismiss_notification(app: &tauri::AppHandle) {
-    // Skip on Linux — empty replacement notification may flash as a visible bubble
-    if cfg!(target_os = "linux") { return; }
-    app.notification()
-        .builder()
-        .id(1)
-        .title("")
-        .body("")
-        .silent()
-        .show()
-        .ok();
 }
 
 #[tauri::command]
