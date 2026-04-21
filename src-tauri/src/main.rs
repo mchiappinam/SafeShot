@@ -112,7 +112,6 @@ fn is_windows_light_theme() -> bool {
 #[cfg(target_os = "windows")]
 fn watch_windows_theme(app: AppHandle, tray_id: tauri::tray::TrayIconId) {
     use windows_sys::Win32::System::Registry::*;
-    use windows_sys::Win32::Foundation::*;
     unsafe {
         let subkey = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize\0"
             .encode_utf16().collect::<Vec<u16>>();
