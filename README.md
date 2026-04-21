@@ -124,6 +124,7 @@ Open from the tray menu to configure:
 - **Save As folder** - Starting folder for the Ctrl+B / ⌘B dialog
 - **Capture hotkey** - Change the screenshot shortcut to any key combination
 - **Cursor capture** - Include the mouse cursor in screenshots
+- **Notifications** - Show/hide notifications after save or copy
 
 ## Features
 
@@ -139,6 +140,7 @@ Open from the tray menu to configure:
 - Remembers your last color, thickness, tool, and fill mode
 - Selection presets: custom, last used, full screen, or fixed sizes
 - Optional cursor capture in screenshots
+- Native notifications after save/copy (can be turned off in Settings)
 - Configurable hotkey
 - Custom save folders for quick save and Save As
 - Tiny installer (~4 MB)

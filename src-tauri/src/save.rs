@@ -3,6 +3,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
+use tauri_plugin_notification::NotificationExt;
 use chrono;
 
 #[derive(Serialize)]
@@ -18,6 +19,29 @@ pub fn config_path() -> PathBuf {
     fs::create_dir_all(&dir).ok();
     dir.push("config.json");
     dir
+}
+
+fn should_notify() -> bool {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(&path) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
+            return json.get("showNotifications")
+                .and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true")))
+                .unwrap_or(true);
+        }
+    }
+    true
+}
+
+fn send_notification(app: &tauri::AppHandle, body: &str) {
+    if !should_notify() { return; }
+    app.notification()
+        .builder()
+        .title("SafeShot")
+        .body(body)
+        .auto_cancel()
+        .show()
+        .ok();
 }
 
 #[tauri::command]
@@ -234,12 +258,13 @@ pub fn get_settings() -> serde_json::Value {
         "hotkey": json.get("hotkey").and_then(|v| v.as_str()).unwrap_or(default_hotkey),
         "captureCursor": json.get("captureCursor").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))).unwrap_or(false),
         "selectionPreset": json.get("selectionPreset").and_then(|v| v.as_str()).unwrap_or("custom"),
+        "showNotifications": json.get("showNotifications").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))).unwrap_or(true),
     })
 }
 
 #[tauri::command]
 pub fn set_setting(key: String, value: String) {
-    let allowed = ["quickSaveDir", "lastSaveDir", "hotkey", "captureCursor", "selectionPreset"];
+    let allowed = ["quickSaveDir", "lastSaveDir", "hotkey", "captureCursor", "selectionPreset", "showNotifications"];
     if !allowed.contains(&key.as_str()) { return; }
     let path = config_path();
     let mut json = if let Ok(data) = fs::read_to_string(&path) {
@@ -373,11 +398,14 @@ pub fn save_screenshot(
     let path = PathBuf::from(&dir).join(&filename);
 
     match fs::write(&path, &png_bytes) {
-        Ok(_) => SaveResult {
-            success: true,
-            file_path: Some(path.to_string_lossy().to_string()),
-            error: None,
-        },
+        Ok(_) => {
+            send_notification(&app_handle, &format!("Screenshot saved to {}", dir));
+            SaveResult {
+                success: true,
+                file_path: Some(path.to_string_lossy().to_string()),
+                error: None,
+            }
+        }
         Err(e) => SaveResult {
             success: false,
             file_path: None,
@@ -387,7 +415,7 @@ pub fn save_screenshot(
 }
 
 #[tauri::command]
-pub fn copy_to_clipboard(image_data_url: String) -> Result<(), String> {
+pub fn copy_to_clipboard(image_data_url: String, app_handle: tauri::AppHandle) -> Result<(), String> {
     let png_bytes = decode_data_url(&image_data_url)?;
     let img = image::load_from_memory(&png_bytes).map_err(|e| e.to_string())?;
     let rgba = img.to_rgba8();
@@ -401,6 +429,7 @@ pub fn copy_to_clipboard(image_data_url: String) -> Result<(), String> {
         bytes: std::borrow::Cow::Borrowed(rgba.as_raw()),
     };
     clipboard.set_image(img_data).map_err(|e| e.to_string())?;
+    send_notification(&app_handle, "Screenshot copied to clipboard");
 
     Ok(())
 }

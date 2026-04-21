@@ -95,6 +95,57 @@ fn parse_hotkey(s: &str) -> Option<Shortcut> {
     Some(Shortcut::new(if mods.is_empty() { Some(Modifiers::empty()) } else { Some(mods) }, c))
 }
 
+/// Check if Windows is using a light taskbar theme.
+#[cfg(target_os = "windows")]
+fn is_windows_light_theme() -> bool {
+    std::process::Command::new("reg")
+        .args(["query", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "/v", "SystemUsesLightTheme"])
+        .output()
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .map(|s| s.contains("0x1"))
+        .unwrap_or(false)
+}
+
+/// Watch for Windows theme changes and update the tray icon.
+/// Uses RegNotifyChangeKeyValue to block until the registry key changes.
+#[cfg(target_os = "windows")]
+fn watch_windows_theme(app: AppHandle, tray_id: tauri::tray::TrayIconId) {
+    use windows_sys::Win32::System::Registry::*;
+    use windows_sys::Win32::Foundation::*;
+    unsafe {
+        let subkey = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize\0"
+            .encode_utf16().collect::<Vec<u16>>();
+        let mut hkey: HKEY = std::ptr::null_mut();
+        let status = RegOpenKeyExW(HKEY_CURRENT_USER, subkey.as_ptr(), 0, KEY_NOTIFY, &mut hkey);
+        if status != 0 || hkey.is_null() { return; }
+
+        let mut last_light = is_windows_light_theme();
+        loop {
+            // Block until the key or any of its values change
+            let result = RegNotifyChangeKeyValue(hkey, 0, REG_NOTIFY_CHANGE_LAST_SET, std::ptr::null_mut(), 0);
+            if result != 0 { break; }
+
+            let light = is_windows_light_theme();
+            if light != last_light {
+                last_light = light;
+                let icon_bytes: &[u8] = if light {
+                    include_bytes!("../icons/tray-icon-dark.png")
+                } else {
+                    include_bytes!("../icons/tray-icon.png")
+                };
+                if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
+                    if let Some(tray) = app.tray_by_id(&tray_id) {
+                        tray.set_icon(Some(icon)).ok();
+                        log(&format!("Tray icon updated for {} theme", if light { "light" } else { "dark" }));
+                    }
+                }
+            }
+        }
+        RegCloseKey(hkey);
+    }
+}
+
 fn main() {
     // Catch panics and log them
     std::panic::set_hook(Box::new(|info| {
@@ -113,6 +164,7 @@ fn main() {
             None,
         ))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
         .manage(capture::CaptureCache(std::sync::Mutex::new(Vec::new())))
         .manage(DialogActive(std::sync::Mutex::new(false)))
         .invoke_handler(tauri::generate_handler![
@@ -144,6 +196,7 @@ fn main() {
             resume_hotkey,
             open_url,
             show_overlay,
+            open_settings,
         ])
         .setup(|app| {
             log("Setup starting...");
@@ -233,12 +286,20 @@ fn main() {
             )?;
             log("Tray menu built");
 
-            let _tray = TrayIconBuilder::new()
-                .icon(tauri::image::Image::from_bytes(if cfg!(target_os = "macos") {
-                    include_bytes!("../icons/tray-icon.png")
-                } else {
-                    include_bytes!("../icons/tray-icon-blue.png")
-                }).unwrap())
+            // Pick the right tray icon for the current theme
+            #[cfg(target_os = "windows")]
+            let initial_icon_bytes: &[u8] = if is_windows_light_theme() {
+                include_bytes!("../icons/tray-icon-dark.png")
+            } else {
+                include_bytes!("../icons/tray-icon.png")
+            };
+            #[cfg(target_os = "macos")]
+            let initial_icon_bytes: &[u8] = include_bytes!("../icons/tray-icon.png");
+            #[cfg(target_os = "linux")]
+            let initial_icon_bytes: &[u8] = include_bytes!("../icons/tray-icon-blue.png");
+
+            let tray = TrayIconBuilder::new()
+                .icon(tauri::image::Image::from_bytes(initial_icon_bytes).unwrap())
                 .icon_as_template(true)
                 .tooltip("SafeShot")
                 .menu(&menu)
@@ -257,6 +318,18 @@ fn main() {
                 })
                 .build(app)?;
             log("Tray icon created");
+
+            // Watch for Windows theme changes and swap the tray icon
+            #[cfg(target_os = "windows")]
+            {
+                let tray_id = tray.id().clone();
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    watch_windows_theme(app_handle, tray_id);
+                });
+            }
+            #[cfg(not(target_os = "windows"))]
+            let _ = &tray; // suppress unused warning
 
             // On Windows 11, disable the built-in Snipping Tool PrtScn override
             #[cfg(target_os = "windows")]
@@ -677,12 +750,6 @@ fn start_capture(app: &AppHandle) {
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(3));
         if let Some(win) = app_clone.get_webview_window("overlay") {
-            // Check window title for JS errors
-            if let Ok(title) = win.title() {
-                if title.starts_with("ERROR:") {
-                    log(&format!("Frontend JS error: {}", title));
-                }
-            }
             log("Safety timeout: force-showing overlay");
             win.show().ok();
             win.set_focus().ok();
@@ -731,9 +798,13 @@ fn show_guide(app: &AppHandle) {
         .maximizable(false)
         .minimizable(false)
         .decorations(false)
-        .always_on_top(true)
         .center()
         .build();
+}
+
+#[tauri::command]
+fn open_settings(app: AppHandle) {
+    show_settings(&app);
 }
 
 fn show_settings(app: &AppHandle) {

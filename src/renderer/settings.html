@@ -116,6 +116,12 @@
           <span class="field-label" style="margin: 0;">Include mouse cursor in screenshots</span>
         </label>
       </div>
+      <div class="field">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="showNotifications" style="accent-color: #2AE3FF; width: 16px; height: 16px;" />
+          <span class="field-label" style="margin: 0;">Show notifications after save/copy</span>
+        </label>
+      </div>
     </div>
   </div>
   <div class="footer">
@@ -164,6 +170,7 @@
     document.getElementById('lastSaveDir').value = s.lastSaveDir || '';
     document.getElementById('hotkey').value = displayHotkey(originalHotkey);
     document.getElementById('captureCursor').checked = s.captureCursor || false;
+    document.getElementById('showNotifications').checked = s.showNotifications !== false;
   });
 
   document.getElementById('browseQuickSave').addEventListener('click', function() {
@@ -239,6 +246,7 @@
     if (settings.quickSaveDir) invoke('set_setting', { key: 'quickSaveDir', value: settings.quickSaveDir });
     if (settings.lastSaveDir) invoke('set_setting', { key: 'lastSaveDir', value: settings.lastSaveDir });
     invoke('set_setting', { key: 'captureCursor', value: document.getElementById('captureCursor').checked ? 'true' : 'false' });
+    invoke('set_setting', { key: 'showNotifications', value: document.getElementById('showNotifications').checked ? 'true' : 'false' });
     if (settings.hotkey) {
       invoke('set_setting', { key: 'hotkey', value: settings.hotkey });
       invoke('register_hotkey', { hotkey: settings.hotkey }).then(function() {

@@ -78,6 +78,7 @@
     <div class="tip"><span class="tip-icon">▦</span> Use blur to pixelate, or redact to auto-hide text</div>
     <div class="tip"><span class="tip-icon">✋</span> Move Objects tool lets you reposition annotations</div>
     <div class="tip"><span class="tip-icon">↩</span> Ctrl+Z to undo, Ctrl+Y to redo</div>
+    <div class="tip"><span class="tip-icon">🔔</span> Notifications after save/copy can be turned off in <a id="settings-link" style="color: #2AE3FF; cursor: pointer;">Settings</a></div>
   </div>
 
   <button class="btn" id="close-btn">Got it (60)</button>
@@ -114,6 +115,9 @@
     });
     document.getElementById('dev-link').addEventListener('click', function() {
       if (window.__TAURI__) window.__TAURI__.core.invoke('open_url', { url: 'https://chiappina.com' });
+    });
+    document.getElementById('settings-link').addEventListener('click', function() {
+      if (window.__TAURI__) window.__TAURI__.core.invoke('open_settings');
     });
     if (navigator.platform.indexOf('Mac') !== -1) {
       document.getElementById('capture-key').textContent = '\u2318\u21E7S';

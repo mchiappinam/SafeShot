@@ -133,16 +133,19 @@ export default function App(): React.ReactElement {
     invoke<{ success: boolean; file_path?: string; error?: string }>('save_screenshot', {
       imageDataUrl: dataURL, showDialog: shiftHeld,
     }).then(result => {
-      // When showDialog=true, Rust handles closing the overlay itself
-      // When showDialog=false (quick save), close overlay on success
-      if (result.success && !shiftHeld) invoke('close_overlay').catch(console.error);
-      else if (!result.success && result.error !== 'Cancelled') console.error('Save failed:', result.error);
+      if (result.success && !shiftHeld) {
+        invoke('close_overlay').catch(console.error);
+      } else if (!result.success && result.error !== 'Cancelled') {
+        console.error('Save failed:', result.error);
+      }
     });
   }, []);
 
   const handleCopy = useCallback((dataURL: string) => {
     invoke('copy_to_clipboard', { imageDataUrl: dataURL })
-      .then(() => invoke('close_overlay').catch(console.error))
+      .then(() => {
+        invoke('close_overlay').catch(console.error);
+      })
       .catch(console.error);
   }, []);
 
