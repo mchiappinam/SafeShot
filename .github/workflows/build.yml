@@ -9,8 +9,20 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx vitest --run
+
   read-config:
     name: Read Runner Config
+    needs: test
     runs-on: ubuntu-latest
     outputs:
       windows: ${{ steps.cfg.outputs.windows }}
