@@ -71,7 +71,6 @@
       lines.push('Version: 1.4.0');
       lines.push('Runtime: Tauri 2 + WebView');
       lines.push('Platform: ' + navigator.platform);
-      lines.push('OS: ' + (navigator.userAgentData ? navigator.userAgentData.platform : navigator.platform));
       lines.push('Renderer: ' + (navigator.userAgent.match(/Chrome\/[\d.]+/) || ['WebKit'])[0]);
       info.innerHTML = lines.join('<br>');
     })();

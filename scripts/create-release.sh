@@ -107,6 +107,7 @@ sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
 sed -i "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
 sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" src-tauri/tauri.conf.json
 sed -i "s/SafeShot v[0-9]*\.[0-9]*\.[0-9]*/SafeShot v$VERSION/g" src/renderer/welcome.html src/renderer/about.html
+sed -i "s/Version: [0-9]*\.[0-9]*\.[0-9]*/Version: $VERSION/g" src/renderer/about.html
 
 echo "Updated version to $VERSION"
 
