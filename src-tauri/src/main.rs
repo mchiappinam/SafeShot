@@ -836,7 +836,7 @@ fn show_about(app: &AppHandle) {
     let _ = WebviewWindowBuilder::new(app, "about", WebviewUrl::App("about.html".into()))
         .title("About SafeShot")
         .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png")).unwrap()).unwrap()
-        .inner_size(420.0, 380.0)
+        .inner_size(420.0, 440.0)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)
