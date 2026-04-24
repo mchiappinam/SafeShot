@@ -40,6 +40,10 @@
     }
     .close-x:hover { color: #fff; }
     .version-link { font-size: 9px !important; color: rgba(255,255,255,0.4); margin-top: 6px; cursor: pointer; }
+    .tech-info {
+      font-size: 10px; color: rgba(229,237,246,0.35); text-align: center;
+      line-height: 1.6; margin-bottom: 12px; font-family: monospace;
+    }
   </style>
 </head>
 <body>
@@ -56,9 +60,22 @@
     <div class="feature"><div class="feature-icon">🌐</div><span class="feature-label">Offline</span></div>
   </div>
   <p class="tagline">No cloud. No tracking. No compromises.</p>
+  <div class="tech-info" id="tech-info"></div>
   <p class="credit">Made with <span class="heart">&#10084;</span> by <a id="dev-link">Matheus Chiappina</a></p>
   <p class="version-link" id="version-link">SafeShot v1.4.0 | <a id="license-link" style="color: rgba(255,255,255,0.4); cursor: pointer;">License</a></p>
   <script>
+    // Populate technical info
+    (function() {
+      var info = document.getElementById('tech-info');
+      var lines = [];
+      lines.push('Version: 1.4.0');
+      lines.push('Runtime: Tauri 2 + WebView');
+      lines.push('Platform: ' + navigator.platform);
+      lines.push('OS: ' + (navigator.userAgentData ? navigator.userAgentData.platform : navigator.platform));
+      lines.push('Renderer: ' + (navigator.userAgent.match(/Chrome\/[\d.]+/) || ['WebKit'])[0]);
+      info.innerHTML = lines.join('<br>');
+    })();
+
     document.getElementById('close-x').addEventListener('click', function() {
       if (window.__TAURI__) window.__TAURI__.core.invoke('close_about');
     });

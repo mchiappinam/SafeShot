@@ -25,6 +25,16 @@ function isPointInSelection(x: number, y: number, sel: Selection): boolean {
   return x >= sel.x && x <= sel.x + sel.width && y >= sel.y && y <= sel.y + sel.height;
 }
 
+const CUSTOM_CROSSHAIR = (() => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+    <line x1="16" y1="0" x2="16" y2="32" stroke="white" stroke-width="3"/>
+    <line x1="0" y1="16" x2="32" y2="16" stroke="white" stroke-width="3"/>
+    <line x1="16" y1="0" x2="16" y2="32" stroke="black" stroke-width="1"/>
+    <line x1="0" y1="16" x2="32" y2="16" stroke="black" stroke-width="1"/>
+  </svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 16 16, crosshair`;
+})();
+
 export class CursorManager {
   private container: HTMLElement;
   private tooltip: HTMLDivElement;
@@ -60,17 +70,17 @@ export class CursorManager {
     } else if (hoveredHandle !== null) {
       cursor = HANDLE_CURSOR_MAP[hoveredHandle];
     } else if (captureState === 'selecting' || captureState === 'annotating') {
-      cursor = activeTool === 'hand' ? 'grabbing' : 'crosshair';
+      cursor = activeTool === 'hand' ? 'grabbing' : CUSTOM_CROSSHAIR;
     } else if (selection !== null && activeTool === 'hand') {
       cursor = 'grab';
     } else if (selection !== null && activeTool === 'eyedropper') {
-      cursor = 'crosshair';
+      cursor = CUSTOM_CROSSHAIR;
     } else if (selection !== null && activeTool !== null) {
-      cursor = 'crosshair';
+      cursor = CUSTOM_CROSSHAIR;
     } else if (selection !== null && activeTool === null && isPointInSelection(mouseX, mouseY, selection)) {
       cursor = 'move';
     } else {
-      cursor = 'crosshair';
+      cursor = CUSTOM_CROSSHAIR;
     }
 
     this.container.style.cursor = cursor;
