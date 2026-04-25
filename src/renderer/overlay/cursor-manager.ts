@@ -26,13 +26,17 @@ function isPointInSelection(x: number, y: number, sel: Selection): boolean {
 }
 
 const CUSTOM_CROSSHAIR = (() => {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
-    <line x1="16" y1="0" x2="16" y2="32" stroke="white" stroke-width="3"/>
-    <line x1="0" y1="16" x2="32" y2="16" stroke="white" stroke-width="3"/>
-    <line x1="16" y1="0" x2="16" y2="32" stroke="black" stroke-width="1"/>
-    <line x1="0" y1="16" x2="32" y2="16" stroke="black" stroke-width="1"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19">
+    <line x1="9.5" y1="0" x2="9.5" y2="7" stroke="white" stroke-width="2"/>
+    <line x1="9.5" y1="12" x2="9.5" y2="19" stroke="white" stroke-width="2"/>
+    <line x1="0" y1="9.5" x2="7" y2="9.5" stroke="white" stroke-width="2"/>
+    <line x1="12" y1="9.5" x2="19" y2="9.5" stroke="white" stroke-width="2"/>
+    <line x1="9.5" y1="0" x2="9.5" y2="7" stroke="black" stroke-width="1"/>
+    <line x1="9.5" y1="12" x2="9.5" y2="19" stroke="black" stroke-width="1"/>
+    <line x1="0" y1="9.5" x2="7" y2="9.5" stroke="black" stroke-width="1"/>
+    <line x1="12" y1="9.5" x2="19" y2="9.5" stroke="black" stroke-width="1"/>
   </svg>`;
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 16 16, crosshair`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 9 9, crosshair`;
 })();
 
 export class CursorManager {
