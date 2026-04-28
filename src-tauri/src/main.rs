@@ -360,7 +360,7 @@ fn main() {
                         true
                     }
                 };
-                apply_win_shift_s_override(override_enabled);
+                apply_win_shift_s_override(app.handle().clone(), override_enabled);
             }
 
             // Register global shortcut from config (or platform default)
@@ -833,30 +833,28 @@ fn open_settings(app: AppHandle) {
 }
 
 #[tauri::command]
-fn apply_win_shift_s_override(enable: bool) {
+fn apply_win_shift_s_override(app: AppHandle, enable: bool) {
     #[cfg(target_os = "windows")]
     {
-        use std::os::windows::process::CommandExt;
+        let shortcut = Shortcut::new(Some(Modifiers::META | Modifiers::SHIFT), Code::KeyS);
         if enable {
-            // Disable Windows Snipping Tool Win+Shift+S by setting the registry key
-            std::process::Command::new("reg")
-                .args(["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "/v", "DisabledHotkeys", "/t", "REG_SZ", "/d", "S", "/f"])
-                .creation_flags(0x08000000)
-                .output()
-                .ok();
-            log("Win+Shift+S override enabled");
+            // Register Win+Shift+S as a SafeShot shortcut to intercept it
+            let app_handle = app.clone();
+            // Unregister first in case it's already registered
+            app.global_shortcut().unregister(shortcut).ok();
+            app.global_shortcut()
+                .on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                    start_capture(&app_handle);
+                }).ok();
+            log("Win+Shift+S override enabled (registered as global shortcut)");
         } else {
-            // Restore Windows Snipping Tool Win+Shift+S
-            std::process::Command::new("reg")
-                .args(["delete", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "/v", "DisabledHotkeys", "/f"])
-                .creation_flags(0x08000000)
-                .output()
-                .ok();
+            // Unregister to let Windows handle it
+            app.global_shortcut().unregister(shortcut).ok();
             log("Win+Shift+S override disabled");
         }
     }
     #[cfg(not(target_os = "windows"))]
-    { let _ = enable; }
+    { let _ = (app, enable); }
 }
 
 fn show_settings(app: &AppHandle) {
