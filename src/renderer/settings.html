@@ -122,6 +122,12 @@
           <span class="field-label" style="margin: 0;">Show notifications after save/copy</span>
         </label>
       </div>
+      <div class="field" id="winShiftSField" style="display: none;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="overrideWinShiftS" style="accent-color: #2AE3FF; width: 16px; height: 16px;" />
+          <span class="field-label" style="margin: 0;">Override Windows Screenshot (Win+Shift+S)</span>
+        </label>
+      </div>
     </div>
   </div>
   <div class="footer">
@@ -137,6 +143,10 @@
     'Meta+KeyZ', 'Meta+KeyY', 'Meta+KeyS', 'Meta+KeyB', 'Meta+KeyC', 'Meta+KeyA',
     'Ctrl+Shift+KeyZ', 'Meta+Shift+KeyZ', 'Escape',
   ];
+  // On Windows, also reserve Win+Shift+S (used by Windows Screenshot)
+  if (navigator.platform.indexOf('Win') !== -1) {
+    reservedKeys.push('Meta+Shift+KeyS');
+  }
   var listening = false;
   var onHotkeyKey = null;
 
@@ -171,6 +181,11 @@
     document.getElementById('hotkey').value = displayHotkey(originalHotkey);
     document.getElementById('captureCursor').checked = s.captureCursor || false;
     document.getElementById('showNotifications').checked = s.showNotifications !== false;
+    // Show Win+Shift+S override option only on Windows
+    if (navigator.platform.indexOf('Win') !== -1) {
+      document.getElementById('winShiftSField').style.display = '';
+      document.getElementById('overrideWinShiftS').checked = s.overrideWinShiftS !== false;
+    }
   });
 
   document.getElementById('browseQuickSave').addEventListener('click', function() {
@@ -247,6 +262,11 @@
     if (settings.lastSaveDir) invoke('set_setting', { key: 'lastSaveDir', value: settings.lastSaveDir });
     invoke('set_setting', { key: 'captureCursor', value: document.getElementById('captureCursor').checked ? 'true' : 'false' });
     invoke('set_setting', { key: 'showNotifications', value: document.getElementById('showNotifications').checked ? 'true' : 'false' });
+    if (navigator.platform.indexOf('Win') !== -1) {
+      var override = document.getElementById('overrideWinShiftS').checked ? 'true' : 'false';
+      invoke('set_setting', { key: 'overrideWinShiftS', value: override });
+      invoke('apply_win_shift_s_override', { enable: override === 'true' });
+    }
     if (settings.hotkey) {
       invoke('set_setting', { key: 'hotkey', value: settings.hotkey });
       invoke('register_hotkey', { hotkey: settings.hotkey }).then(function() {
