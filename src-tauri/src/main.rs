@@ -198,6 +198,7 @@ fn main() {
             open_url,
             show_overlay,
             open_settings,
+            apply_win_shift_s_override,
         ])
         .setup(|app| {
             log("Setup starting...");
@@ -343,6 +344,23 @@ fn main() {
                     .output()
                     .ok();
                 log("Windows PrtScn Snipping Tool override disabled");
+            }
+
+            // Apply Win+Shift+S override based on saved setting (default: false)
+            #[cfg(target_os = "windows")]
+            {
+                let override_enabled = {
+                    let path = save::config_path();
+                    if let Ok(data) = std::fs::read_to_string(&path) {
+                        serde_json::from_str::<serde_json::Value>(&data)
+                            .ok()
+                            .and_then(|j| j.get("overrideWinShiftS").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))))
+                            .unwrap_or(false)
+                    } else {
+                        false
+                    }
+                };
+                apply_win_shift_s_override(override_enabled);
             }
 
             // Register global shortcut from config (or platform default)
@@ -814,13 +832,41 @@ fn open_settings(app: AppHandle) {
     show_settings(&app);
 }
 
+#[tauri::command]
+fn apply_win_shift_s_override(enable: bool) {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        if enable {
+            // Disable Windows Snipping Tool Win+Shift+S by setting the registry key
+            std::process::Command::new("reg")
+                .args(["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "/v", "DisabledHotkeys", "/t", "REG_SZ", "/d", "S", "/f"])
+                .creation_flags(0x08000000)
+                .output()
+                .ok();
+            log("Win+Shift+S override enabled");
+        } else {
+            // Restore Windows Snipping Tool Win+Shift+S
+            std::process::Command::new("reg")
+                .args(["delete", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "/v", "DisabledHotkeys", "/f"])
+                .creation_flags(0x08000000)
+                .output()
+                .ok();
+            log("Win+Shift+S override disabled");
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    { let _ = enable; }
+}
+
 fn show_settings(app: &AppHandle) {
     if app.get_webview_window("settings").is_some() || is_blocked(app) {
         return;
     }
+    let height = if cfg!(target_os = "windows") { 520.0 } else { 480.0 };
     let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
         .title("SafeShot Settings")
-        .inner_size(460.0, 480.0)
+        .inner_size(460.0, height)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)

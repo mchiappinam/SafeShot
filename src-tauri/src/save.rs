@@ -260,12 +260,13 @@ pub fn get_settings() -> serde_json::Value {
         "captureCursor": json.get("captureCursor").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))).unwrap_or(false),
         "selectionPreset": json.get("selectionPreset").and_then(|v| v.as_str()).unwrap_or("custom"),
         "showNotifications": json.get("showNotifications").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))).unwrap_or(true),
+        "overrideWinShiftS": json.get("overrideWinShiftS").and_then(|v| v.as_bool().or_else(|| v.as_str().map(|s| s == "true"))).unwrap_or(false),
     })
 }
 
 #[tauri::command]
 pub fn set_setting(key: String, value: String) {
-    let allowed = ["quickSaveDir", "lastSaveDir", "hotkey", "captureCursor", "selectionPreset", "showNotifications"];
+    let allowed = ["quickSaveDir", "lastSaveDir", "hotkey", "captureCursor", "selectionPreset", "showNotifications", "overrideWinShiftS"];
     if !allowed.contains(&key.as_str()) { return; }
     let path = config_path();
     let mut json = if let Ok(data) = fs::read_to_string(&path) {
