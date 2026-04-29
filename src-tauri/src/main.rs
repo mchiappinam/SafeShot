@@ -725,7 +725,7 @@ fn start_capture(app: &AppHandle) {
                 }
                 log(&format!(
                     "Win32: styles stripped, positioned at ({},{}) {}x{} (virtual screen)",
-                    vs_x, vs_y, vs_w, vs_h
+                    min_x, min_y, total_w, total_h
                 ));
             }
         }
