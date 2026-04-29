@@ -643,11 +643,11 @@ fn start_capture(app: &AppHandle) {
         total_w, total_h, min_x, min_y
     ));
 
-    // Create window at the virtual desktop bounds
+    // Create window at the virtual desktop bounds.
+    // The display_info coordinates from the screenshots crate are in physical pixels.
+    // Create with approximate logical size first, then set exact physical size after.
     let win = match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
         .title("SafeShot")
-        .position(min_x as f64, min_y as f64)
-        .inner_size(total_w as f64, total_h as f64)
         .decorations(false)
         .resizable(false)
         .maximizable(false)
@@ -663,6 +663,10 @@ fn start_capture(app: &AppHandle) {
         .build()
     {
         Ok(w) => {
+            // Set physical position and size to match the virtual desktop exactly
+            use tauri::{PhysicalPosition, PhysicalSize};
+            w.set_position(PhysicalPosition::new(min_x, min_y)).ok();
+            w.set_size(PhysicalSize::new(total_w as u32, total_h as u32)).ok();
             log("Overlay window created (hidden)");
             w
         }
@@ -730,8 +734,8 @@ fn start_capture(app: &AppHandle) {
 
     #[cfg(not(target_os = "windows"))]
     {
-        use tauri::LogicalPosition;
-        win.set_position(LogicalPosition::new(min_x as f64, min_y as f64))
+        use tauri::PhysicalPosition;
+        win.set_position(PhysicalPosition::new(min_x, min_y))
             .ok();
     }
 
