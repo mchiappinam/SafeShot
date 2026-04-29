@@ -697,15 +697,17 @@ fn start_capture(app: &AppHandle) {
                     let clean_ex = ex_style as u32
                         & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                    // Apply style changes and z-order without resizing.
-                    // Tauri's inner_size uses logical coordinates which match
-                    // the display_info coordinate system, so let Tauri handle sizing.
-                    // We only need SetWindowPos for FRAMECHANGED + TOPMOST.
+                    // Position the window to cover the full virtual desktop.
+                    // After stripping styles, the client area equals the window area,
+                    // so we can use the logical coordinates directly.
                     SetWindowPos(
                         hwnd,
                         HWND_TOPMOST,
-                        0, 0, 0, 0,
-                        SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
+                        min_x,
+                        min_y,
+                        total_w,
+                        total_h,
+                        SWP_FRAMECHANGED | SWP_NOACTIVATE,
                     );
 
                     // Disable Win11 rounded corners
@@ -719,7 +721,7 @@ fn start_capture(app: &AppHandle) {
                     );
                 }
                 log(&format!(
-                    "Win32: styles stripped, positioned at ({},{}) {}x{} (virtual screen)",
+                    "Win32: styles stripped, positioned at ({},{}) {}x{}",
                     min_x, min_y, total_w, total_h
                 ));
             }
