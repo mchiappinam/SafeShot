@@ -305,8 +305,6 @@ export class RenderPipeline {
   private dirty = false;
   private offsetX = 0;
   private offsetY = 0;
-  private totalWidth = 1;
-  private totalHeight = 1;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -324,10 +322,6 @@ export class RenderPipeline {
     // Compute offset so virtual screen coords map to canvas 0,0
     this.offsetX = Math.min(...screens.map(s => s.bounds.x));
     this.offsetY = Math.min(...screens.map(s => s.bounds.y));
-    const maxX = Math.max(...screens.map(s => s.bounds.x + s.bounds.width));
-    const maxY = Math.max(...screens.map(s => s.bounds.y + s.bounds.height));
-    this.totalWidth = maxX - this.offsetX || 1;
-    this.totalHeight = maxY - this.offsetY || 1;
     await Promise.all(screens.map(async (s) => {
       // Decode base64 data URL directly, avoids fetch() which CSP can block
       const base64 = s.imageDataURL.replace(/^data:image\/\w+;base64,/, '');
@@ -394,19 +388,16 @@ export class RenderPipeline {
     ctx.imageSmoothingEnabled = false;
 
     // Draw each screen bitmap at native resolution by sampling the exact
-    // source pixels that correspond to the selection region, instead of
-    // going through CSS pixel coordinates which lose resolution.
-    const cw = window.innerWidth;
-    const ch = window.innerHeight;
+    // source pixels that correspond to the selection region.
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
       if (!bmp) continue;
 
       // Where this screen sits in logical (CSS) canvas coordinates
-      const screenLogicalX = (s.bounds.x - this.offsetX) / this.totalWidth * cw;
-      const screenLogicalY = (s.bounds.y - this.offsetY) / this.totalHeight * ch;
-      const screenLogicalW = s.bounds.width / this.totalWidth * cw;
-      const screenLogicalH = s.bounds.height / this.totalHeight * ch;
+      const screenLogicalX = s.bounds.x - this.offsetX;
+      const screenLogicalY = s.bounds.y - this.offsetY;
+      const screenLogicalW = s.bounds.width;
+      const screenLogicalH = s.bounds.height;
 
       // Intersection of selection with this screen in logical coords
       const ix0 = Math.max(sel.x, screenLogicalX);
@@ -463,15 +454,13 @@ export class RenderPipeline {
     const h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
 
-    // Layer 0: frozen screen bitmaps, scale to fill canvas
+    // Layer 0: frozen screen bitmaps at exact pixel positions
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
       if (bmp) {
-        const sx = (s.bounds.x - this.offsetX) / this.totalWidth * w;
-        const sy = (s.bounds.y - this.offsetY) / this.totalHeight * h;
-        const sw = s.bounds.width / this.totalWidth * w;
-        const sh = s.bounds.height / this.totalHeight * h;
-        ctx.drawImage(bmp, sx, sy, sw, sh);
+        const sx = s.bounds.x - this.offsetX;
+        const sy = s.bounds.y - this.offsetY;
+        ctx.drawImage(bmp, sx, sy, s.bounds.width, s.bounds.height);
       }
     }
 
@@ -492,11 +481,9 @@ export class RenderPipeline {
       for (const s of this.screens) {
         const bmp = this.bitmaps.get(s.displayId);
         if (bmp) {
-          const sx = (s.bounds.x - this.offsetX) / this.totalWidth * w;
-          const sy = (s.bounds.y - this.offsetY) / this.totalHeight * h;
-          const sw = s.bounds.width / this.totalWidth * w;
-          const sh = s.bounds.height / this.totalHeight * h;
-          ctx.drawImage(bmp, sx, sy, sw, sh);
+          const sx = s.bounds.x - this.offsetX;
+          const sy = s.bounds.y - this.offsetY;
+          ctx.drawImage(bmp, sx, sy, s.bounds.width, s.bounds.height);
         }
       }
       ctx.restore();
