@@ -697,20 +697,15 @@ fn start_capture(app: &AppHandle) {
                     let clean_ex = ex_style as u32
                         & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                    // Use the actual virtual screen bounds from Windows (physical pixels)
-                    let vs_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-                    let vs_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
-                    let vs_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-                    let vs_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-                    let pad = 8;
+                    // Apply style changes and z-order without resizing.
+                    // Tauri's inner_size uses logical coordinates which match
+                    // the display_info coordinate system, so let Tauri handle sizing.
+                    // We only need SetWindowPos for FRAMECHANGED + TOPMOST.
                     SetWindowPos(
                         hwnd,
                         HWND_TOPMOST,
-                        vs_x - pad,
-                        vs_y - pad,
-                        vs_w + pad * 2,
-                        vs_h + pad * 2,
-                        SWP_FRAMECHANGED | SWP_NOACTIVATE,
+                        0, 0, 0, 0,
+                        SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
                     );
 
                     // Disable Win11 rounded corners
