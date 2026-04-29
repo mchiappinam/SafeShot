@@ -673,7 +673,7 @@ fn start_capture(app: &AppHandle) {
     };
 
     // On Windows: strip all window styles that cause invisible borders/title bar,
-    // then force exact position with SetWindowPos
+    // then use GetSystemMetrics for the true virtual screen bounds in physical pixels
     #[cfg(target_os = "windows")]
     {
         use raw_window_handle::HasWindowHandle;
@@ -697,16 +697,19 @@ fn start_capture(app: &AppHandle) {
                     let clean_ex = ex_style as u32
                         & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                     SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                    // Padding: less on top (it's already flush), more on sides/bottom
-                    let pad_top = 2;
-                    let pad = 12;
+                    // Use the actual virtual screen bounds from Windows (physical pixels)
+                    let vs_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+                    let vs_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+                    let vs_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+                    let vs_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+                    let pad = 8;
                     SetWindowPos(
                         hwnd,
                         HWND_TOPMOST,
-                        min_x - pad,
-                        min_y - pad_top,
-                        total_w + pad * 2,
-                        total_h + pad_top + pad,
+                        vs_x - pad,
+                        vs_y - pad,
+                        vs_w + pad * 2,
+                        vs_h + pad * 2,
                         SWP_FRAMECHANGED | SWP_NOACTIVATE,
                     );
 
@@ -721,8 +724,8 @@ fn start_capture(app: &AppHandle) {
                     );
                 }
                 log(&format!(
-                    "Win32: styles stripped, positioned at ({},{}) {}x{}",
-                    min_x, min_y, total_w, total_h
+                    "Win32: styles stripped, positioned at ({},{}) {}x{} (virtual screen)",
+                    vs_x, vs_y, vs_w, vs_h
                 ));
             }
         }
