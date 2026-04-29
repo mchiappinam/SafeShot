@@ -553,6 +553,10 @@ pub fn do_capture() -> Result<Vec<ScreenData>, String> {
             native_height: image.height(),
             image_data_url: data_url,
         });
+        crate::log(&format!(
+            "Display {}: pos=({},{}) size={}x{} scale={} native={}x{}",
+            info.id, info.x, info.y, info.width, info.height, info.scale_factor, image.width(), image.height()
+        ));
     }
 
     results.sort_by(|a, b| a.x.cmp(&b.x).then(a.y.cmp(&b.y)));
