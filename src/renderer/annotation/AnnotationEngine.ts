@@ -180,6 +180,71 @@ export class AnnotationEngine {
 
   isMovingAnnotation(): boolean { return this.movingAnnotationId !== null; }
 
+  // --- Text editing ---
+
+  /** Remove an annotation from the stack and return it (for editing). */
+  editAnnotation(id: string): Annotation | null {
+    return this.stack.removeAnnotation(id);
+  }
+
+  // --- Resize annotations ---
+
+  private resizingAnnotationId: string | null = null;
+  private resizeCorner: string | null = null;
+  private resizeOriginalPoints: Point[] = [];
+
+  /** Check if a point is near a corner of any shape annotation's bounding box.
+   *  Returns { id, corner } or null. Only works for 2-point shapes (not pencil/sharpie/text). */
+  hitTestAnnotationCorner(point: Point): { id: string; corner: string } | null {
+    const anns = this.stack.getAnnotations();
+    const threshold = 10;
+    for (let i = anns.length - 1; i >= 0; i--) {
+      const ann = anns[i];
+      // Only resize 2-point shapes
+      if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'text') continue;
+      if (ann.points.length < 2) continue;
+      const [s, e] = ann.points;
+      // Check near start point
+      if (Math.hypot(point.x - s.x, point.y - s.y) <= threshold) {
+        return { id: ann.id, corner: 'start' };
+      }
+      // Check near end point
+      if (Math.hypot(point.x - e.x, point.y - e.y) <= threshold) {
+        return { id: ann.id, corner: 'end' };
+      }
+    }
+    return null;
+  }
+
+  startResizeAnnotation(id: string, corner: string, point: Point): void {
+    const anns = this.stack.getAnnotations();
+    const ann = anns.find(a => a.id === id);
+    if (!ann || ann.points.length < 2) return;
+    this.resizingAnnotationId = id;
+    this.resizeCorner = corner;
+    this.resizeOriginalPoints = ann.points.map(p => ({ ...p }));
+  }
+
+  updateResizeAnnotation(point: Point): void {
+    if (!this.resizingAnnotationId || !this.resizeCorner) return;
+    const [s, e] = this.resizeOriginalPoints;
+    let newPoints: Point[];
+    if (this.resizeCorner === 'start') {
+      newPoints = [{ x: point.x, y: point.y }, { ...e }];
+    } else {
+      newPoints = [{ ...s }, { x: point.x, y: point.y }];
+    }
+    this.stack.resizeAnnotation(this.resizingAnnotationId, newPoints);
+  }
+
+  finalizeResizeAnnotation(): void {
+    this.resizingAnnotationId = null;
+    this.resizeCorner = null;
+    this.resizeOriginalPoints = [];
+  }
+
+  isResizingAnnotation(): boolean { return this.resizingAnnotationId !== null; }
+
   undo(): boolean { return this.stack.undo(); }
   redo(): boolean { return this.stack.redo(); }
   canUndo(): boolean { return this.stack.canUndo(); }

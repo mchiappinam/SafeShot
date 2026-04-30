@@ -67,6 +67,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     if (textInput && activeTool !== 'text') {
       annEngRef.current?.updateText(textInput.text);
       annEngRef.current?.finalizeText();
+      restoreEngineState();
       setTextInput(null);
       notifyAnnotations();
       syncPipeline();
@@ -98,6 +99,18 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     pipeline.requestRender();
     notifySelection();
   }, [notifySelection]);
+
+  // Restore engine state to match React state (after text editing changes it)
+  const restoreEngineState = useCallback(() => {
+    const eng = annEngRef.current;
+    if (!eng) return;
+    eng.setColor(activeColor);
+    eng.setTextBold(textBold);
+    eng.setTextItalic(textItalic);
+    eng.setTextUnderline(textUnderline);
+    eng.setTextHighlight(textHighlight);
+    eng.setTextSize(textSize);
+  }, [activeColor, textBold, textItalic, textUnderline, textHighlight, textSize]);
 
   // Listen for overlay-activated events from other overlay windows.
   // When another overlay becomes active, clear our selection and reset to idle.
@@ -249,8 +262,17 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         syncPipeline();
         return;
       }
-      // Hand tool: move existing annotations
+      // Hand tool: resize or move existing annotations
       if (inside && activeToolRef.current === 'hand') {
+        // First check if clicking near a corner for resize
+        const cornerHit = annEng?.hitTestAnnotationCorner({ x, y });
+        if (cornerHit) {
+          annEng?.startResizeAnnotation(cornerHit.id, cornerHit.corner, { x, y });
+          setCaptureState('annotating');
+          syncPipeline();
+          return;
+        }
+        // Otherwise, move existing annotations
         const hitId = annEng?.hitTestAnnotation({ x, y });
         if (hitId) {
           annEng?.startMoveAnnotation(hitId, { x, y });
@@ -264,8 +286,37 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         if (textInput) {
           annEng?.updateText(textInput.text);
           annEng?.finalizeText();
+          restoreEngineState();
           notifyAnnotations();
         }
+        // Check if clicking on an existing text annotation to edit it
+        const hitId = annEng?.hitTestAnnotation({ x, y });
+        if (hitId) {
+          const anns = annEng?.getAnnotations() ?? [];
+          const hitAnn = anns.find(a => a.id === hitId);
+          if (hitAnn && hitAnn.tool === 'text') {
+            // Remove the annotation and open textarea pre-filled with its data
+            const removed = annEng?.editAnnotation(hitId);
+            if (removed) {
+              // Apply the annotation's formatting for the edit session
+              annEng?.setColor(removed.color);
+              annEng?.setTextBold(removed.textBold ?? false);
+              annEng?.setTextItalic(removed.textItalic ?? false);
+              annEng?.setTextUnderline(removed.textUnderline ?? false);
+              annEng?.setTextHighlight(removed.textHighlight ?? false);
+              annEng?.setTextSize(removed.textSize ?? 16);
+              // Start a new text input at the annotation's original position
+              const pos = removed.points[0] ?? { x, y };
+              annEng?.startStroke(pos);
+              annEng?.updateText(removed.text ?? '');
+              setTextInput({ x: pos.x, y: pos.y, text: removed.text ?? '' });
+              notifyAnnotations();
+              syncPipeline();
+              return;
+            }
+          }
+        }
+        // No existing text annotation hit — start new text
         annEng?.startStroke({ x, y });
         setTextInput({ x, y, text: '' });
         syncPipeline();
@@ -276,6 +327,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         if (textInput) {
           annEng?.updateText(textInput.text);
           annEng?.finalizeText();
+          restoreEngineState();
           setTextInput(null);
           notifyAnnotations();
         }
@@ -294,7 +346,8 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     else if (state === 'resizing') selMgrRef.current?.updateResize({ x, y });
     else if (state === 'moving') selMgrRef.current?.updateMove({ x, y });
     else if (state === 'annotating') {
-      if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.updateMoveAnnotation({ x, y });
+      if (annEngRef.current?.isResizingAnnotation()) annEngRef.current.updateResizeAnnotation({ x, y });
+      else if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.updateMoveAnnotation({ x, y });
       else annEngRef.current?.updateStroke({ x, y });
     }
     cursorRef.current?.update({
@@ -311,7 +364,8 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     else if (state === 'resizing') { selMgrRef.current?.finalizeResize(); setCaptureState('area-finalized'); }
     else if (state === 'moving') { selMgrRef.current?.finalizeMove(); setCaptureState('area-finalized'); }
     else if (state === 'annotating') {
-      if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.finalizeMoveAnnotation();
+      if (annEngRef.current?.isResizingAnnotation()) annEngRef.current.finalizeResizeAnnotation();
+      else if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.finalizeMoveAnnotation();
       else annEngRef.current?.finalizeStroke();
       notifyAnnotations(); setCaptureState('area-finalized');
     }
@@ -365,6 +419,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
             if (e.key === 'Escape') {
               annEngRef.current?.updateText(textInput.text);
               annEngRef.current?.finalizeText();
+              restoreEngineState();
               setTextInput(null);
               notifyAnnotations();
               syncPipeline();

@@ -46,5 +46,24 @@ export class UndoRedoStack {
     this.undone = [];
   }
 
+  /** Remove an annotation by id and return it. Returns null if not found. */
+  removeAnnotation(id: string): Annotation | null {
+    const idx = this.done.findIndex(ann => ann.id === id);
+    if (idx === -1) return null;
+    const removed = this.done[idx];
+    this.done = [...this.done.slice(0, idx), ...this.done.slice(idx + 1)];
+    this.undone = [];
+    return removed;
+  }
+
+  /** Resize an annotation by updating its points. */
+  resizeAnnotation(id: string, points: import('../../shared/types').Point[]): void {
+    this.done = this.done.map(ann => {
+      if (ann.id !== id) return ann;
+      return { ...ann, points };
+    });
+    this.undone = [];
+  }
+
   clear(): void { this.done = []; this.undone = []; }
 }
