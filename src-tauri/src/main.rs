@@ -739,12 +739,15 @@ fn start_capture(app: &AppHandle) {
                         let clean_ex = ex_style as u32
                             & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                         SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                        // Apply style changes and z-order only, let Tauri handle position/size
+                        // After stripping styles, reposition to cover the monitor exactly
                         SetWindowPos(
                             hwnd,
                             HWND_TOPMOST,
-                            0, 0, 0, 0,
-                            SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
+                            screen.x,
+                            screen.y,
+                            screen.width as i32,
+                            screen.height as i32,
+                            SWP_FRAMECHANGED | SWP_NOACTIVATE,
                         );
                         use windows_sys::Win32::Graphics::Dwm::*;
                         let preference: u32 = DWMWCP_DONOTROUND as u32;
