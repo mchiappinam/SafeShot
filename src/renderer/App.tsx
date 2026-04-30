@@ -101,6 +101,7 @@ export default function App(): React.ReactElement {
         if (s.textUnderline !== undefined) setTextUnderline(s.textUnderline as boolean);
         if (s.textHighlight !== undefined) setTextHighlight(s.textHighlight as boolean);
         if (s.textSize !== undefined) setTextSize(s.textSize as number);
+        if (s.selectionPreset !== undefined) setSelectionPreset(s.selectionPreset as SelectionPreset);
         receivingRef.current = false;
       }).then(fn => { unlisten = fn; });
     }
@@ -282,6 +283,7 @@ export default function App(): React.ReactElement {
           onSelectionPresetChange={(p) => {
             setSelectionPreset(p);
             invoke('set_setting', { key: 'selectionPreset', value: p }).catch(() => {});
+            broadcastToolState({ selectionPreset: p });
             // Apply immediately
             if (p === 'custom') return;
             if (p === 'last') {
