@@ -676,15 +676,13 @@ fn start_capture(app: &AppHandle) {
             .map(|(i, m)| { used_monitors[i] = true; m.scale_factor() })
             .unwrap_or(1.0);
 
-        let logical_x = screen.x as f64 / scale;
-        let logical_y = screen.y as f64 / scale;
         let logical_w = screen.width as f64 / scale;
         let logical_h = screen.height as f64 / scale;
 
         log(&format!(
-            "Creating {} physical=({},{}) {}x{} scale={} logical=({:.0},{:.0}) {:.0}x{:.0}",
+            "Creating {} physical=({},{}) {}x{} scale={} logical_size={:.0}x{:.0}",
             label, screen.x, screen.y, screen.width, screen.height,
-            scale, logical_x, logical_y, logical_w, logical_h
+            scale, logical_w, logical_h
         ));
 
         let win = match WebviewWindowBuilder::new(
@@ -693,7 +691,7 @@ fn start_capture(app: &AppHandle) {
             WebviewUrl::App(url_str.into()),
         )
         .title("SafeShot")
-        .position(logical_x, logical_y)
+        .position(screen.x as f64, screen.y as f64)
         .inner_size(logical_w, logical_h)
         .decorations(false)
         .resizable(false)
