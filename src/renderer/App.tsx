@@ -16,12 +16,21 @@ declare global {
   interface Window {
     __TAURI__: {
       core: { invoke: (cmd: string, args?: Record<string, unknown>) => Promise<unknown> };
+      event: {
+        listen: (event: string, handler: (event: { payload: unknown }) => void) => Promise<() => void>;
+      };
     };
   }
 }
 
 function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   return window.__TAURI__.core.invoke(cmd, args) as Promise<T>;
+}
+
+/** Read the screen index from the URL query string (?screen=N). */
+function getScreenIndex(): number {
+  const params = new URLSearchParams(window.location.search);
+  return parseInt(params.get('screen') ?? '0', 10);
 }
 
 interface TauriScreenData {
@@ -45,6 +54,7 @@ function mapScreenData(raw: TauriScreenData[]): ScreenData[] {
 }
 
 export default function App(): React.ReactElement {
+  const screenIndex = useRef(getScreenIndex()).current;
   const overlayRef = useRef<OverlayCanvasHandle>(null);
   const [screens, setScreens] = useState<ScreenData[]>([]);
   const [captureState, setCaptureState] = useState<CaptureState>('idle');
@@ -83,7 +93,15 @@ export default function App(): React.ReactElement {
 
   useEffect(() => {
     invoke<TauriScreenData[]>('capture_screens').then(raw => {
-      setScreens(mapScreenData(raw));
+      const all = mapScreenData(raw);
+      // Each overlay window only shows its own screen
+      const myScreen = all[screenIndex];
+      if (myScreen) {
+        setScreens([myScreen]);
+      } else {
+        console.error(`Screen index ${screenIndex} not found in ${all.length} screens`);
+        setScreens(all.length > 0 ? [all[0]] : []);
+      }
     }).catch(err => console.error('capture_screens failed:', err));
     // Load last used color and thickness
     invoke<string>('get_last_color').then(color => {
@@ -122,7 +140,7 @@ export default function App(): React.ReactElement {
         if (rect) setInitialSelection(rect);
       }
     }).catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close overlay only, don't exit the app
   const handleClose = useCallback(() => {
@@ -178,6 +196,7 @@ export default function App(): React.ReactElement {
       <OverlayCanvas
         ref={overlayRef}
         screens={screens}
+        screenIndex={screenIndex}
         activeTool={activeTool}
         activeColor={activeColor}
         strokeWidth={strokeWidth}

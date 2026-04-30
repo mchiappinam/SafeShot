@@ -9,6 +9,7 @@ import { hitTestSelection } from '../selection/selection-math';
 
 export interface OverlayCanvasProps {
   screens: ScreenData[];
+  screenIndex: number;
   activeTool: ToolType | null;
   activeColor: string;
   strokeWidth: number;
@@ -36,7 +37,7 @@ export interface OverlayCanvasHandle {
 }
 
 export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>(({
-  screens, activeTool, activeColor, strokeWidth, fillMode, textBold, textItalic, textUnderline, textHighlight, textSize, initialSelection, onStateChange, onAnnotationsChange, onSelectionChange,
+  screens, screenIndex, activeTool, activeColor, strokeWidth, fillMode, textBold, textItalic, textUnderline, textHighlight, textSize, initialSelection, onStateChange, onAnnotationsChange, onSelectionChange,
   onClose, onSave, onCopy, onColorPick,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -97,6 +98,25 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     pipeline.requestRender();
     notifySelection();
   }, [notifySelection]);
+
+  // Listen for overlay-activated events from other overlay windows.
+  // When another overlay becomes active, clear our selection and reset to idle.
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    if (window.__TAURI__?.event) {
+      window.__TAURI__.event.listen('overlay-activated', (event: { payload: unknown }) => {
+        const activeIndex = event.payload as number;
+        if (activeIndex !== screenIndex) {
+          // Another overlay became active — clear our selection and annotations
+          selMgrRef.current?.discardSelection();
+          annEngRef.current?.clear();
+          setCaptureState('capturing');
+          syncPipeline();
+        }
+      }).then(fn => { unlisten = fn; });
+    }
+    return () => { unlisten?.(); };
+  }, [screenIndex, syncPipeline]);
 
   // Export only the selected region (frozen screen + annotations, no UI chrome)
   const getSelectionDataURL = useCallback((forceScale?: number): string | null => {
@@ -209,6 +229,11 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     const annEng = annEngRef.current;
     const sel = selMgr?.getSelection();
 
+    // Notify other overlay windows that this one is now active
+    if (window.__TAURI__) {
+      window.__TAURI__.core.invoke('activate_overlay', { screenIndex }).catch(() => {});
+    }
+
     if (e.button === 2) { if (state === 'capturing') onClose(); return; }
 
     if (state === 'capturing') {
@@ -260,7 +285,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       else { selMgr?.discardSelection(); setTextInput(null); notifyAnnotations(); selMgr?.startSelection({ x, y }); setCaptureState('selecting'); }
     }
     syncPipeline();
-  }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations, onClose, onColorPick, textInput]);
+  }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations, onClose, onColorPick, textInput, screenIndex]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = getCoords(e);

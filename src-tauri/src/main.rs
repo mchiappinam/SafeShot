@@ -9,7 +9,7 @@ use std::io::Write;
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Manager, WebviewUrl, WebviewWindowBuilder,
+    AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder,
 };
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
@@ -197,6 +197,7 @@ fn main() {
             resume_hotkey,
             open_url,
             show_overlay,
+            activate_overlay,
             open_settings,
             apply_win_shift_s_override,
         ])
@@ -464,10 +465,19 @@ fn main() {
 
 #[tauri::command]
 fn close_overlay(app: AppHandle) {
-    if let Some(win) = app.get_webview_window("overlay") {
-        win.close().ok();
+    // Close all overlay windows (overlay-0, overlay-1, ...)
+    let labels: Vec<String> = app
+        .webview_windows()
+        .keys()
+        .filter(|l| l.starts_with("overlay-"))
+        .cloned()
+        .collect();
+    for label in &labels {
+        if let Some(win) = app.get_webview_window(label) {
+            win.close().ok();
+        }
     }
-    log("Overlay closed");
+    log(&format!("Overlay closed ({} windows)", labels.len()));
 }
 
 #[tauri::command]
@@ -569,11 +579,24 @@ fn open_url(url: String) {
 
 #[tauri::command]
 fn show_overlay(app: AppHandle) {
-    if let Some(win) = app.get_webview_window("overlay") {
-        win.show().ok();
-        win.set_focus().ok();
+    let labels: Vec<String> = app
+        .webview_windows()
+        .keys()
+        .filter(|l| l.starts_with("overlay-"))
+        .cloned()
+        .collect();
+    for label in &labels {
+        if let Some(win) = app.get_webview_window(label) {
+            win.show().ok();
+            win.set_focus().ok();
+        }
     }
-    log("Overlay shown");
+    log(&format!("Overlay shown ({} windows)", labels.len()));
+}
+
+#[tauri::command]
+fn activate_overlay(app: AppHandle, screen_index: usize) {
+    app.emit("overlay-activated", screen_index).ok();
 }
 
 fn toggle_autostart(app: &AppHandle) {
@@ -599,7 +622,8 @@ fn toggle_autostart(app: &AppHandle) {
 }
 
 fn start_capture(app: &AppHandle) {
-    if app.get_webview_window("overlay").is_some() {
+    // Guard: if any overlay window already exists, don't create more
+    if app.webview_windows().keys().any(|l| l.starts_with("overlay-")) {
         return;
     }
     log("Starting capture...");
@@ -622,32 +646,24 @@ fn start_capture(app: &AppHandle) {
         }
     };
 
-    // Compute virtual desktop bounds spanning all monitors
-    let min_x = screens.iter().map(|s| s.x).min().unwrap_or(0);
-    let min_y = screens.iter().map(|s| s.y).min().unwrap_or(0);
-    let max_x = screens
-        .iter()
-        .map(|s| s.x + s.width as i32)
-        .max()
-        .unwrap_or(1920);
-    let max_y = screens
-        .iter()
-        .map(|s| s.y + s.height as i32)
-        .max()
-        .unwrap_or(1080);
-    let total_w = max_x - min_x;
-    let total_h = max_y - min_y;
+    // Create one overlay window per monitor
+    for (idx, screen) in screens.iter().enumerate() {
+        let label = format!("overlay-{}", idx);
+        let url_str = format!("index.html?screen={}", idx);
 
-    log(&format!(
-        "Virtual desktop: {}x{} at ({},{})",
-        total_w, total_h, min_x, min_y
-    ));
+        log(&format!(
+            "Creating {} at ({},{}) {}x{}",
+            label, screen.x, screen.y, screen.width, screen.height
+        ));
 
-    // Create window at the virtual desktop bounds
-    let win = match WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
+        let win = match WebviewWindowBuilder::new(
+            app,
+            &label,
+            WebviewUrl::App(url_str.into()),
+        )
         .title("SafeShot")
-        .position(min_x as f64, min_y as f64)
-        .inner_size(total_w as f64, total_h as f64)
+        .position(screen.x as f64, screen.y as f64)
+        .inner_size(screen.width as f64, screen.height as f64)
         .decorations(false)
         .resizable(false)
         .maximizable(false)
@@ -655,134 +671,140 @@ fn start_capture(app: &AppHandle) {
         .closable(false)
         .always_on_top(true)
         .skip_taskbar(true)
-        .focused(true)
+        .focused(idx == 0) // Focus the first window
         .transparent(true)
         // On macOS, WebKit defers JS execution for hidden windows, so start visible.
         // The window is transparent so nothing shows until the frontend renders.
         .visible(cfg!(target_os = "macos"))
         .build()
-    {
-        Ok(w) => {
-            log("Overlay window created (hidden)");
-            w
-        }
-        Err(e) => {
-            log(&format!("Overlay window failed: {}", e));
-            return;
-        }
-    };
+        {
+            Ok(w) => {
+                log(&format!("{} created", label));
+                w
+            }
+            Err(e) => {
+                log(&format!("{} failed: {}", label, e));
+                continue;
+            }
+        };
 
-    // On Windows: strip all window styles that cause invisible borders/title bar,
-    // then use GetSystemMetrics for the true virtual screen bounds in physical pixels
-    #[cfg(target_os = "windows")]
-    {
-        use raw_window_handle::HasWindowHandle;
-        if let Ok(handle) = win.window_handle() {
-            if let raw_window_handle::RawWindowHandle::Win32(h) = handle.as_ref() {
-                let hwnd = h.hwnd.get() as *mut std::ffi::c_void;
-                unsafe {
-                    use windows_sys::Win32::UI::WindowsAndMessaging::*;
-                    // Strip all frame styles: thick frame, caption, sysmenu, etc.
-                    let style = GetWindowLongW(hwnd, GWL_STYLE);
-                    let clean = (style as u32
-                        & !(WS_THICKFRAME
-                            | WS_CAPTION
-                            | WS_SYSMENU
-                            | WS_MAXIMIZEBOX
-                            | WS_MINIMIZEBOX))
-                        | WS_POPUP;
-                    SetWindowLongW(hwnd, GWL_STYLE, clean as i32);
-                    // Also strip extended styles (tool window border, etc.)
-                    let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
-                    let clean_ex = ex_style as u32
-                        & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
-                    SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                    // Position the window to cover the full virtual desktop
-                    let pad_top = 2;
-                    let pad = 12;
-                    SetWindowPos(
-                        hwnd,
-                        HWND_TOPMOST,
-                        min_x - pad,
-                        min_y - pad_top,
-                        total_w + pad * 2,
-                        total_h + pad_top + pad,
-                        SWP_FRAMECHANGED | SWP_NOACTIVATE,
-                    );
+        // On Windows: strip all window styles that cause invisible borders/title bar
+        #[cfg(target_os = "windows")]
+        {
+            use raw_window_handle::HasWindowHandle;
+            if let Ok(handle) = win.window_handle() {
+                if let raw_window_handle::RawWindowHandle::Win32(h) = handle.as_ref() {
+                    let hwnd = h.hwnd.get() as *mut std::ffi::c_void;
+                    unsafe {
+                        use windows_sys::Win32::UI::WindowsAndMessaging::*;
+                        // Strip all frame styles: thick frame, caption, sysmenu, etc.
+                        let style = GetWindowLongW(hwnd, GWL_STYLE);
+                        let clean = (style as u32
+                            & !(WS_THICKFRAME
+                                | WS_CAPTION
+                                | WS_SYSMENU
+                                | WS_MAXIMIZEBOX
+                                | WS_MINIMIZEBOX))
+                            | WS_POPUP;
+                        SetWindowLongW(hwnd, GWL_STYLE, clean as i32);
+                        // Also strip extended styles (tool window border, etc.)
+                        let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+                        let clean_ex = ex_style as u32
+                            & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+                        SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
+                        // Position the window to cover this monitor exactly
+                        SetWindowPos(
+                            hwnd,
+                            HWND_TOPMOST,
+                            screen.x,
+                            screen.y,
+                            screen.width as i32,
+                            screen.height as i32,
+                            SWP_FRAMECHANGED | SWP_NOACTIVATE,
+                        );
 
-                    // Disable Win11 rounded corners
-                    use windows_sys::Win32::Graphics::Dwm::*;
-                    let preference: u32 = DWMWCP_DONOTROUND as u32;
-                    DwmSetWindowAttribute(
-                        hwnd,
-                        DWMWA_WINDOW_CORNER_PREFERENCE as u32,
-                        &preference as *const u32 as *const std::ffi::c_void,
-                        std::mem::size_of::<u32>() as u32,
-                    );
+                        // Disable Win11 rounded corners
+                        use windows_sys::Win32::Graphics::Dwm::*;
+                        let preference: u32 = DWMWCP_DONOTROUND as u32;
+                        DwmSetWindowAttribute(
+                            hwnd,
+                            DWMWA_WINDOW_CORNER_PREFERENCE as u32,
+                            &preference as *const u32 as *const std::ffi::c_void,
+                            std::mem::size_of::<u32>() as u32,
+                        );
+                    }
+                    log(&format!(
+                        "Win32: {} styles stripped, positioned at ({},{}) {}x{}",
+                        label, screen.x, screen.y, screen.width, screen.height
+                    ));
                 }
-                log(&format!(
-                    "Win32: styles stripped, positioned at ({},{}) {}x{}",
-                    min_x, min_y, total_w, total_h
-                ));
             }
         }
-    }
 
-    #[cfg(not(target_os = "windows"))]
-    {
-        use tauri::LogicalPosition;
-        win.set_position(LogicalPosition::new(min_x as f64, min_y as f64))
-            .ok();
-    }
+        #[cfg(not(target_os = "windows"))]
+        {
+            use tauri::LogicalPosition;
+            win.set_position(LogicalPosition::new(screen.x as f64, screen.y as f64))
+                .ok();
+        }
 
-    // On macOS, set the window level high enough to cover the menu bar and dock
-    #[cfg(target_os = "macos")]
-    {
-        use raw_window_handle::HasWindowHandle;
+        // On macOS, set the window level high enough to cover the menu bar and dock
+        #[cfg(target_os = "macos")]
+        {
+            use raw_window_handle::HasWindowHandle;
 
-        if let Ok(handle) = win.window_handle() {
-            if let raw_window_handle::RawWindowHandle::AppKit(h) = handle.as_ref() {
-                let ns_view = h.ns_view.as_ptr() as *mut std::ffi::c_void;
-                unsafe {
-                    extern "C" {
-                        fn objc_msgSend(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void, ...) -> *mut std::ffi::c_void;
-                        fn sel_registerName(name: *const std::ffi::c_char) -> *mut std::ffi::c_void;
+            if let Ok(handle) = win.window_handle() {
+                if let raw_window_handle::RawWindowHandle::AppKit(h) = handle.as_ref() {
+                    let ns_view = h.ns_view.as_ptr() as *mut std::ffi::c_void;
+                    unsafe {
+                        extern "C" {
+                            fn objc_msgSend(receiver: *mut std::ffi::c_void, sel: *mut std::ffi::c_void, ...) -> *mut std::ffi::c_void;
+                            fn sel_registerName(name: *const std::ffi::c_char) -> *mut std::ffi::c_void;
+                        }
+                        // Get NSWindow from NSView via [nsView window]
+                        let window_sel = sel_registerName(b"window\0".as_ptr() as *const _);
+                        let ns_window = objc_msgSend(ns_view, window_sel);
+                        if !ns_window.is_null() {
+                            let set_level = sel_registerName(b"setLevel:\0".as_ptr() as *const _);
+                            let set_behavior = sel_registerName(b"setCollectionBehavior:\0".as_ptr() as *const _);
+                            // kCGScreenSaverWindowLevel (1000) sits above everything
+                            // including menu bar items and the dock
+                            objc_msgSend(ns_window, set_level, 1000i64);
+                            // NSWindowCollectionBehaviorCanJoinAllSpaces (1 << 0) |
+                            // NSWindowCollectionBehaviorFullScreenAuxiliary (1 << 8)
+                            let behavior: u64 = (1 << 0) | (1 << 8);
+                            objc_msgSend(ns_window, set_behavior, behavior);
+                        }
                     }
-                    // Get NSWindow from NSView via [nsView window]
-                    let window_sel = sel_registerName(b"window\0".as_ptr() as *const _);
-                    let ns_window = objc_msgSend(ns_view, window_sel);
-                    if !ns_window.is_null() {
-                        let set_level = sel_registerName(b"setLevel:\0".as_ptr() as *const _);
-                        let set_behavior = sel_registerName(b"setCollectionBehavior:\0".as_ptr() as *const _);
-                        // kCGScreenSaverWindowLevel (1000) sits above everything
-                        // including menu bar items and the dock
-                        objc_msgSend(ns_window, set_level, 1000i64);
-                        // NSWindowCollectionBehaviorCanJoinAllSpaces (1 << 0) |
-                        // NSWindowCollectionBehaviorFullScreenAuxiliary (1 << 8)
-                        let behavior: u64 = (1 << 0) | (1 << 8);
-                        objc_msgSend(ns_window, set_behavior, behavior);
-                    }
+                    log(&format!("macOS: {} window level set above menu bar and dock", label));
                 }
-                log("macOS: window level set above menu bar and dock");
             }
         }
-    }
 
-    log(&format!(
-        "Window ready: ({},{}) {}x{}, waiting for frontend to call show_overlay",
-        min_x, min_y, total_w, total_h
-    ));
+        log(&format!(
+            "{} ready: ({},{}) {}x{}, waiting for frontend to call show_overlay",
+            label, screen.x, screen.y, screen.width, screen.height
+        ));
+    }
 
     // Safety: if the frontend doesn't call show_overlay within 3 seconds,
-    // force-show the window so we can at least see what's happening
+    // force-show all overlay windows so we can at least see what's happening
     let app_clone = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(3));
-        if let Some(win) = app_clone.get_webview_window("overlay") {
-            if !win.is_visible().unwrap_or(true) {
-                log("Safety timeout: force-showing overlay");
-                win.show().ok();
-                win.set_focus().ok();
+        let labels: Vec<String> = app_clone
+            .webview_windows()
+            .keys()
+            .filter(|l| l.starts_with("overlay-"))
+            .cloned()
+            .collect();
+        for label in labels {
+            if let Some(win) = app_clone.get_webview_window(&label) {
+                if !win.is_visible().unwrap_or(true) {
+                    log(&format!("Safety timeout: force-showing {}", label));
+                    win.show().ok();
+                    win.set_focus().ok();
+                }
             }
         }
     });
@@ -812,7 +834,9 @@ fn open_save_folder(_app: &AppHandle) {
 }
 
 fn is_blocked(app: &AppHandle) -> bool {
-    if app.get_webview_window("overlay").is_some() { return true; }
+    // Check if any overlay window exists
+    let has_overlay = app.webview_windows().keys().any(|l| l.starts_with("overlay-"));
+    if has_overlay { return true; }
     let flag = app.state::<DialogActive>();
     let active = *flag.0.lock().unwrap();
     active
