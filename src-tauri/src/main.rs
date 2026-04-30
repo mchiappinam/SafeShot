@@ -724,8 +724,8 @@ fn start_capture(app: &AppHandle) {
                             & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                         SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                         // Reposition with padding (same as v1.4.3)
-                        let pad_top = 2;
-                        let pad = 10;
+                        let pad_top = 1;
+                        let pad = 9;
                         SetWindowPos(
                             hwnd,
                             HWND_TOPMOST,
