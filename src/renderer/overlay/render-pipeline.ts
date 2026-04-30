@@ -393,11 +393,12 @@ export class RenderPipeline {
       const bmp = this.bitmaps.get(s.displayId);
       if (!bmp) continue;
 
-      // Where this screen sits in logical (CSS) canvas coordinates
-      const screenLogicalX = s.bounds.x - this.offsetX;
-      const screenLogicalY = s.bounds.y - this.offsetY;
-      const screenLogicalW = s.bounds.width;
-      const screenLogicalH = s.bounds.height;
+      // Each overlay covers exactly one screen, filling the entire canvas.
+      // The screen's logical size is window.innerWidth x window.innerHeight.
+      const screenLogicalX = 0;
+      const screenLogicalY = 0;
+      const screenLogicalW = window.innerWidth;
+      const screenLogicalH = window.innerHeight;
 
       // Intersection of selection with this screen in logical coords
       const ix0 = Math.max(sel.x, screenLogicalX);
@@ -454,13 +455,11 @@ export class RenderPipeline {
     const h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
 
-    // Layer 0: frozen screen bitmaps at exact pixel positions
+    // Layer 0: frozen screen bitmaps — fill the entire canvas
     for (const s of this.screens) {
       const bmp = this.bitmaps.get(s.displayId);
       if (bmp) {
-        const sx = s.bounds.x - this.offsetX;
-        const sy = s.bounds.y - this.offsetY;
-        ctx.drawImage(bmp, sx, sy, s.bounds.width, s.bounds.height);
+        ctx.drawImage(bmp, 0, 0, w, h);
       }
     }
 
@@ -481,9 +480,7 @@ export class RenderPipeline {
       for (const s of this.screens) {
         const bmp = this.bitmaps.get(s.displayId);
         if (bmp) {
-          const sx = s.bounds.x - this.offsetX;
-          const sy = s.bounds.y - this.offsetY;
-          ctx.drawImage(bmp, sx, sy, s.bounds.width, s.bounds.height);
+          ctx.drawImage(bmp, 0, 0, w, h);
         }
       }
       ctx.restore();
