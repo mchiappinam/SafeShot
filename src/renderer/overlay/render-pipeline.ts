@@ -305,6 +305,7 @@ export class RenderPipeline {
   private dirty = false;
   private offsetX = 0;
   private offsetY = 0;
+  private activeTool: import('../../shared/types').ToolType | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -338,6 +339,8 @@ export class RenderPipeline {
   }
 
   setSelection(selection: Selection | null): void { this.selection = selection; this.dirty = true; }
+
+  setActiveTool(tool: import('../../shared/types').ToolType | null): void { this.activeTool = tool; this.dirty = true; }
 
   setAnnotations(annotations: Annotation[], preview: Annotation | null): void {
     this.annotations = annotations; this.preview = preview; this.dirty = true;
@@ -497,6 +500,23 @@ export class RenderPipeline {
       ctx.clip();
       for (const ann of this.annotations) renderAnnotation(ctx, ann);
       if (this.preview) renderAnnotation(ctx, this.preview);
+      // Layer 3.5: resize dots on shape endpoints when hand tool is active
+      if (this.activeTool === 'hand') {
+        for (const ann of this.annotations) {
+          if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'text') continue;
+          if (ann.points.length < 2) continue;
+          const [s, e] = ann.points;
+          for (const pt of [s, e]) {
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'black';
+            ctx.stroke();
+          }
+        }
+      }
       ctx.restore();
     }
 
