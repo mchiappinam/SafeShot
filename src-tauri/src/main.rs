@@ -693,7 +693,7 @@ fn start_capture(app: &AppHandle) {
             }
         };
 
-        // On Windows: strip all window styles that cause invisible borders/title bar
+        // On Windows: strip window styles, apply z-order, let Tauri handle sizing
         #[cfg(target_os = "windows")]
         {
             use raw_window_handle::HasWindowHandle;
@@ -702,7 +702,6 @@ fn start_capture(app: &AppHandle) {
                     let hwnd = h.hwnd.get() as *mut std::ffi::c_void;
                     unsafe {
                         use windows_sys::Win32::UI::WindowsAndMessaging::*;
-                        // Strip all frame styles: thick frame, caption, sysmenu, etc.
                         let style = GetWindowLongW(hwnd, GWL_STYLE);
                         let clean = (style as u32
                             & !(WS_THICKFRAME
@@ -712,23 +711,17 @@ fn start_capture(app: &AppHandle) {
                                 | WS_MINIMIZEBOX))
                             | WS_POPUP;
                         SetWindowLongW(hwnd, GWL_STYLE, clean as i32);
-                        // Also strip extended styles (tool window border, etc.)
                         let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
                         let clean_ex = ex_style as u32
                             & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                         SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                        // Position the window to cover this monitor exactly
+                        // Only apply style changes and z-order, don't reposition
                         SetWindowPos(
                             hwnd,
                             HWND_TOPMOST,
-                            screen.x,
-                            screen.y,
-                            screen.width as i32,
-                            screen.height as i32,
-                            SWP_FRAMECHANGED | SWP_NOACTIVATE,
+                            0, 0, 0, 0,
+                            SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
                         );
-
-                        // Disable Win11 rounded corners
                         use windows_sys::Win32::Graphics::Dwm::*;
                         let preference: u32 = DWMWCP_DONOTROUND as u32;
                         DwmSetWindowAttribute(
