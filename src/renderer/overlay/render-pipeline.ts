@@ -373,9 +373,11 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
           const hcx = bx + bw / 2;
           ctx.save();
           ctx.beginPath();
-          ctx.moveTo(hcx, by + bh);
-          ctx.bezierCurveTo(bx, by + bh * 0.7, bx, by + bh * 0.15, hcx, by + bh * 0.3);
-          ctx.bezierCurveTo(bx + bw, by + bh * 0.15, bx + bw, by + bh * 0.7, hcx, by + bh);
+          ctx.moveTo(hcx, by + bh * 0.25);
+          ctx.bezierCurveTo(hcx - bw * 0.02, by, bx, by, bx, by + bh * 0.35);
+          ctx.bezierCurveTo(bx, by + bh * 0.65, hcx, by + bh * 0.7, hcx, by + bh);
+          ctx.bezierCurveTo(hcx, by + bh * 0.7, bx + bw, by + bh * 0.65, bx + bw, by + bh * 0.35);
+          ctx.bezierCurveTo(bx + bw, by, hcx + bw * 0.02, by, hcx, by + bh * 0.25);
           ctx.closePath();
           ctx.clip();
           if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);

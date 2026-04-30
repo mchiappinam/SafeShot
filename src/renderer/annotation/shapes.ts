@@ -355,19 +355,29 @@ export function drawHeart(
   ctx.lineJoin = 'round';
 
   ctx.beginPath();
-  // Bottom point of the heart
-  ctx.moveTo(cx, y + h);
-  // Left side bezier curve
+  // Start at the top center dip
+  ctx.moveTo(cx, y + h * 0.25);
+  // Left bump: curve up to top-left, then down to bottom point
   ctx.bezierCurveTo(
-    x, y + h * 0.7,
-    x, y + h * 0.15,
-    cx, y + h * 0.3
+    cx - w * 0.02, y,       // pull toward center-top
+    x, y,                    // top-left corner
+    x, y + h * 0.35         // left side midpoint
   );
-  // Right side bezier curve
   ctx.bezierCurveTo(
-    x + w, y + h * 0.15,
-    x + w, y + h * 0.7,
-    cx, y + h
+    x, y + h * 0.65,        // left side lower
+    cx, y + h * 0.7,        // pull toward center
+    cx, y + h               // bottom point
+  );
+  // Right bump: curve from bottom back up to top-right, then to center dip
+  ctx.bezierCurveTo(
+    cx, y + h * 0.7,        // pull toward center
+    x + w, y + h * 0.65,    // right side lower
+    x + w, y + h * 0.35     // right side midpoint
+  );
+  ctx.bezierCurveTo(
+    x + w, y,                // top-right corner
+    cx + w * 0.02, y,       // pull toward center-top
+    cx, y + h * 0.25        // back to center dip
   );
   ctx.closePath();
   if (solid) { ctx.fillStyle = color; ctx.fill(); }
