@@ -657,14 +657,34 @@ fn start_capture(app: &AppHandle) {
         }
     };
 
-    // Create one overlay window per monitor
+    // Create one overlay window per monitor.
+    // Detect scale factors by matching captured screens to Tauri monitors by physical size.
+    let tauri_monitors = app.available_monitors().unwrap_or_default();
+    let mut used_monitors: Vec<bool> = vec![false; tauri_monitors.len()];
+
     for (idx, screen) in screens.iter().enumerate() {
         let label = format!("overlay-{}", idx);
         let url_str = format!("index.html?screen={}", idx);
 
+        // Find an unused Tauri monitor with matching physical size
+        let scale = tauri_monitors.iter().enumerate()
+            .find(|(i, m)| {
+                if used_monitors[*i] { return false; }
+                let s = m.size();
+                s.width == screen.width && s.height == screen.height
+            })
+            .map(|(i, m)| { used_monitors[i] = true; m.scale_factor() })
+            .unwrap_or(1.0);
+
+        let logical_x = screen.x as f64 / scale;
+        let logical_y = screen.y as f64 / scale;
+        let logical_w = screen.width as f64 / scale;
+        let logical_h = screen.height as f64 / scale;
+
         log(&format!(
-            "Creating {} at ({},{}) {}x{}",
-            label, screen.x, screen.y, screen.width, screen.height
+            "Creating {} physical=({},{}) {}x{} scale={} logical=({:.0},{:.0}) {:.0}x{:.0}",
+            label, screen.x, screen.y, screen.width, screen.height,
+            scale, logical_x, logical_y, logical_w, logical_h
         ));
 
         let win = match WebviewWindowBuilder::new(
@@ -673,8 +693,8 @@ fn start_capture(app: &AppHandle) {
             WebviewUrl::App(url_str.into()),
         )
         .title("SafeShot")
-        .position(screen.x as f64, screen.y as f64)
-        .inner_size(screen.width as f64, screen.height as f64)
+        .position(logical_x, logical_y)
+        .inner_size(logical_w, logical_h)
         .decorations(false)
         .resizable(false)
         .maximizable(false)
@@ -699,7 +719,7 @@ fn start_capture(app: &AppHandle) {
             }
         };
 
-        // On Windows: strip window styles and reposition with padding (same as v1.4.3)
+        // On Windows: strip window styles and apply z-order only
         #[cfg(target_os = "windows")]
         {
             use raw_window_handle::HasWindowHandle;
@@ -721,16 +741,12 @@ fn start_capture(app: &AppHandle) {
                         let clean_ex = ex_style as u32
                             & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                         SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                        let pad_top = 2;
-                        let pad = 12;
+                        // Apply style changes and z-order only, let Tauri handle position/size
                         SetWindowPos(
                             hwnd,
                             HWND_TOPMOST,
-                            screen.x - pad,
-                            screen.y - pad_top,
-                            screen.width as i32 + pad * 2,
-                            screen.height as i32 + pad_top + pad,
-                            SWP_FRAMECHANGED | SWP_NOACTIVATE,
+                            0, 0, 0, 0,
+                            SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
                         );
                         use windows_sys::Win32::Graphics::Dwm::*;
                         let preference: u32 = DWMWCP_DONOTROUND as u32;
