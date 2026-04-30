@@ -658,31 +658,15 @@ fn start_capture(app: &AppHandle) {
     };
 
     // Create one overlay window per monitor.
-    // Detect scale factors by matching captured screens to Tauri monitors by physical size.
-    let tauri_monitors = app.available_monitors().unwrap_or_default();
-    let mut used_monitors: Vec<bool> = vec![false; tauri_monitors.len()];
-
+    // Use the same approach as v1.4.3: pass raw display_info values to the builder,
+    // then let SetWindowPos with padding override position and size on Windows.
     for (idx, screen) in screens.iter().enumerate() {
         let label = format!("overlay-{}", idx);
         let url_str = format!("index.html?screen={}", idx);
 
-        // Find an unused Tauri monitor with matching physical size
-        let scale = tauri_monitors.iter().enumerate()
-            .find(|(i, m)| {
-                if used_monitors[*i] { return false; }
-                let s = m.size();
-                s.width == screen.width && s.height == screen.height
-            })
-            .map(|(i, m)| { used_monitors[i] = true; m.scale_factor() })
-            .unwrap_or(1.0);
-
-        let logical_w = screen.width as f64 / scale;
-        let logical_h = screen.height as f64 / scale;
-
         log(&format!(
-            "Creating {} physical=({},{}) {}x{} scale={} logical_size={:.0}x{:.0}",
-            label, screen.x, screen.y, screen.width, screen.height,
-            scale, logical_w, logical_h
+            "Creating {} at ({},{}) {}x{}",
+            label, screen.x, screen.y, screen.width, screen.height
         ));
 
         let win = match WebviewWindowBuilder::new(
@@ -692,7 +676,7 @@ fn start_capture(app: &AppHandle) {
         )
         .title("SafeShot")
         .position(screen.x as f64, screen.y as f64)
-        .inner_size(logical_w, logical_h)
+        .inner_size(screen.width as f64, screen.height as f64)
         .decorations(false)
         .resizable(false)
         .maximizable(false)
@@ -739,14 +723,16 @@ fn start_capture(app: &AppHandle) {
                         let clean_ex = ex_style as u32
                             & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                         SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
-                        // After stripping styles, reposition to cover the monitor exactly
+                        // Reposition with padding (same as v1.4.3)
+                        let pad_top = 2;
+                        let pad = 12;
                         SetWindowPos(
                             hwnd,
                             HWND_TOPMOST,
-                            screen.x,
-                            screen.y,
-                            screen.width as i32,
-                            screen.height as i32,
+                            screen.x - pad,
+                            screen.y - pad_top,
+                            screen.width as i32 + pad * 2,
+                            screen.height as i32 + pad_top + pad,
                             SWP_FRAMECHANGED | SWP_NOACTIVATE,
                         );
                         use windows_sys::Win32::Graphics::Dwm::*;
