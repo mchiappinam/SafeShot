@@ -588,6 +588,11 @@ fn show_overlay(app: AppHandle) {
     for label in &labels {
         if let Some(win) = app.get_webview_window(label) {
             win.show().ok();
+        }
+    }
+    // Focus only the first overlay to avoid focus thrashing
+    if let Some(first) = labels.first() {
+        if let Some(win) = app.get_webview_window(first) {
             win.set_focus().ok();
         }
     }

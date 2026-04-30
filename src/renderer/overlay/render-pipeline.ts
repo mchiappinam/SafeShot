@@ -319,9 +319,9 @@ export class RenderPipeline {
     this.bitmaps.clear();
     this.screens = screens;
     if (screens.length === 0) return;
-    // Each overlay window now covers exactly one screen, so offset is always 0,0
-    this.offsetX = 0;
-    this.offsetY = 0;
+    // Each overlay window now covers exactly one screen, so offset to its origin
+    this.offsetX = screens[0]?.bounds.x ?? 0;
+    this.offsetY = screens[0]?.bounds.y ?? 0;
     await Promise.all(screens.map(async (s) => {
       // Decode base64 data URL directly, avoids fetch() which CSP can block
       const base64 = s.imageDataURL.replace(/^data:image\/\w+;base64,/, '');

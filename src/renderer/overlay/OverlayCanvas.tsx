@@ -181,7 +181,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     pipelineRef.current.setScreens(screens).then(() => {
       pipelineRef.current?.requestRender();
     }).catch(console.error);
-    // Show overlay once screens are handed off, don't wait for bitmap decoding
+    // Show this overlay window once its screen is loaded
     requestAnimationFrame(() => {
       if (window.__TAURI__) {
         window.__TAURI__.core.invoke('show_overlay').catch(() => {});
