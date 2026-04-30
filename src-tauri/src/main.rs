@@ -198,6 +198,7 @@ fn main() {
             open_url,
             show_overlay,
             activate_overlay,
+            sync_tool_state,
             open_settings,
             apply_win_shift_s_override,
         ])
@@ -602,6 +603,11 @@ fn show_overlay(app: AppHandle) {
 #[tauri::command]
 fn activate_overlay(app: AppHandle, screen_index: usize) {
     app.emit("overlay-activated", screen_index).ok();
+}
+
+#[tauri::command]
+fn sync_tool_state(app: AppHandle, state: serde_json::Value) {
+    app.emit("tool-state-changed", state).ok();
 }
 
 fn toggle_autostart(app: &AppHandle) {

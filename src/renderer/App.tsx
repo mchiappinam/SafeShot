@@ -75,6 +75,38 @@ export default function App(): React.ReactElement {
   const [initialSelection, setInitialSelection] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [selectionPreset, setSelectionPreset] = useState<SelectionPreset>('custom');
 
+  // Flag to prevent broadcast loops when receiving state from another overlay
+  const receivingRef = useRef(false);
+
+  // Broadcast tool state to other overlay windows
+  const broadcastToolState = useCallback((overrides?: Record<string, unknown>) => {
+    if (receivingRef.current) return;
+    invoke('sync_tool_state', { state: { screenIndex, ...overrides } }).catch(() => {});
+  }, [screenIndex]);
+
+  // Listen for tool state changes from other overlays
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    if (window.__TAURI__?.event) {
+      window.__TAURI__.event.listen('tool-state-changed', (event: { payload: unknown }) => {
+        const s = event.payload as Record<string, unknown>;
+        if (s.screenIndex === screenIndex) return; // ignore our own broadcasts
+        receivingRef.current = true;
+        if (s.activeTool !== undefined) setActiveTool(s.activeTool as ToolType | null);
+        if (s.activeColor !== undefined) setActiveColor(s.activeColor as string);
+        if (s.strokeWidth !== undefined) setStrokeWidth(s.strokeWidth as number);
+        if (s.fillMode !== undefined) setFillMode(s.fillMode as FillMode);
+        if (s.textBold !== undefined) setTextBold(s.textBold as boolean);
+        if (s.textItalic !== undefined) setTextItalic(s.textItalic as boolean);
+        if (s.textUnderline !== undefined) setTextUnderline(s.textUnderline as boolean);
+        if (s.textHighlight !== undefined) setTextHighlight(s.textHighlight as boolean);
+        if (s.textSize !== undefined) setTextSize(s.textSize as number);
+        receivingRef.current = false;
+      }).then(fn => { unlisten = fn; });
+    }
+    return () => { unlisten?.(); };
+  }, [screenIndex]);
+
   /** Resolve a preset string to a selection rect, or null for 'custom'/'last'. */
   const resolvePreset = useCallback((preset: string): { x: number; y: number; width: number; height: number } | null => {
     const sw = window.innerWidth;
@@ -210,12 +242,12 @@ export default function App(): React.ReactElement {
         onClose={handleClose}
         onSave={handleSave}
         onCopy={handleCopy}
-        onColorPick={(c) => { setActiveColor(c); invoke('set_last_color', { color: c }).catch(() => {}); }}
+        onColorPick={(c) => { setActiveColor(c); invoke('set_last_color', { color: c }).catch(() => {}); broadcastToolState({ activeColor: c }); }}
       />
 
       {showToolbars && toolbarPositions && (
         <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
-          <DrawingToolbar activeTool={activeTool} onToolSelect={(t) => { setActiveTool(t); invoke('set_last_tool', { tool: t ?? 'move' }).catch(() => {}); }}
+          <DrawingToolbar activeTool={activeTool} onToolSelect={(t) => { setActiveTool(t); invoke('set_last_tool', { tool: t ?? 'move' }).catch(() => {}); broadcastToolState({ activeTool: t }); }}
             onColorPickerOpen={() => { setColorPickerOpen(v => !v); setSettingsOpen(false); }}
             onSettingsOpen={() => { setSettingsOpen(v => !v); setColorPickerOpen(false); }}
             activeColor={activeColor}
@@ -238,15 +270,15 @@ export default function App(): React.ReactElement {
 
       {colorPickerOpen && toolbarPositions && (
         <ColorPicker selectedColor={activeColor}
-          onColorChange={(c) => { setActiveColor(c); setColorPickerOpen(false); invoke('set_last_color', { color: c }).catch(() => {}); }}
+          onColorChange={(c) => { setActiveColor(c); setColorPickerOpen(false); invoke('set_last_color', { color: c }).catch(() => {}); broadcastToolState({ activeColor: c }); }}
           onClose={() => setColorPickerOpen(false)}
           position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}
 
       {settingsOpen && toolbarPositions && (
         <SettingsPopup strokeWidth={strokeWidth} fillMode={fillMode} selectionPreset={selectionPreset}
-          onStrokeWidthChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); }}
-          onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); }}
+          onStrokeWidthChange={(v) => { setStrokeWidth(v); invoke('set_last_thickness', { thickness: v }).catch(() => {}); broadcastToolState({ strokeWidth: v }); }}
+          onFillModeChange={(m) => { setFillMode(m); invoke('set_fill_mode', { mode: m }).catch(() => {}); broadcastToolState({ fillMode: m }); }}
           onSelectionPresetChange={(p) => {
             setSelectionPreset(p);
             invoke('set_setting', { key: 'selectionPreset', value: p }).catch(() => {});
@@ -271,11 +303,11 @@ export default function App(): React.ReactElement {
         <TextFormatBar
           bold={textBold} italic={textItalic} underline={textUnderline}
           highlight={textHighlight} size={textSize}
-          onBoldToggle={() => setTextBold(v => !v)}
-          onItalicToggle={() => setTextItalic(v => !v)}
-          onUnderlineToggle={() => setTextUnderline(v => !v)}
-          onHighlightToggle={() => setTextHighlight(v => !v)}
-          onSizeChange={setTextSize}
+          onBoldToggle={() => { setTextBold(v => { broadcastToolState({ textBold: !v }); return !v; }); }}
+          onItalicToggle={() => { setTextItalic(v => { broadcastToolState({ textItalic: !v }); return !v; }); }}
+          onUnderlineToggle={() => { setTextUnderline(v => { broadcastToolState({ textUnderline: !v }); return !v; }); }}
+          onHighlightToggle={() => { setTextHighlight(v => { broadcastToolState({ textHighlight: !v }); return !v; }); }}
+          onSizeChange={(s) => { setTextSize(s); broadcastToolState({ textSize: s }); }}
           position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y - 50 }} />
       )}
     </>
