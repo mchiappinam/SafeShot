@@ -222,11 +222,12 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     }
   }, [initialSelection, screens]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement> | MouseEvent) => {
+  const getCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement> | MouseEvent | React.Touch) => {
     const rect = canvasRef.current!.getBoundingClientRect();
-    // Clamp to canvas bounds so selection can't go outside
-    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+    const clientX = 'clientX' in e ? e.clientX : 0;
+    const clientY = 'clientY' in e ? e.clientY : 0;
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const y = Math.max(0, Math.min(clientY - rect.top, rect.height));
     return { x, y };
   }, []);
 
@@ -417,11 +418,33 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Touch event handlers for touchscreen support
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    // Create a synthetic mouse event-like object
+    handleMouseDown({ ...e, clientX: touch.clientX, clientY: touch.clientY, button: 0, getCoords: undefined } as unknown as React.MouseEvent<HTMLCanvasElement>);
+  }, [handleMouseDown]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleMouseMove({ ...e, clientX: touch.clientX, clientY: touch.clientY } as unknown as React.MouseEvent<HTMLCanvasElement>);
+  }, [handleMouseMove]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    handleMouseUp(e as unknown as React.MouseEvent<HTMLCanvasElement>);
+  }, [handleMouseUp]);
+
   return (
     <>
       <canvas ref={canvasRef}
-        style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: window.innerWidth, height: window.innerHeight }}
+        style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: window.innerWidth, height: window.innerHeight, touchAction: 'none' }}
         onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
+        onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
         onContextMenu={(e) => e.preventDefault()} />
       {textInput && (
         <textarea
