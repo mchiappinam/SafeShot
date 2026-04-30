@@ -1,7 +1,7 @@
 import { DIM_MASK_OPACITY, RESIZE_HANDLE_SIZE } from '../../shared/constants';
 import type { Annotation, ScreenData, Selection } from '../../shared/types';
-import { drawCircle, drawTriangle, drawOctagon, drawLine, drawArrow, drawSquare, drawText } from '../annotation/shapes';
-import { drawFreehand } from '../annotation/freehand';
+import { drawCircle, drawTriangle, drawOctagon, drawLine, drawArrow, drawSquare, drawText, drawDiamond, drawStar, drawPentagon, drawHeart } from '../annotation/shapes';
+import { drawFreehand, drawCalligraphy } from '../annotation/freehand';
 
 interface HandlePoint { x: number; y: number; }
 
@@ -289,6 +289,103 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
     case 'text':
       if (start && ann.text) drawText(ctx, start, ann.text, ann.color, ann.textSize ?? 16, ann.textBold, ann.textItalic, ann.textUnderline, ann.textHighlight);
       break;
+    case 'calligraphy':
+      drawCalligraphy(ctx, ann.points, ann.color, ann.strokeWidth);
+      break;
+    case 'diamond':
+      if (start && end) {
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
+          ctx.save();
+          ctx.beginPath();
+          const dcx = bx + bw / 2, dcy = by + bh / 2;
+          ctx.moveTo(dcx, by);
+          ctx.lineTo(bx + bw, dcy);
+          ctx.lineTo(dcx, by + bh);
+          ctx.lineTo(bx, dcy);
+          ctx.closePath();
+          ctx.clip();
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
+        } else {
+          drawDiamond(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
+      break;
+    case 'star':
+      if (start && end) {
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
+          const scx = bx + bw / 2, scy = by + bh / 2;
+          const srx = bw / 2, sry = bh / 2;
+          const sirx = srx * 0.38, siry = sry * 0.38;
+          ctx.save();
+          ctx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            const outerAngle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+            const ox = scx + srx * Math.cos(outerAngle), oy = scy + sry * Math.sin(outerAngle);
+            if (i === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
+            const innerAngle = outerAngle + Math.PI / 5;
+            ctx.lineTo(scx + sirx * Math.cos(innerAngle), scy + siry * Math.sin(innerAngle));
+          }
+          ctx.closePath();
+          ctx.clip();
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
+        } else {
+          drawStar(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
+      break;
+    case 'pentagon':
+      if (start && end) {
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
+          const pcx = bx + bw / 2, pcy = by + bh / 2;
+          const prx = bw / 2, pry = bh / 2;
+          ctx.save();
+          ctx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+            const px = pcx + prx * Math.cos(angle), py = pcy + pry * Math.sin(angle);
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.clip();
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
+        } else {
+          drawPentagon(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
+      break;
+    case 'heart':
+      if (start && end) {
+        const bx = Math.min(start.x, end.x), by = Math.min(start.y, end.y);
+        const bw = Math.abs(end.x - start.x), bh = Math.abs(end.y - start.y);
+        if (isBlur || isRedact) {
+          const hcx = bx + bw / 2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(hcx, by + bh);
+          ctx.bezierCurveTo(bx, by + bh * 0.7, bx, by + bh * 0.15, hcx, by + bh * 0.3);
+          ctx.bezierCurveTo(bx + bw, by + bh * 0.15, bx + bw, by + bh * 0.7, hcx, by + bh);
+          ctx.closePath();
+          ctx.clip();
+          if (isRedact) redactTextLines(ctx, bx, by, bw, bh, ann.color);
+          else pixelateClipped(ctx, bx, by, bw, bh, 10, dprOverride);
+          ctx.restore();
+        } else {
+          drawHeart(ctx, start, end, ann.color, ann.strokeWidth, ann.fillMode === 'solid');
+        }
+      }
+      break;
   }
 }
 
@@ -503,7 +600,7 @@ export class RenderPipeline {
       // Layer 3.5: resize dots on shape endpoints when hand tool is active
       if (this.activeTool === 'hand') {
         for (const ann of this.annotations) {
-          if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'text') continue;
+          if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'calligraphy' || ann.tool === 'text') continue;
           if (ann.points.length < 2) continue;
           const [s, e] = ann.points;
           for (const pt of [s, e]) {

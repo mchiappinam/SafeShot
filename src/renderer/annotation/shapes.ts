@@ -208,6 +208,175 @@ export function drawSquare(
 }
 
 /**
+ * Draw a diamond (rotated square) bounded by the drag rectangle.
+ */
+export function drawDiamond(
+  ctx: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  color: string,
+  strokeWidth: number,
+  solid: boolean = false
+): void {
+  ctx.save();
+
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
+  const w = Math.abs(end.x - start.x);
+  const h = Math.abs(end.y - start.y);
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+
+  ctx.lineWidth = strokeWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  ctx.moveTo(cx, y);        // top
+  ctx.lineTo(x + w, cy);    // right
+  ctx.lineTo(cx, y + h);    // bottom
+  ctx.lineTo(x, cy);        // left
+  ctx.closePath();
+  if (solid) { ctx.fillStyle = color; ctx.fill(); }
+  else { ctx.strokeStyle = color; ctx.stroke(); }
+
+  ctx.restore();
+}
+
+/**
+ * Draw a 5-pointed star inscribed in the bounding box.
+ */
+export function drawStar(
+  ctx: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  color: string,
+  strokeWidth: number,
+  solid: boolean = false
+): void {
+  ctx.save();
+
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
+  const w = Math.abs(end.x - start.x);
+  const h = Math.abs(end.y - start.y);
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const rx = w / 2;
+  const ry = h / 2;
+  const innerRx = rx * 0.38;
+  const innerRy = ry * 0.38;
+
+  ctx.lineWidth = strokeWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    // Outer point
+    const outerAngle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+    const ox = cx + rx * Math.cos(outerAngle);
+    const oy = cy + ry * Math.sin(outerAngle);
+    if (i === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
+    // Inner point
+    const innerAngle = outerAngle + Math.PI / 5;
+    const ix = cx + innerRx * Math.cos(innerAngle);
+    const iy = cy + innerRy * Math.sin(innerAngle);
+    ctx.lineTo(ix, iy);
+  }
+  ctx.closePath();
+  if (solid) { ctx.fillStyle = color; ctx.fill(); }
+  else { ctx.strokeStyle = color; ctx.stroke(); }
+
+  ctx.restore();
+}
+
+/**
+ * Draw a regular pentagon inscribed in the bounding box.
+ */
+export function drawPentagon(
+  ctx: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  color: string,
+  strokeWidth: number,
+  solid: boolean = false
+): void {
+  ctx.save();
+
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
+  const w = Math.abs(end.x - start.x);
+  const h = Math.abs(end.y - start.y);
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const rx = w / 2;
+  const ry = h / 2;
+
+  ctx.lineWidth = strokeWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+    const px = cx + rx * Math.cos(angle);
+    const py = cy + ry * Math.sin(angle);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  if (solid) { ctx.fillStyle = color; ctx.fill(); }
+  else { ctx.strokeStyle = color; ctx.stroke(); }
+
+  ctx.restore();
+}
+
+/**
+ * Draw a heart shape using bezier curves inscribed in the bounding box.
+ */
+export function drawHeart(
+  ctx: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  color: string,
+  strokeWidth: number,
+  solid: boolean = false
+): void {
+  ctx.save();
+
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
+  const w = Math.abs(end.x - start.x);
+  const h = Math.abs(end.y - start.y);
+  const cx = x + w / 2;
+
+  ctx.lineWidth = strokeWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  // Bottom point of the heart
+  ctx.moveTo(cx, y + h);
+  // Left side bezier curve
+  ctx.bezierCurveTo(
+    x, y + h * 0.7,
+    x, y + h * 0.15,
+    cx, y + h * 0.3
+  );
+  // Right side bezier curve
+  ctx.bezierCurveTo(
+    x + w, y + h * 0.15,
+    x + w, y + h * 0.7,
+    cx, y + h
+  );
+  ctx.closePath();
+  if (solid) { ctx.fillStyle = color; ctx.fill(); }
+  else { ctx.strokeStyle = color; ctx.stroke(); }
+
+  ctx.restore();
+}
+
+/**
  * Draw text at the given position with transparent background.
  */
 export function drawText(

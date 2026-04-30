@@ -263,6 +263,14 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         syncPipeline();
         return;
       }
+      // Eraser tool: erase annotation at click point, enter annotating state for drag
+      if (inside && activeToolRef.current === 'eraser') {
+        annEng?.eraseAt({ x, y });
+        notifyAnnotations();
+        setCaptureState('annotating');
+        syncPipeline();
+        return;
+      }
       // Hand tool: resize or move existing annotations
       if (inside && activeToolRef.current === 'hand') {
         // First check if clicking near a corner for resize
@@ -349,6 +357,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     else if (state === 'annotating') {
       if (annEngRef.current?.isResizingAnnotation()) annEngRef.current.updateResizeAnnotation({ x, y });
       else if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.updateMoveAnnotation({ x, y });
+      else if (activeToolRef.current === 'eraser') { annEngRef.current?.eraseAt({ x, y }); notifyAnnotations(); }
       else annEngRef.current?.updateStroke({ x, y });
     }
     cursorRef.current?.update({
@@ -357,7 +366,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       hoveredHandle: state === 'area-finalized' ? getHoveredHandle(x, y) : null, isOverToolbar: false,
     });
     syncPipeline();
-  }, [getCoords, getHoveredHandle, syncPipeline]);
+  }, [getCoords, getHoveredHandle, syncPipeline, notifyAnnotations]);
 
   const handleMouseUp = useCallback((_e: React.MouseEvent<HTMLCanvasElement>) => {
     const state = captureStateRef.current;
@@ -367,6 +376,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     else if (state === 'annotating') {
       if (annEngRef.current?.isResizingAnnotation()) annEngRef.current.finalizeResizeAnnotation();
       else if (annEngRef.current?.isMovingAnnotation()) annEngRef.current.finalizeMoveAnnotation();
+      else if (activeToolRef.current === 'eraser') { /* eraser has no stroke to finalize */ }
       else annEngRef.current?.finalizeStroke();
       notifyAnnotations(); setCaptureState('area-finalized');
     }
@@ -376,6 +386,15 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const canvas = canvasRef.current;
     if (e.key === 'Escape') { e.preventDefault(); onClose(); return; }
+    // Delete/Backspace with hand tool: delete last interacted annotation
+    if ((e.key === 'Delete' || e.key === 'Backspace') && activeToolRef.current === 'hand') {
+      e.preventDefault();
+      if (annEngRef.current?.deleteLastInteracted()) {
+        notifyAnnotations();
+        syncPipeline();
+      }
+      return;
+    }
     const mod = e.ctrlKey || e.metaKey;
     if (!mod || !canvas) return;
     if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); annEngRef.current?.undo(); notifyAnnotations(); syncPipeline(); }

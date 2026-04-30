@@ -79,6 +79,8 @@ export class CursorManager {
       cursor = 'grab';
     } else if (selection !== null && activeTool === 'eyedropper') {
       cursor = CUSTOM_CROSSHAIR;
+    } else if (selection !== null && activeTool === 'eraser') {
+      cursor = CUSTOM_CROSSHAIR;
     } else if (selection !== null && activeTool !== null) {
       cursor = CUSTOM_CROSSHAIR;
     } else if (selection !== null && activeTool === null && isPointInSelection(mouseX, mouseY, selection)) {

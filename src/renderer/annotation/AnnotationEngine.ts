@@ -23,6 +23,7 @@ export class AnnotationEngine {
   private textInput: { point: Point; text: string } | null = null;
   private movingAnnotationId: string | null = null;
   private moveLastPoint: Point | null = null;
+  private lastInteractedId: string | null = null;
   private textBold = false;
   private textItalic = false;
   private textUnderline = false;
@@ -53,6 +54,12 @@ export class AnnotationEngine {
 
     if (this.tool === 'text') {
       this.textInput = { point, text: '' };
+      return;
+    }
+
+    // Eraser: hit-test and remove annotation at point
+    if (this.tool === 'eraser') {
+      this.eraseAt(point);
       return;
     }
 
@@ -109,8 +116,15 @@ export class AnnotationEngine {
   }
 
   updateStroke(point: Point): void {
-    if (!this.tool || !this.preview) return;
-    if (this.tool === 'pencil' || this.tool === 'sharpie') {
+    if (!this.tool || !this.preview) {
+      // Eraser during drag: continuously erase
+      if (this.tool === 'eraser') {
+        this.eraseAt(point);
+        return;
+      }
+      return;
+    }
+    if (this.tool === 'pencil' || this.tool === 'sharpie' || this.tool === 'calligraphy') {
       this.currentPoints = [...this.currentPoints, point];
     } else {
       this.currentPoints = [this.currentPoints[0], point];
@@ -145,7 +159,7 @@ export class AnnotationEngine {
       const textH = fontSize + 4;
       return p.x >= start.x && p.x <= start.x + textW && p.y >= start.y && p.y <= start.y + textH;
     }
-    if (ann.tool === 'pencil' || ann.tool === 'sharpie') {
+    if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'calligraphy') {
       return ann.points.some(pt => Math.hypot(p.x - pt.x, p.y - pt.y) <= tolerance);
     }
     // For shapes with 2 points (start, end), check bounding box
@@ -163,6 +177,7 @@ export class AnnotationEngine {
   startMoveAnnotation(id: string, point: Point): void {
     this.movingAnnotationId = id;
     this.moveLastPoint = point;
+    this.lastInteractedId = id;
   }
 
   updateMoveAnnotation(point: Point): void {
@@ -201,7 +216,7 @@ export class AnnotationEngine {
     for (let i = anns.length - 1; i >= 0; i--) {
       const ann = anns[i];
       // Only resize 2-point shapes
-      if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'text') continue;
+      if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'calligraphy' || ann.tool === 'text') continue;
       if (ann.points.length < 2) continue;
       const [s, e] = ann.points;
       // Check near start point
@@ -223,6 +238,7 @@ export class AnnotationEngine {
     this.resizingAnnotationId = id;
     this.resizeCorner = corner;
     this.resizeOriginalPoints = ann.points.map(p => ({ ...p }));
+    this.lastInteractedId = id;
   }
 
   updateResizeAnnotation(point: Point): void {
@@ -244,6 +260,25 @@ export class AnnotationEngine {
   }
 
   isResizingAnnotation(): boolean { return this.resizingAnnotationId !== null; }
+
+  /** Erase the topmost annotation at the given point. Returns true if something was removed. */
+  eraseAt(point: Point): boolean {
+    const hitId = this.hitTestAnnotation(point);
+    if (!hitId) return false;
+    this.stack.removeAnnotation(hitId);
+    return true;
+  }
+
+  /** Delete the last annotation that was moved or resized. Returns true if something was removed. */
+  deleteLastInteracted(): boolean {
+    if (!this.lastInteractedId) return false;
+    const removed = this.stack.removeAnnotation(this.lastInteractedId);
+    if (removed) {
+      this.lastInteractedId = null;
+      return true;
+    }
+    return false;
+  }
 
   undo(): boolean { return this.stack.undo(); }
   redo(): boolean { return this.stack.redo(); }

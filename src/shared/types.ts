@@ -43,7 +43,7 @@ export interface ResizeHandle {
 
 // Annotations
 
-export type ToolType = 'pencil' | 'line' | 'arrow' | 'sharpie' | 'circle' | 'triangle' | 'octagon' | 'square' | 'text' | 'hand' | 'eyedropper';
+export type ToolType = 'pencil' | 'line' | 'arrow' | 'sharpie' | 'circle' | 'triangle' | 'octagon' | 'square' | 'text' | 'hand' | 'eyedropper' | 'eraser' | 'calligraphy' | 'diamond' | 'star' | 'pentagon' | 'heart';
 
 export type FillMode = 'hollow' | 'solid' | 'blur' | 'redact';
 

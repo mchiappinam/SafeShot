@@ -148,7 +148,7 @@ export default function App(): React.ReactElement {
     }).catch(() => {});
     invoke<string>('get_last_tool').then(tool => {
       if (tool === 'move') { setActiveTool(null); return; }
-      const valid: ToolType[] = ['pencil', 'line', 'arrow', 'sharpie', 'circle', 'triangle', 'octagon', 'square', 'text', 'hand', 'eyedropper'];
+      const valid: ToolType[] = ['pencil', 'line', 'arrow', 'sharpie', 'circle', 'triangle', 'octagon', 'square', 'text', 'hand', 'eyedropper', 'eraser', 'calligraphy', 'diamond', 'star', 'pentagon', 'heart'];
       if (tool && valid.includes(tool as ToolType)) setActiveTool(tool as ToolType);
     }).catch(() => {});
     invoke<Record<string, unknown>>('get_text_settings').then(ts => {

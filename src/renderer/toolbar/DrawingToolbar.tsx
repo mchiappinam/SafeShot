@@ -11,21 +11,27 @@ interface DrawingToolbarProps {
   position: { x: number; y: number };
 }
 
-const SHAPE_TOOLS = new Set<ToolType>(['square', 'circle', 'triangle', 'octagon']);
+const SHAPE_TOOLS = new Set<ToolType>(['square', 'circle', 'triangle', 'octagon', 'diamond', 'star', 'pentagon', 'heart']);
 const FILL_LABELS: Record<FillMode, string> = { hollow: 'Hollow', solid: 'Solid', blur: 'Blur', redact: 'Redact' };
 
 const TOOLS: { id: ToolType | null; label: string; tooltip: string; fontSize?: number }[] = [
   { id: null,        label: '✥',  tooltip: 'Move Selection' },
   { id: 'hand',      label: '✋', tooltip: 'Move Objects' },
   { id: 'eyedropper',label: '💧', tooltip: 'Pick Color' },
+  { id: 'eraser',    label: '🧹', tooltip: 'Eraser' },
   { id: 'pencil',   label: '🖊', tooltip: 'Sharpie' },
   { id: 'sharpie',  label: '🖍️', tooltip: 'Highlighter' },
+  { id: 'calligraphy', label: '🖋', tooltip: 'Calligraphy' },
   { id: 'line',     label: '╱',  tooltip: 'Line' },
   { id: 'arrow',    label: '➜',  tooltip: 'Arrow' },
   { id: 'square',   label: '▢',  tooltip: 'Rectangle' },
   { id: 'circle',   label: '○',  tooltip: 'Circle', fontSize: 22 },
   { id: 'triangle', label: '△',  tooltip: 'Triangle' },
   { id: 'octagon',  label: '⬡',  tooltip: 'Octagon' },
+  { id: 'diamond',  label: '◇',  tooltip: 'Diamond' },
+  { id: 'star',     label: '★',  tooltip: 'Star' },
+  { id: 'pentagon', label: '⬠',  tooltip: 'Pentagon' },
+  { id: 'heart',    label: '♥',  tooltip: 'Heart' },
   { id: 'text',     label: 'T',  tooltip: 'Text' },
 ];
 
@@ -58,7 +64,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         left: position.x,
         top: position.y,
         display: 'grid',
-        gridTemplateColumns: '32px 32px',
+        gridTemplateColumns: '32px 32px 32px',
         gap: 4,
         background: 'rgba(30,30,30,0.92)',
         borderRadius: 0,
