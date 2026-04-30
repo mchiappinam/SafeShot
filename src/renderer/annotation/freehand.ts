@@ -41,8 +41,9 @@ export function drawFreehand(
 }
 
 /**
- * Draw a calligraphy stroke with variable width based on speed.
- * Shorter distance between points = thicker stroke, longer distance = thinner stroke.
+ * Draw a calligraphy stroke with an angled nib effect.
+ * Simulates a flat pen held at 45 degrees, creating thick/thin variation
+ * based on stroke direction, similar to Paint's calligraphy brush.
  */
 export function drawCalligraphy(
   ctx: CanvasRenderingContext2D,
@@ -53,28 +54,33 @@ export function drawCalligraphy(
   if (points.length === 0) return;
 
   ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.fillStyle = color;
+
+  // Nib angle (45 degrees) and half-width
+  const nibAngle = Math.PI / 4;
+  const hw = baseStrokeWidth * 0.8;
+  const dx = Math.cos(nibAngle) * hw;
+  const dy = Math.sin(nibAngle) * hw;
 
   if (points.length === 1) {
+    // Single dot: draw an angled ellipse
     ctx.beginPath();
-    ctx.arc(points[0].x, points[0].y, baseStrokeWidth / 2, 0, Math.PI * 2);
-    ctx.fillStyle = color;
+    ctx.ellipse(points[0].x, points[0].y, hw, hw * 0.3, nibAngle, 0, Math.PI * 2);
     ctx.fill();
   } else {
+    // Draw filled quadrilaterals between consecutive points
+    // Each point expands into two corners based on the nib angle
     for (let i = 1; i < points.length; i++) {
       const prev = points[i - 1];
       const curr = points[i];
-      const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
-      // Shorter distance = thicker (slow movement), longer distance = thinner (fast movement)
-      // Clamp between 0.5x and 2.5x the base width
-      const widthFactor = Math.max(0.5, Math.min(2.5, 1.0 + (10 - dist) / 10));
-      ctx.lineWidth = baseStrokeWidth * widthFactor;
+
       ctx.beginPath();
-      ctx.moveTo(prev.x, prev.y);
-      ctx.lineTo(curr.x, curr.y);
-      ctx.stroke();
+      ctx.moveTo(prev.x - dx, prev.y - dy);
+      ctx.lineTo(prev.x + dx, prev.y + dy);
+      ctx.lineTo(curr.x + dx, curr.y + dy);
+      ctx.lineTo(curr.x - dx, curr.y - dy);
+      ctx.closePath();
+      ctx.fill();
     }
   }
 
