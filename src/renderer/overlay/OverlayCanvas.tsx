@@ -53,7 +53,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   activeToolRef.current = activeTool;
   const [textInput, setTextInput] = useState<{ x: number; y: number; text: string } | null>(null);
 
-  useEffect(() => { annEngRef.current?.setTool(activeTool); }, [activeTool]);
+  useEffect(() => { annEngRef.current?.setTool(activeTool); syncPipeline(); }, [activeTool]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { annEngRef.current?.setColor(activeColor); }, [activeColor]);
   useEffect(() => { annEngRef.current?.setCustomStrokeWidth(strokeWidth); }, [strokeWidth]);
   useEffect(() => { annEngRef.current?.setFillMode(fillMode); }, [fillMode]);
