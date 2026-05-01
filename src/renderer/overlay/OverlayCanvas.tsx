@@ -316,10 +316,12 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
               annEng?.setTextHighlight(removed.textHighlight ?? false);
               annEng?.setTextSize(removed.textSize ?? 16);
               // Start a new text input at the annotation's original position
+              // Subtract the padding+border offset since the textarea adds it back
               const pos = removed.points[0] ?? { x, y };
-              annEng?.startStroke(pos);
+              const editPos = { x: pos.x - 3, y: pos.y - 3 };
+              annEng?.startStroke(editPos);
               annEng?.updateText(removed.text ?? '');
-              setTextInput({ x: pos.x, y: pos.y, text: removed.text ?? '' });
+              setTextInput({ x: editPos.x, y: editPos.y, text: removed.text ?? '' });
               notifyAnnotations();
               syncPipeline();
               return;

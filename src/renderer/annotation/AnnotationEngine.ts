@@ -98,12 +98,15 @@ export class AnnotationEngine {
       this.preview = null;
       return;
     }
+    // Offset by textarea padding (2px) + border (1px) so rendered text matches textarea position
+    const offset = 3;
+    const adjustedPoint = { x: this.textInput.point.x + offset, y: this.textInput.point.y + offset };
     this.stack.push({
       id: generateId(),
       tool: 'text',
       color: this.color,
       strokeWidth: this.textSize,
-      points: [this.textInput.point],
+      points: [adjustedPoint],
       text: this.textInput.text,
       textBold: this.textBold,
       textItalic: this.textItalic,

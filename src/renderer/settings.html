@@ -138,13 +138,16 @@
   var settings = {};
   var originalHotkey = '';
   var hotkeyDisplay = { PrintScreen: 'Print Screen', 'Meta+Shift+KeyS': '\u2318\u21E7S' };
+  var isMacOS = navigator.platform.indexOf('Mac') !== -1 || navigator.userAgent.indexOf('Macintosh') !== -1;
+  var isLinux = navigator.platform.indexOf('Linux') !== -1;
+  var isWindows = !isMacOS && !isLinux;
   var reservedKeys = [
     'Ctrl+KeyZ', 'Ctrl+KeyY', 'Ctrl+KeyS', 'Ctrl+KeyB', 'Ctrl+KeyC', 'Ctrl+KeyA',
     'Meta+KeyZ', 'Meta+KeyY', 'Meta+KeyS', 'Meta+KeyB', 'Meta+KeyC', 'Meta+KeyA',
     'Ctrl+Shift+KeyZ', 'Meta+Shift+KeyZ', 'Escape',
   ];
   // On Windows, also reserve Win+Shift+S (used by Windows Screenshot)
-  if (navigator.platform.indexOf('Win') !== -1) {
+  if (isWindows) {
     reservedKeys.push('Meta+Shift+KeyS');
   }
   var listening = false;
@@ -158,7 +161,7 @@
     display = display.replace(/Key([A-Z])/g, '$1');
     display = display.replace(/Digit([0-9])/g, '$1');
     // Convert modifier names to symbols on macOS
-    if (navigator.platform.indexOf('Mac') !== -1) {
+    if (isMacOS) {
       display = display.replace('Meta+', '\u2318').replace('Shift+', '\u21E7').replace('Ctrl+', '\u2303').replace('Alt+', '\u2325');
     }
     return display;
@@ -182,7 +185,7 @@
     document.getElementById('captureCursor').checked = s.captureCursor || false;
     document.getElementById('showNotifications').checked = s.showNotifications !== false;
     // Show Win+Shift+S override option only on Windows
-    if (navigator.platform.indexOf('Win') !== -1) {
+    if (isWindows) {
       document.getElementById('winShiftSField').style.display = '';
       document.getElementById('overrideWinShiftS').checked = s.overrideWinShiftS === true;
     }
@@ -249,8 +252,7 @@
   });
 
   document.getElementById('resetHotkey').addEventListener('click', function() {
-    var isMac = navigator.platform.indexOf('Mac') !== -1;
-    var def = isMac ? 'Meta+Shift+KeyS' : 'PrintScreen';
+    var def = isMacOS ? 'Meta+Shift+KeyS' : 'PrintScreen';
     hotkeyEl.value = displayHotkey(def);
     settings.hotkey = def;
     errorEl.style.display = 'none';
@@ -262,7 +264,7 @@
     if (settings.lastSaveDir) invoke('set_setting', { key: 'lastSaveDir', value: settings.lastSaveDir });
     invoke('set_setting', { key: 'captureCursor', value: document.getElementById('captureCursor').checked ? 'true' : 'false' });
     invoke('set_setting', { key: 'showNotifications', value: document.getElementById('showNotifications').checked ? 'true' : 'false' });
-    if (navigator.platform.indexOf('Win') !== -1) {
+    if (isWindows) {
       var override = document.getElementById('overrideWinShiftS').checked ? 'true' : 'false';
       invoke('set_setting', { key: 'overrideWinShiftS', value: override });
       invoke('apply_win_shift_s_override', { enable: override === 'true' });
@@ -283,7 +285,7 @@
   document.getElementById('cancelBtn').addEventListener('click', function() { stopListening(); invoke('close_settings'); });
   document.getElementById('close-x').addEventListener('click', function() { stopListening(); invoke('close_settings'); });
 
-  if (navigator.platform.indexOf('Mac') !== -1) {
+  if (isMacOS) {
     document.getElementById('lbl-quick').textContent = 'Quick save folder (\u2318S)';
     document.getElementById('hint-quick').textContent = 'Where screenshots go when you press \u2318S';
     document.getElementById('lbl-saveas').textContent = 'Save As default folder (\u2318B)';
