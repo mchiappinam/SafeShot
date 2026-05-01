@@ -200,7 +200,14 @@ export default function App(): React.ReactElement {
       .catch(console.error);
   }, []);
 
-  const handleStateChange = useCallback((state: CaptureState) => setCaptureState(state), []);
+  const handleStateChange = useCallback((state: CaptureState) => {
+    setCaptureState(state);
+    // Close popups when leaving area-finalized (e.g., starting a new selection)
+    if (state !== 'area-finalized') {
+      setColorPickerOpen(false);
+      setSettingsOpen(false);
+    }
+  }, []);
 
   // Auto-save text settings when any change
   useEffect(() => {
