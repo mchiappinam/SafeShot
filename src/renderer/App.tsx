@@ -308,7 +308,7 @@ export default function App(): React.ReactElement {
           position={{ x: toolbarPositions.drawing.x + 90, y: toolbarPositions.drawing.y }} />
       )}
 
-      {activeTool === 'text' && toolbarPositions && (
+      {activeTool === 'text' && showToolbars && toolbarPositions && (
         <TextFormatBar
           bold={textBold} italic={textItalic} underline={textUnderline}
           highlight={textHighlight} size={textSize}
