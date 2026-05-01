@@ -504,59 +504,74 @@ pub fn do_capture() -> Result<Vec<ScreenData>, String> {
     let cursor_pos = if capture_cursor { get_cursor_position() } else { None };
 
     let screens = Screen::all().map_err(|e| e.to_string())?;
-    let mut results = Vec::new();
 
+    // Capture all screens first (must be sequential, OS API limitation)
+    let mut captures: Vec<_> = Vec::new();
     for screen in screens {
         let captured = screen.capture().map_err(|e| e.to_string())?;
-        let info = screen.display_info;
-        let (cw, ch) = (captured.width(), captured.height());
-        // Convert from screenshots' image type to our image crate version
-        let mut image = image::RgbaImage::from_raw(cw, ch, captured.into_raw())
-            .ok_or_else(|| "Failed to convert captured image".to_string())?;
+        captures.push((screen.display_info, captured));
+    }
 
-        // Draw cursor if it's on this screen
-        if let Some((cx, cy)) = cursor_pos {
-            let sx = info.x;
-            let sy = info.y;
-            let sw = info.width as i32;
-            let sh = info.height as i32;
-            if cx >= sx && cx < sx + sw && cy >= sy && cy < sy + sh {
-                let scale = image.width() as f64 / info.width as f64;
-                let px = ((cx - sx) as f64 * scale) as u32;
-                let py = ((cy - sy) as f64 * scale) as u32;
-                draw_cursor_on_image(&mut image, px, py, scale);
+    // Process screens in parallel (PNG encode + base64 are the bottleneck)
+    let handles: Vec<_> = captures.into_iter().map(|(info, captured)| {
+        let cursor_pos = cursor_pos;
+        std::thread::spawn(move || {
+            let (cw, ch) = (captured.width(), captured.height());
+            let mut image = image::RgbaImage::from_raw(cw, ch, captured.into_raw())
+                .ok_or_else(|| "Failed to convert captured image".to_string())?;
+
+            // Draw cursor if it's on this screen
+            if let Some((cx, cy)) = cursor_pos {
+                let sx = info.x;
+                let sy = info.y;
+                let sw = info.width as i32;
+                let sh = info.height as i32;
+                if cx >= sx && cx < sx + sw && cy >= sy && cy < sy + sh {
+                    let scale = image.width() as f64 / info.width as f64;
+                    let px = ((cx - sx) as f64 * scale) as u32;
+                    let py = ((cy - sy) as f64 * scale) as u32;
+                    draw_cursor_on_image(&mut image, px, py, scale);
+                }
             }
-        }
 
-        let mut png_bytes = Vec::new();
-        let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
-        image::ImageEncoder::write_image(
-            encoder,
-            image.as_raw(),
-            image.width(),
-            image.height(),
-            image::ExtendedColorType::Rgba8,
-        )
-        .map_err(|e| e.to_string())?;
+            let mut png_bytes = Vec::new();
+            let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
+            image::ImageEncoder::write_image(
+                encoder,
+                image.as_raw(),
+                image.width(),
+                image.height(),
+                image::ExtendedColorType::Rgba8,
+            )
+            .map_err(|e| e.to_string())?;
 
-        let b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
-        let data_url = format!("data:image/png;base64,{}", b64);
+            let b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
+            let data_url = format!("data:image/png;base64,{}", b64);
 
-        results.push(ScreenData {
-            display_id: info.id.to_string(),
-            x: info.x,
-            y: info.y,
-            width: info.width,
-            height: info.height,
-            scale_factor: info.scale_factor as f64,
-            native_width: image.width(),
-            native_height: image.height(),
-            image_data_url: data_url,
-        });
+            Ok::<ScreenData, String>(ScreenData {
+                display_id: info.id.to_string(),
+                x: info.x,
+                y: info.y,
+                width: info.width,
+                height: info.height,
+                scale_factor: info.scale_factor as f64,
+                native_width: image.width(),
+                native_height: image.height(),
+                image_data_url: data_url,
+            })
+        })
+    }).collect();
+
+    let mut results = Vec::new();
+    for handle in handles {
+        let screen_data = handle.join().map_err(|_| "Thread panicked".to_string())??;
         crate::log(&format!(
             "Display {}: pos=({},{}) size={}x{} scale={} native={}x{}",
-            info.id, info.x, info.y, info.width, info.height, info.scale_factor, image.width(), image.height()
+            screen_data.display_id, screen_data.x, screen_data.y,
+            screen_data.width, screen_data.height, screen_data.scale_factor,
+            screen_data.native_width, screen_data.native_height
         ));
+        results.push(screen_data);
     }
 
     results.sort_by(|a, b| a.x.cmp(&b.x).then(a.y.cmp(&b.y)));
