@@ -398,7 +398,8 @@ export function drawText(
   bold?: boolean,
   italic?: boolean,
   underline?: boolean,
-  highlight?: boolean
+  highlight?: boolean,
+  wrapWidth?: number
 ): void {
   if (!text) return;
   ctx.save();
@@ -407,7 +408,44 @@ export function drawText(
   ctx.font = style;
   ctx.textBaseline = 'top';
 
-  const lines = text.split('\n');
+  // Split by explicit newlines first, then wrap each line if wrapWidth is set
+  const rawLines = text.split('\n');
+  const lines: string[] = [];
+  for (const raw of rawLines) {
+    if (wrapWidth && wrapWidth > 0) {
+      // Word-wrap within the given width, matching textarea behavior
+      const words = raw.split(/(\s+)/); // split keeping whitespace
+      let current = '';
+      for (const word of words) {
+        const test = current + word;
+        if (ctx.measureText(test).width > wrapWidth && current.length > 0) {
+          lines.push(current);
+          current = word.trimStart();
+        } else {
+          current = test;
+        }
+      }
+      // If a single word is wider than wrapWidth, break it by character
+      if (current && ctx.measureText(current).width > wrapWidth) {
+        let charLine = '';
+        for (const ch of current) {
+          if (ctx.measureText(charLine + ch).width > wrapWidth && charLine.length > 0) {
+            lines.push(charLine);
+            charLine = ch;
+          } else {
+            charLine += ch;
+          }
+        }
+        if (charLine) lines.push(charLine);
+      } else if (current) {
+        lines.push(current);
+      }
+      if (raw === '') lines.push('');
+    } else {
+      lines.push(raw);
+    }
+  }
+
   const lineHeight = fontSize + 4;
 
   for (let i = 0; i < lines.length; i++) {

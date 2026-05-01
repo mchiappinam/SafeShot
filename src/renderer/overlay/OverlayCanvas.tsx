@@ -51,7 +51,8 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   captureStateRef.current = captureState;
   const activeToolRef = useRef(activeTool);
   activeToolRef.current = activeTool;
-  const [textInput, setTextInput] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [textInput, setTextInput] = useState<{ x: number; y: number; text: string; width?: number } | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => { annEngRef.current?.setTool(activeTool); syncPipeline(); }, [activeTool]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { annEngRef.current?.setColor(activeColor); }, [activeColor]);
@@ -66,7 +67,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
   useEffect(() => {
     if (textInput && activeTool !== 'text') {
       annEngRef.current?.updateText(textInput.text);
-      annEngRef.current?.finalizeText();
+      captureAndFinalizeText();
       restoreEngineState();
       setTextInput(null);
       notifyAnnotations();
@@ -100,6 +101,18 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     pipeline.requestRender();
     notifySelection();
   }, [notifySelection]);
+
+  // Capture textarea width and finalize text
+  const captureAndFinalizeText = useCallback(() => {
+    const eng = annEngRef.current;
+    if (!eng) return;
+    const el = textareaRef.current;
+    if (el) {
+      // Subtract padding (2px) and border (1px) on each side
+      eng.setTextWrapWidth(el.offsetWidth - 6);
+    }
+    eng.finalizeText();
+  }, []);
 
   // Restore engine state to match React state (after text editing changes it)
   const restoreEngineState = useCallback(() => {
@@ -295,7 +308,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         // Finalize any existing text first
         if (textInput) {
           annEng?.updateText(textInput.text);
-          annEng?.finalizeText();
+          captureAndFinalizeText();
           restoreEngineState();
           notifyAnnotations();
         }
@@ -321,7 +334,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
               const editPos = { x: pos.x - 3, y: pos.y - 3 };
               annEng?.startStroke(editPos);
               annEng?.updateText(removed.text ?? '');
-              setTextInput({ x: editPos.x, y: editPos.y, text: removed.text ?? '' });
+              setTextInput({ x: editPos.x, y: editPos.y, text: removed.text ?? '', width: removed.textWidth ? removed.textWidth + 6 : undefined });
               notifyAnnotations();
               syncPipeline();
               return;
@@ -338,7 +351,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         // Finalize pending text if switching to another tool action
         if (textInput) {
           annEng?.updateText(textInput.text);
-          annEng?.finalizeText();
+          captureAndFinalizeText();
           restoreEngineState();
           setTextInput(null);
           notifyAnnotations();
@@ -450,7 +463,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
         onContextMenu={(e) => e.preventDefault()} />
       {textInput && (
         <textarea
-          ref={(el) => { if (el) setTimeout(() => el.focus(), 0); }}
+          ref={(el) => { textareaRef.current = el; if (el) setTimeout(() => el.focus(), 0); }}
           value={textInput.text}
           onChange={(e) => {
             const val = e.target.value;
@@ -463,7 +476,7 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
             e.stopPropagation();
             if (e.key === 'Escape') {
               annEngRef.current?.updateText(textInput.text);
-              annEngRef.current?.finalizeText();
+              captureAndFinalizeText();
               restoreEngineState();
               setTextInput(null);
               notifyAnnotations();
@@ -474,7 +487,8 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
             position: 'fixed',
             left: textInput.x,
             top: textInput.y,
-            minWidth: 100,
+            minWidth: textInput.width ?? 100,
+            width: textInput.width,
             minHeight: 24,
             background: textHighlight ? `${annEngRef.current?.getColor() ?? '#FF0000'}4D` : 'transparent',
             border: '1px dashed rgba(255,255,255,0.5)',

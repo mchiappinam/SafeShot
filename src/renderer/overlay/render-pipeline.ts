@@ -287,7 +287,7 @@ function renderAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, dprOve
       }
       break;
     case 'text':
-      if (start && ann.text) drawText(ctx, start, ann.text, ann.color, ann.textSize ?? 16, ann.textBold, ann.textItalic, ann.textUnderline, ann.textHighlight);
+      if (start && ann.text) drawText(ctx, start, ann.text, ann.color, ann.textSize ?? 16, ann.textBold, ann.textItalic, ann.textUnderline, ann.textHighlight, ann.textWidth);
       break;
     case 'calligraphy':
       drawCalligraphy(ctx, ann.points, ann.color, ann.strokeWidth);

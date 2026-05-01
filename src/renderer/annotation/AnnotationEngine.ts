@@ -92,6 +92,10 @@ export class AnnotationEngine {
     };
   }
 
+  private textWrapWidth: number | undefined = undefined;
+
+  setTextWrapWidth(w: number | undefined): void { this.textWrapWidth = w; }
+
   finalizeText(): void {
     if (!this.textInput || !this.textInput.text) {
       this.textInput = null;
@@ -113,9 +117,11 @@ export class AnnotationEngine {
       textUnderline: this.textUnderline,
       textHighlight: this.textHighlight,
       textSize: this.textSize,
+      textWidth: this.textWrapWidth,
     });
     this.textInput = null;
     this.preview = null;
+    this.textWrapWidth = undefined;
   }
 
   updateStroke(point: Point): void {

@@ -60,6 +60,7 @@ export interface Annotation {
   textUnderline?: boolean;
   textHighlight?: boolean;
   textSize?: number;
+  textWidth?: number;
 }
 
 // Screen Data
