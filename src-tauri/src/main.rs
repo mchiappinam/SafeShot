@@ -638,11 +638,12 @@ fn start_capture(app: &AppHandle) {
         return;
     }
     log("Starting capture...");
+    let t0 = std::time::Instant::now();
 
     // Capture screens BEFORE opening the overlay so we don't screenshot our own window
     let screens = match capture::do_capture() {
         Ok(data) => {
-            log(&format!("Captured {} displays", data.len()));
+            log(&format!("Captured {} displays in {}ms", data.len(), t0.elapsed().as_millis()));
             if data.is_empty() {
                 log("Capture returned 0 displays, aborting");
                 return;
@@ -669,6 +670,7 @@ fn start_capture(app: &AppHandle) {
             label, screen.x, screen.y, screen.width, screen.height
         ));
 
+        let tw = std::time::Instant::now();
         let win = match WebviewWindowBuilder::new(
             app,
             &label,
@@ -692,7 +694,7 @@ fn start_capture(app: &AppHandle) {
         .build()
         {
             Ok(w) => {
-                log(&format!("{} created", label));
+                log(&format!("{} created in {}ms", label, tw.elapsed().as_millis()));
                 w
             }
             Err(e) => {
