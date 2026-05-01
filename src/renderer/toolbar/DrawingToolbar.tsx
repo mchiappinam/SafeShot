@@ -17,20 +17,19 @@ const FILL_LABELS: Record<FillMode, string> = { hollow: 'Hollow', solid: 'Solid'
 const TOOLS: { id: ToolType | null; label: string; tooltip: string; fontSize?: number }[] = [
   { id: null,        label: '✥',  tooltip: 'Move Selection' },
   { id: 'hand',      label: '✋', tooltip: 'Move Objects' },
-  { id: 'eyedropper',label: '💧', tooltip: 'Pick Color' },
-  { id: 'eraser',    label: '🧹', tooltip: 'Eraser' },
+  { id: 'eraser',    label: '🧽', tooltip: 'Eraser' },
   { id: 'pencil',   label: '🖊', tooltip: 'Sharpie' },
   { id: 'sharpie',  label: '🖍️', tooltip: 'Highlighter' },
   { id: 'calligraphy', label: '🖋', tooltip: 'Calligraphy' },
   { id: 'line',     label: '╱',  tooltip: 'Line' },
   { id: 'arrow',    label: '➜',  tooltip: 'Arrow' },
-  { id: 'square',   label: '▢',  tooltip: 'Rectangle' },
   { id: 'circle',   label: '○',  tooltip: 'Circle', fontSize: 22 },
   { id: 'triangle', label: '△',  tooltip: 'Triangle' },
-  { id: 'octagon',  label: '⬡',  tooltip: 'Octagon' },
+  { id: 'square',   label: '▢',  tooltip: 'Rectangle' },
   { id: 'diamond',  label: '◇',  tooltip: 'Diamond' },
-  { id: 'star',     label: '★',  tooltip: 'Star' },
   { id: 'pentagon', label: '⬠',  tooltip: 'Pentagon' },
+  { id: 'octagon',  label: '⬡',  tooltip: 'Octagon' },
+  { id: 'star',     label: '★',  tooltip: 'Star' },
   { id: 'heart',    label: '♥',  tooltip: 'Heart' },
   { id: 'text',     label: 'T',  tooltip: 'Text' },
 ];
@@ -82,6 +81,15 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
           <span className="tooltip-text">{id !== null && SHAPE_TOOLS.has(id) ? `${tooltip} (${FILL_LABELS[fillMode]} ⚙)` : tooltip}</span>
         </div>
       ))}
+      {/* Empty slot to complete the row after Text */}
+      <div />
+      <div style={{ position: 'relative' }} className="tooltip-wrap">
+        <button onClick={() => handleToolClick('eyedropper')}
+          style={btnStyle(activeTool === 'eyedropper')}>
+          💧
+        </button>
+        <span className="tooltip-text">Pick Color</span>
+      </div>
       <div style={{ position: 'relative' }} className="tooltip-wrap">
         <button onClick={onColorPickerOpen}
           style={{ width: 32, height: 32, border: '2px solid #fff', borderRadius: 0, background: activeColor, cursor: 'pointer' }}
