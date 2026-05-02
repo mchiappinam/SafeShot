@@ -199,6 +199,7 @@ fn main() {
             show_overlay,
             activate_overlay,
             sync_tool_state,
+            relay_shortcut,
             open_settings,
             apply_win_shift_s_override,
         ])
@@ -608,6 +609,11 @@ fn activate_overlay(app: AppHandle, screen_index: usize) {
 #[tauri::command]
 fn sync_tool_state(app: AppHandle, state: serde_json::Value) {
     app.emit("tool-state-changed", state).ok();
+}
+
+#[tauri::command]
+fn relay_shortcut(app: AppHandle, key: String) {
+    app.emit("shortcut-relay", key).ok();
 }
 
 fn toggle_autostart(app: &AppHandle) {

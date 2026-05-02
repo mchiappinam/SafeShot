@@ -145,6 +145,29 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     return () => { unlisten?.(); };
   }, [screenIndex, syncPipeline]);
 
+  // Relay a shortcut to other overlay windows when this one doesn't have a selection
+  const relayShortcut = useCallback((key: string) => {
+    if (window.__TAURI__) {
+      window.__TAURI__.core.invoke('relay_shortcut', { key }).catch(() => {});
+    }
+  }, []);
+
+  // Listen for relayed shortcuts from other overlay windows
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    if (window.__TAURI__?.event) {
+      window.__TAURI__.event.listen('shortcut-relay', (event: { payload: unknown }) => {
+        const key = event.payload as string;
+        const d = getSelectionDataURL();
+        if (!d) return; // this overlay doesn't have a selection either
+        if (key === 'b') onSave(d, true);
+        else if (key === 's') onSave(d, false);
+        else if (key === 'c') onCopy(d);
+      }).then(fn => { unlisten = fn; });
+    }
+    return () => { unlisten?.(); };
+  }, [getSelectionDataURL, onSave, onCopy]);
+
   // Export only the selected region (frozen screen + annotations, no UI chrome)
   const getSelectionDataURL = useCallback((forceScale?: number): string | null => {
     const pipeline = pipelineRef.current;
@@ -412,13 +435,13 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
       return;
     }
     const mod = e.ctrlKey || e.metaKey;
-    if (!mod || !canvas) return;
+    if (!mod) return;
     if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); annEngRef.current?.undo(); notifyAnnotations(); syncPipeline(); }
     else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); annEngRef.current?.redo(); notifyAnnotations(); syncPipeline(); }
-    else if (e.key === 'b') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, true); }
-    else if (e.key === 's') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, false); }
-    else if (e.key === 'c') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onCopy(d); }
-    else if (e.key === 'a') { e.preventDefault(); /* Ctrl+A: select entire screen */
+    else if (e.key === 'b') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, true); else relayShortcut('b'); }
+    else if (e.key === 's') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onSave(d, false); else relayShortcut('s'); }
+    else if (e.key === 'c') { e.preventDefault(); const d = getSelectionDataURL(); if (d) onCopy(d); else relayShortcut('c'); }
+    else if (e.key === 'a') { e.preventDefault();
       selMgrRef.current?.discardSelection();
       selMgrRef.current?.startSelection({ x: 0, y: 0 });
       selMgrRef.current?.updateSelection({ x: window.innerWidth, y: window.innerHeight });
