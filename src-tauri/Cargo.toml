@@ -1,6 +1,6 @@
 [package]
 name = "safeshot"
-version = "1.4.39"
+version = "1.4.40"
 edition = "2021"
 
 [build-dependencies]
