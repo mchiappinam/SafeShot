@@ -87,17 +87,23 @@ Once you've selected an area, a toolbar appears with drawing tools:
 | Tool | Description |
 |------|-------------|
 | ✥ Move Selection | Move or resize the selected area |
-| ✋ Move Objects | Move annotations around |
-| 💧 Pick Color | Sample a color from the screen |
+| ✋ Move Objects | Move or resize annotations |
+| 🧽 Eraser | Remove annotations by clicking or dragging |
 | 🖊 Sharpie | Freehand drawing |
-| 🖍️ Highlighter | Semi-transparent marker |
+| 🖍️ Highlighter | Semi-transparent freehand |
+| 🖋 Calligraphy | Angled nib with thick/thin variation |
 | ╱ Line | Straight line |
 | ➜ Arrow | Line with arrowhead |
-| ▢ Rectangle | Rectangle shape |
 | ○ Circle | Ellipse shape |
 | △ Triangle | Triangle shape |
+| ▢ Rectangle | Rectangle shape |
+| ◇ Diamond | Rotated square |
+| ⬠ Pentagon | Regular 5-sided polygon |
 | ⬡ Octagon | Regular octagon |
-| T Text | Click to type text |
+| ★ Star | 5-pointed star |
+| ♥ Heart | Bezier curve heart |
+| T Text | Click to type, click existing text to edit |
+| 💧 Pick Color | Sample a color from the screen |
 | 🎨 Color | Pick a color |
 | ⚙ Settings | Thickness, fill mode, selection presets |
 
@@ -106,6 +112,7 @@ Once you've selected an area, a toolbar appears with drawing tools:
 - **Ctrl+S** / **⌘S** quick saves to Pictures/SafeShot
 - **Ctrl+B** / **⌘B** opens a Save As dialog
 - **Ctrl+Z** / **⌘Z** and **Ctrl+Y** / **⌘Y** for undo and redo
+- **Delete** / **Backspace** with the hand tool to remove the last interacted annotation
 - **ESC** to cancel and close
 
 ### Tray Menu
@@ -125,15 +132,22 @@ Open from the tray menu to configure:
 - **Capture hotkey** - Change the screenshot shortcut to any key combination
 - **Cursor capture** - Include the mouse cursor in screenshots
 - **Notifications** - Show/hide notifications after save or copy
+- **Win+Shift+S override** - Replace Windows Screenshot with SafeShot (Windows only)
 
 ## Features
 
 - Instant screen capture with area selection
-- 12 annotation tools with color picker and thickness control
+- 18 tools with color picker and thickness control
+- Shape resizing with the hand tool (drag endpoint dots)
+- Edit existing text annotations by clicking them
+- Text wrapping with preserved width
+- Eraser tool to remove annotations by click or drag
+- Calligraphy pen with angled nib effect
 - Solid, hollow, blur, or redact shapes
 - Blur pixelates content underneath a shape
 - Redact auto-detects text lines and covers them with bars
-- Multi-monitor support
+- Per-monitor multi-display support with mixed-DPI handling
+- Touchscreen support for drawing and selection
 - Keyboard shortcuts for everything
 - Auto-start on boot
 - Saves to your Pictures/SafeShot folder
@@ -142,6 +156,7 @@ Open from the tray menu to configure:
 - Optional cursor capture in screenshots
 - Native notifications after save/copy (can be turned off in Settings)
 - Configurable hotkey
+- Win+Shift+S override option (Windows only)
 - Custom save folders for quick save and Save As
 - Tiny installer (~4 MB)
 - Zero network access, fully offline
