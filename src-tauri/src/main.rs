@@ -202,6 +202,7 @@ fn main() {
             relay_shortcut,
             open_settings,
             apply_win_shift_s_override,
+            get_platform,
         ])
         .setup(|app| {
             log("Setup starting...");
@@ -614,6 +615,13 @@ fn sync_tool_state(app: AppHandle, state: serde_json::Value) {
 #[tauri::command]
 fn relay_shortcut(app: AppHandle, key: String) {
     app.emit("shortcut-relay", key).ok();
+}
+
+#[tauri::command]
+fn get_platform() -> String {
+    if cfg!(target_os = "windows") { "windows".into() }
+    else if cfg!(target_os = "macos") { "macos".into() }
+    else { "linux".into() }
 }
 
 fn toggle_autostart(app: &AppHandle) {

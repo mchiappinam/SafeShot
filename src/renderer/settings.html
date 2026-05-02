@@ -138,18 +138,15 @@
   var settings = {};
   var originalHotkey = '';
   var hotkeyDisplay = { PrintScreen: 'Print Screen', 'Meta+Shift+KeyS': '\u2318\u21E7S' };
-  var isMacOS = navigator.platform.indexOf('Mac') !== -1 || navigator.userAgent.indexOf('Macintosh') !== -1;
-  var isLinux = navigator.platform.indexOf('Linux') !== -1;
-  var isWindows = !isMacOS && !isLinux;
+  // Platform detection is deferred to Rust via get_platform for reliability
+  var isMacOS = false;
+  var isLinux = false;
+  var isWindows = false;
   var reservedKeys = [
     'Ctrl+KeyZ', 'Ctrl+KeyY', 'Ctrl+KeyS', 'Ctrl+KeyB', 'Ctrl+KeyC', 'Ctrl+KeyA',
     'Meta+KeyZ', 'Meta+KeyY', 'Meta+KeyS', 'Meta+KeyB', 'Meta+KeyC', 'Meta+KeyA',
     'Ctrl+Shift+KeyZ', 'Meta+Shift+KeyZ', 'Escape',
   ];
-  // On Windows, also reserve Win+Shift+S (used by Windows Screenshot)
-  if (isWindows) {
-    reservedKeys.push('Meta+Shift+KeyS');
-  }
   var listening = false;
   var onHotkeyKey = null;
 
@@ -176,7 +173,18 @@
     invoke('resume_hotkey');
   }
 
-  invoke('get_settings').then(function(s) {
+  invoke('get_platform').then(function(p) {
+    isMacOS = p === 'macos';
+    isLinux = p === 'linux';
+    isWindows = p === 'windows';
+    if (isWindows) { reservedKeys.push('Meta+Shift+KeyS'); }
+    if (isMacOS) {
+      document.getElementById('lbl-quick').textContent = 'Quick save folder (\u2318S)';
+      document.getElementById('hint-quick').textContent = 'Where screenshots go when you press \u2318S';
+      document.getElementById('lbl-saveas').textContent = 'Save As default folder (\u2318B)';
+    }
+    return invoke('get_settings');
+  }).then(function(s) {
     settings = s;
     originalHotkey = s.hotkey || 'PrintScreen';
     document.getElementById('quickSaveDir').value = s.quickSaveDir || '';
@@ -285,11 +293,6 @@
   document.getElementById('cancelBtn').addEventListener('click', function() { stopListening(); invoke('close_settings'); });
   document.getElementById('close-x').addEventListener('click', function() { stopListening(); invoke('close_settings'); });
 
-  if (isMacOS) {
-    document.getElementById('lbl-quick').textContent = 'Quick save folder (\u2318S)';
-    document.getElementById('hint-quick').textContent = 'Where screenshots go when you press \u2318S';
-    document.getElementById('lbl-saveas').textContent = 'Save As default folder (\u2318B)';
-  }
   </script>
 </body>
 </html>
