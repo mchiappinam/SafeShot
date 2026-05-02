@@ -472,7 +472,13 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
             syncPipeline();
           }}
           onKeyDown={(e) => {
-            // Stop all key events from reaching the global handler while typing
+            // Let Ctrl/Cmd shortcuts pass through to the global handler
+            if ((e.ctrlKey || e.metaKey) && e.key !== 'a') {
+              // Don't stop propagation for shortcuts like Ctrl+S, Ctrl+C, Ctrl+B
+              // But keep Ctrl+A for select-all within the textarea
+              return;
+            }
+            // Stop other key events from reaching the global handler while typing
             e.stopPropagation();
             if (e.key === 'Escape') {
               annEngRef.current?.updateText(textInput.text);

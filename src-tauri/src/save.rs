@@ -344,9 +344,17 @@ pub fn save_screenshot(
     };
 
     if show_dialog {
-        // Close overlay before opening the dialog so it can't obscure it
-        if let Some(win) = app_handle.get_webview_window("overlay") {
-            win.close().ok();
+        // Close all overlay windows before opening the dialog so they can't obscure it
+        let labels: Vec<String> = app_handle
+            .webview_windows()
+            .keys()
+            .filter(|l| l.starts_with("overlay-"))
+            .cloned()
+            .collect();
+        for label in &labels {
+            if let Some(win) = app_handle.get_webview_window(label) {
+                win.close().ok();
+            }
         }
 
         {
