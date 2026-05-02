@@ -145,6 +145,21 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     return () => { unlisten?.(); };
   }, [screenIndex, syncPipeline]);
 
+  // Export only the selected region (frozen screen + annotations, no UI chrome)
+  const getSelectionDataURL = useCallback((forceScale?: number): string | null => {
+    const pipeline = pipelineRef.current;
+    const sel = selMgrRef.current?.getSelection();
+    if (!pipeline || !sel) return null;
+
+    const annEng = annEngRef.current;
+    const annotations = annEng?.getAnnotations() ?? [];
+    const preview = annEng?.getPreview() ?? null;
+    const exportCanvas = pipeline.renderCleanExport(sel, annotations, preview, forceScale);
+    if (!exportCanvas) return null;
+
+    return exportCanvas.toDataURL('image/png');
+  }, []);
+
   // Relay a shortcut to other overlay windows when this one doesn't have a selection
   const relayShortcut = useCallback((key: string) => {
     if (window.__TAURI__) {
@@ -167,21 +182,6 @@ export const OverlayCanvas = forwardRef<OverlayCanvasHandle, OverlayCanvasProps>
     }
     return () => { unlisten?.(); };
   }, [getSelectionDataURL, onSave, onCopy]);
-
-  // Export only the selected region (frozen screen + annotations, no UI chrome)
-  const getSelectionDataURL = useCallback((forceScale?: number): string | null => {
-    const pipeline = pipelineRef.current;
-    const sel = selMgrRef.current?.getSelection();
-    if (!pipeline || !sel) return null;
-
-    const annEng = annEngRef.current;
-    const annotations = annEng?.getAnnotations() ?? [];
-    const preview = annEng?.getPreview() ?? null;
-    const exportCanvas = pipeline.renderCleanExport(sel, annotations, preview, forceScale);
-    if (!exportCanvas) return null;
-
-    return exportCanvas.toDataURL('image/png');
-  }, []);
 
   const applySelection = useCallback((sel: { x: number; y: number; width: number; height: number }) => {
     const selMgr = selMgrRef.current;
