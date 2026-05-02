@@ -122,12 +122,7 @@
           <span class="field-label" style="margin: 0;">Show notifications after save/copy</span>
         </label>
       </div>
-      <div class="field" id="winShiftSField" style="display: none;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="overrideWinShiftS" style="accent-color: #2AE3FF; width: 16px; height: 16px;" />
-          <span class="field-label" style="margin: 0;">Replace Windows Screenshot (Win+Shift+S) with SafeShot (requires restart)</span>
-        </label>
-      </div>
+      <div id="winShiftSContainer"></div>
     </div>
   </div>
   <div class="footer">
@@ -194,7 +189,11 @@
     document.getElementById('showNotifications').checked = s.showNotifications !== false;
     // Show Win+Shift+S override option only on Windows
     if (isWindows) {
-      document.getElementById('winShiftSField').style.display = '';
+      var container = document.getElementById('winShiftSContainer');
+      container.innerHTML = '<div class="field"><label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">' +
+        '<input type="checkbox" id="overrideWinShiftS" style="accent-color: #2AE3FF; width: 16px; height: 16px;" />' +
+        '<span class="field-label" style="margin: 0;">Replace Windows Screenshot (Win+Shift+S) with SafeShot (requires restart)</span>' +
+        '</label></div>';
       document.getElementById('overrideWinShiftS').checked = s.overrideWinShiftS === true;
     }
   });
