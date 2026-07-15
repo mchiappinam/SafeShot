@@ -648,9 +648,10 @@ fn toggle_autostart(app: &AppHandle) {
 
 // Overlay windows are intentionally sized a few pixels larger than the monitor
 // bounds on every platform. Without this overscan a thin sliver of desktop
-// (or the OS's window border/shadow) is visible on all 4 edges of the overlay.
-const OVERLAY_PAD: i32 = 9;
-const OVERLAY_PAD_TOP: i32 = 1;
+// (or the OS's window border/shadow) is visible on all 4 edges of the overlay,
+// and clicks just outside the (too-small) overlay pass through to the desktop.
+const OVERLAY_PAD: i32 = 24;
+const OVERLAY_PAD_TOP: i32 = 24;
 
 fn start_capture(app: &AppHandle) {
     // Guard: if any overlay window already exists, don't create more
