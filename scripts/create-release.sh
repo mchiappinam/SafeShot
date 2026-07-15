@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required but not installed. Install it first (e.g. sudo apt install jq) and re-run this script."
+  exit 1
+fi
+
 CURRENT=$(grep '"version"' package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
 CONFIG=".github/runner-config.json"
 
