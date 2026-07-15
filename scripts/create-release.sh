@@ -135,7 +135,7 @@ case $BUILD_TYPE in
 esac
 
 git tag "$TAG"
-git push origin main
+git push origin HEAD
 git push origin "$TAG"
 
 echo ""
