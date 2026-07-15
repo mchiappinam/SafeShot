@@ -309,15 +309,17 @@ export default function App(): React.ReactElement {
       )}
 
       {activeTool === 'text' && showToolbars && toolbarPositions && (
-        <TextFormatBar
-          bold={textBold} italic={textItalic} underline={textUnderline}
-          highlight={textHighlight} size={textSize}
-          onBoldToggle={() => { setTextBold(v => { broadcastToolState({ textBold: !v }); return !v; }); }}
-          onItalicToggle={() => { setTextItalic(v => { broadcastToolState({ textItalic: !v }); return !v; }); }}
-          onUnderlineToggle={() => { setTextUnderline(v => { broadcastToolState({ textUnderline: !v }); return !v; }); }}
-          onHighlightToggle={() => { setTextHighlight(v => { broadcastToolState({ textHighlight: !v }); return !v; }); }}
-          onSizeChange={(s) => { setTextSize(s); broadcastToolState({ textSize: s }); }}
-          position={{ x: toolbarPositions.action.x, y: toolbarPositions.action.y - 50 }} />
+        <div className={captureState === 'area-finalized' ? 'toolbar' : 'toolbar--hidden'}>
+          <TextFormatBar
+            bold={textBold} italic={textItalic} underline={textUnderline}
+            highlight={textHighlight} size={textSize}
+            onBoldToggle={() => { setTextBold(v => { broadcastToolState({ textBold: !v }); return !v; }); }}
+            onItalicToggle={() => { setTextItalic(v => { broadcastToolState({ textItalic: !v }); return !v; }); }}
+            onUnderlineToggle={() => { setTextUnderline(v => { broadcastToolState({ textUnderline: !v }); return !v; }); }}
+            onHighlightToggle={() => { setTextHighlight(v => { broadcastToolState({ textHighlight: !v }); return !v; }); }}
+            onSizeChange={(s) => { setTextSize(s); broadcastToolState({ textSize: s }); }}
+            position={{ x: toolbarPositions.text.x, y: toolbarPositions.text.y }} />
+        </div>
       )}
     </>
   );
