@@ -33,6 +33,8 @@ export const DRAWING_TOOLBAR_WIDTH = 116;
 export const DRAWING_TOOLBAR_HEIGHT = 260;
 export const ACTION_TOOLBAR_WIDTH = 320;
 export const ACTION_TOOLBAR_HEIGHT = 40;
+export const TEXT_FORMAT_BAR_WIDTH = 240;
+export const TEXT_FORMAT_BAR_HEIGHT = 44;
 export const TOOLBAR_GAP = 8;
 
 // Color Picker

@@ -1,4 +1,5 @@
 import React from 'react';
+import { TEXT_FORMAT_BAR_WIDTH, TEXT_FORMAT_BAR_HEIGHT } from '../../shared/constants';
 
 interface TextFormatBarProps {
   bold: boolean;
@@ -19,10 +20,8 @@ export const TextFormatBar: React.FC<TextFormatBarProps> = ({
   onBoldToggle, onItalicToggle, onUnderlineToggle, onHighlightToggle, onSizeChange,
   position,
 }) => {
-  const pickerWidth = 240;
-  const pickerHeight = 44;
-  const x = Math.max(0, Math.min(position.x, window.innerWidth - pickerWidth));
-  const y = Math.max(0, Math.min(position.y, window.innerHeight - pickerHeight));
+  const x = Math.max(0, Math.min(position.x, window.innerWidth - TEXT_FORMAT_BAR_WIDTH));
+  const y = Math.max(0, Math.min(position.y, window.innerHeight - TEXT_FORMAT_BAR_HEIGHT));
 
   const btn = (active: boolean): React.CSSProperties => ({
     width: 32, height: 32,

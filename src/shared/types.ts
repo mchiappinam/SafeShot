@@ -86,6 +86,7 @@ export interface Rectangle {
 export interface ToolbarPositions {
   drawing: ToolbarPosition;
   action: ToolbarPosition;
+  text: ToolbarPosition;
 }
 
 export interface ToolbarPosition {

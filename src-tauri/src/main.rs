@@ -646,6 +646,12 @@ fn toggle_autostart(app: &AppHandle) {
     std::fs::write(&path, serde_json::to_string_pretty(&json).unwrap_or_default()).ok();
 }
 
+// Overlay windows are intentionally sized a few pixels larger than the monitor
+// bounds on every platform. Without this overscan a thin sliver of desktop
+// (or the OS's window border/shadow) is visible on all 4 edges of the overlay.
+const OVERLAY_PAD: i32 = 9;
+const OVERLAY_PAD_TOP: i32 = 1;
+
 fn start_capture(app: &AppHandle) {
     // Guard: if any overlay window already exists, don't create more
     if app.webview_windows().keys().any(|l| l.starts_with("overlay-")) {
@@ -689,8 +695,11 @@ fn start_capture(app: &AppHandle) {
             WebviewUrl::App(url_str.into()),
         )
         .title("SafeShot")
-        .position(screen.x as f64, screen.y as f64)
-        .inner_size(screen.width as f64, screen.height as f64)
+        .position((screen.x - OVERLAY_PAD) as f64, (screen.y - OVERLAY_PAD_TOP) as f64)
+        .inner_size(
+            (screen.width as i32 + OVERLAY_PAD * 2) as f64,
+            (screen.height as i32 + OVERLAY_PAD_TOP + OVERLAY_PAD) as f64,
+        )
         .decorations(false)
         .resizable(false)
         .maximizable(false)
@@ -738,8 +747,8 @@ fn start_capture(app: &AppHandle) {
                             & !(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
                         SetWindowLongW(hwnd, GWL_EXSTYLE, clean_ex as i32);
                         // Reposition with padding (same as v1.4.3)
-                        let pad_top = 1;
-                        let pad = 9;
+                        let pad_top = OVERLAY_PAD_TOP;
+                        let pad = OVERLAY_PAD;
                         SetWindowPos(
                             hwnd,
                             HWND_TOPMOST,
@@ -769,8 +778,11 @@ fn start_capture(app: &AppHandle) {
         #[cfg(not(target_os = "windows"))]
         {
             use tauri::LogicalPosition;
-            win.set_position(LogicalPosition::new(screen.x as f64, screen.y as f64))
-                .ok();
+            win.set_position(LogicalPosition::new(
+                (screen.x - OVERLAY_PAD) as f64,
+                (screen.y - OVERLAY_PAD_TOP) as f64,
+            ))
+            .ok();
         }
 
         // On macOS, set the window level high enough to cover the menu bar and dock

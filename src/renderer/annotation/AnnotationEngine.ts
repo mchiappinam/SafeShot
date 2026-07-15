@@ -164,8 +164,11 @@ export class AnnotationEngine {
       const [start] = ann.points;
       if (!start) return false;
       const fontSize = ann.textSize ?? 16;
-      const textW = (ann.text?.length ?? 0) * fontSize * 0.6;
-      const textH = fontSize + 4;
+      const lines = (ann.text ?? '').split('\n');
+      const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
+      const textW = ann.textWidth ?? longestLine * fontSize * 0.6;
+      const lineHeight = fontSize + 4;
+      const textH = lines.length * lineHeight;
       return p.x >= start.x && p.x <= start.x + textW && p.y >= start.y && p.y <= start.y + textH;
     }
     if (ann.tool === 'pencil' || ann.tool === 'sharpie' || ann.tool === 'calligraphy') {
