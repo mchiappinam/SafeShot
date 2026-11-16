@@ -35,7 +35,7 @@ Oh, and the installer is under 4 MB.
 |----------|--------|
 | Windows 10+ | ✅ Passed QA |
 | macOS 11+ (Intel) | ✅ Passed QA |
-| macOS 11+ (Apple Silicon) | 🔶 Untested |
+| macOS 11+ (Apple Silicon) | ✅ Passed QA |
 | Ubuntu / Debian | 🔶 Untested |
 | Fedora / Arch / Other | 🔶 Untested |
 
