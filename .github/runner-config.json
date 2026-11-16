@@ -1,6 +1,6 @@
 {
   "windows": ["windows-latest"],
-  "macos-arm": ["macos-14"],
+  "macos-arm": ["macos-15"],
   "macos-x64": ["macos-15-intel"],
   "linux": ["ubuntu-22.04"]
 }

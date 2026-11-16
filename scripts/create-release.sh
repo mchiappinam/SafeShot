@@ -64,7 +64,7 @@ elif [ "$RUNNER_MODE" = "m" ]; then
   if [ "$MAC_ARM_RUNNER" = "s" ]; then
     MAC_ARM_VAL='["self-hosted", "macOS"]'
   else
-    MAC_ARM_VAL='["macos-14"]'
+    MAC_ARM_VAL='["macos-15"]'
   fi
 
   read -p "  macOS Intel [g]: " MAC_X64_RUNNER
@@ -94,7 +94,7 @@ else
   cat > "$CONFIG" << 'EOF'
 {
   "windows": ["windows-latest"],
-  "macos-arm": ["macos-14"],
+  "macos-arm": ["macos-15"],
   "macos-x64": ["macos-15-intel"],
   "linux": ["ubuntu-22.04"]
 }

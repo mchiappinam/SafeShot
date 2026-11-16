@@ -135,8 +135,11 @@ jobs:
         if: "!contains(needs.read-config.outputs.linux, 'self-hosted')"
         with:
           node-version: 20
-      - uses: dtolnay/rust-toolchain@stable
+      # Rust 1.100 breaks the screenshots crate on Linux (never type fallback), unpin once it is fixed
+      - uses: dtolnay/rust-toolchain@master
         if: "!contains(needs.read-config.outputs.linux, 'self-hosted')"
+        with:
+          toolchain: 1.99.1
       - name: Install system dependencies
         run: |
           sudo apt-get update
