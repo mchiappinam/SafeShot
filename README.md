@@ -66,6 +66,16 @@ brew install mchiappinam/safeshot/safeshot
 
 SafeShot starts automatically when your computer boots. You can toggle this from the tray menu.
 
+### macOS first launch (DMG installs)
+
+SafeShot is signed ad-hoc but not notarized by Apple, because notarization needs a paid Apple Developer ID. macOS therefore blocks the first launch of a downloaded DMG. Homebrew installs skip this, the cask clears the block for you.
+
+1. Drag SafeShot to Applications and open it. When macOS says it could not verify SafeShot, click **Done**
+2. Open **System Settings > Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to SafeShot
+3. Confirm with your password or Touch ID, then click **Open**
+
+Prefer Terminal? Run `xattr -dr com.apple.quarantine /Applications/SafeShot.app` once, then open the app.
+
 ## How to Use
 
 ### Capture a Screenshot

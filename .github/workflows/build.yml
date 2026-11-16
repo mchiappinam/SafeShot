@@ -84,6 +84,11 @@ jobs:
           npm install
           node scripts/generate-icons.js
           npx tauri build --target aarch64-apple-darwin
+      - name: Verify app signature
+        run: |
+          APP=src-tauri/target/aarch64-apple-darwin/release/bundle/macos/SafeShot.app
+          codesign -dv "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
       - uses: actions/upload-artifact@v5
         with:
           name: SafeShot-macos-arm
@@ -109,6 +114,11 @@ jobs:
           npm install
           node scripts/generate-icons.js
           npx tauri build
+      - name: Verify app signature
+        run: |
+          APP=src-tauri/target/release/bundle/macos/SafeShot.app
+          codesign -dv "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
       - uses: actions/upload-artifact@v5
         with:
           name: SafeShot-macos-x64
@@ -227,6 +237,16 @@ jobs:
             homepage \"https://github.com/{r}\"
 
             app \"SafeShot.app\"
+
+            # SafeShot is ad-hoc signed but not notarized (no paid Apple Developer ID).
+            # Homebrew quarantines downloads and Gatekeeper then blocks the first launch.
+            # Clear the quarantine flag so brew installs open without extra steps.
+            postflight_steps do
+              run \"/usr/bin/xattr\",
+                  args:           [\"-dr\", \"com.apple.quarantine\", \"{{{{appdir}}}}/SafeShot.app\"],
+                  writable_paths: [\"SafeShot.app\"],
+                  writable_base:  :appdir
+            end
 
             zap trash: [
               \"~/Library/Application Support/SafeShot\",
