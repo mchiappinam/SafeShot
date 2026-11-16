@@ -86,9 +86,12 @@ jobs:
           npx tauri build --target aarch64-apple-darwin
       - name: Verify app signature
         run: |
-          APP=src-tauri/target/aarch64-apple-darwin/release/bundle/macos/SafeShot.app
-          codesign -dv "$APP"
-          codesign --verify --deep --strict --verbose=2 "$APP"
+          DMG=$(ls src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          MP=$(mktemp -d)
+          trap 'hdiutil detach "$MP" -quiet || true' EXIT
+          hdiutil attach -readonly -nobrowse -noverify -mountpoint "$MP" "$DMG"
+          codesign -dv "$MP/SafeShot.app"
+          codesign --verify --deep --strict --verbose=2 "$MP/SafeShot.app"
       - uses: actions/upload-artifact@v5
         with:
           name: SafeShot-macos-arm
@@ -116,9 +119,12 @@ jobs:
           npx tauri build
       - name: Verify app signature
         run: |
-          APP=src-tauri/target/release/bundle/macos/SafeShot.app
-          codesign -dv "$APP"
-          codesign --verify --deep --strict --verbose=2 "$APP"
+          DMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg | head -1)
+          MP=$(mktemp -d)
+          trap 'hdiutil detach "$MP" -quiet || true' EXIT
+          hdiutil attach -readonly -nobrowse -noverify -mountpoint "$MP" "$DMG"
+          codesign -dv "$MP/SafeShot.app"
+          codesign --verify --deep --strict --verbose=2 "$MP/SafeShot.app"
       - uses: actions/upload-artifact@v5
         with:
           name: SafeShot-macos-x64
